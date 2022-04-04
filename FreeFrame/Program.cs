@@ -1,5 +1,7 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
+using FreeFrame.Components;
+using FreeFrame.Components.Shapes;
 
 namespace FreeFrame
 {
@@ -7,7 +9,9 @@ namespace FreeFrame
     {
         static void Main()
         {
+            List<Shape> shapes = Importer.Import("test.svg");
 
+            shapes.ForEach(shape => Console.WriteLine(shape));
         }
     }
 }

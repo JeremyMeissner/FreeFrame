@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {
-    abstract class Shape
+    public abstract class Shape
     {
         public Shape()
         {

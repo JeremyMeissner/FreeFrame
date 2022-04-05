@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {
-    class SVGPath : Shape
+    public class SVGPath : Shape
     {
         // https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths
         // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d

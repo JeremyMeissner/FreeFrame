@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {
-    class SVGRectangle : Shape
+    public class SVGRectangle : Shape
     {
         #region Geometry properties
         private float _x;

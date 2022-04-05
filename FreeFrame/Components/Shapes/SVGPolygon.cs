@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FreeFrame.Components.Shapes
 {
-    class SVGPolygon : Shape
+    public class SVGPolygon : Shape
     {
         #region Geometry properties
         List<float> points = new List<float>();

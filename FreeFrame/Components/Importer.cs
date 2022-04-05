@@ -8,7 +8,7 @@ using FreeFrame.Components.Shapes;
 
 namespace FreeFrame.Components
 {
-    static class Importer
+    public static class Importer
     {
         static public void Import()
         {
@@ -17,32 +17,50 @@ namespace FreeFrame.Components
             //{
             //}
         }
-        static public List<Shape> Import(string filename)
+        static public List<Shape> ImportFromStream(Stream pStream)
         {
-            if (!File.Exists(filename))
-                throw new ArgumentException($"'{nameof(filename)}' file cannot be found.", nameof(filename)); //TODO: replace by a simple alert window
-
             List<Shape> shapes = new List<Shape>();
 
-            using (XmlReader reader = XmlReader.Create(filename))
+            using (XmlReader reader = XmlReader.Create(pStream))
             {
-                while(reader.Read())
+                while (reader.Read())
                 {
                     if (reader.HasAttributes)
                     {
                         Console.WriteLine("Attributes of <" + reader.Name + ">");
                         switch (reader.Name)
                         {
+                            case "xml":
+                            case "svg":
+                            case "rect":
+                            case "path":
+                                break;
                             case "circle":
                                 shapes.Add(new SVGCircle(reader));
                                 break;
                             default:
+                                // TODO: show all the elemnt are not valid, be careful
                                 break;
                         }
                     }
                 }
             }
             return (shapes);
+        }
+        static public List<Shape> ImportFromFile(string pFilename)
+        {
+            if (!File.Exists(pFilename))
+                throw new ArgumentException($"'{nameof(pFilename)}' file cannot be found.", nameof(pFilename)); //TODO: replace by a simple alert window
+
+            byte[] byteArray = Encoding.UTF8.GetBytes(File.ReadAllText(pFilename));
+
+            return ImportFromStream(new MemoryStream(byteArray));
+        }
+        static public List<Shape> ImportFromString(string pString)
+        {
+            byte[] byteArray = Encoding.UTF8.GetBytes(pString);
+
+            return ImportFromStream(new MemoryStream(byteArray));
         }
     }
 }

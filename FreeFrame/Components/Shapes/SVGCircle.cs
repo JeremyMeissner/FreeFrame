@@ -6,7 +6,7 @@ using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {
-    class SVGCircle : Shape
+    public class SVGCircle : Shape
     {
         #region Geometry properties
         private float _cx;

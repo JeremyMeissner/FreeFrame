@@ -8,7 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ImGui.NET" Version="1.87.3" />
     <PackageReference Include="OpenTK" Version="4.7.1" />
+    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="if not exist $(ProjectDir)$(OutDir)Shaders mkdir $(ProjectDir)$(OutDir)Shaders&#xD;&#xA;copy &quot;$(ProjectDir)Shaders\*&quot; &quot;$(ProjectDir)$(OutDir)Shaders\&quot;" />
+  </Target>
 
 </Project>

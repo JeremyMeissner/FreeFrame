@@ -12,17 +12,24 @@ namespace FreeFrame
     class Window : GameWindow
     {
         int _vertexBuffer;
-
         int _vertexArray;
-
+        int _indexBuffer;
         int _shader;
 
         public readonly float[] _vertices =
         {
-             0.0f, 0.5f, 0.0f, // Top
-            -0.5f,  -0.5f, 0.0f, // Bottom-Left
-             0.5f,  -0.5f, 0.0f  // Bottom-Right
+             0.5f,  0.5f, 0.0f, // Top-Right
+             0.5f, -0.5f, 0.0f,  // Bottom-Right
+            -0.5f, -0.5f, 0.0f, // Bottom-Left
+            -0.5f,  0.5f, 0.0f, // Top-Left
         };
+
+        public readonly uint[] _indices =
+        {
+            0, 1, 2, // First triangle
+            0, 2, 3, // Second triangle
+        };
+
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) { }
         
         static int CompileShader(string uri, ShaderType type)
@@ -69,18 +76,25 @@ namespace FreeFrame
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+            // Vertex Buffer Object
             _vertexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
 
-            _vertexArray = GL.GenVertexArray(); // TODO: Why a vertex array is necessary ?
+            // Vertex Array Object
+            _vertexArray = GL.GenVertexArray(); // TODO: Why a vertex array is necessary? Why not only use VertexAttribPointer?
             GL.BindVertexArray(_vertexArray);
 
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
 
-            _shader = CreateShader("Shaders/shader.vert", "Shaders/shader.frag");
+            // Index Buffer Object
+            _indexBuffer = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
+            // Shaders
+            _shader = CreateShader("Shaders/shader.vert", "Shaders/shader.frag");
             GL.UseProgram(_shader);
         }
         protected override void OnResize(ResizeEventArgs e)
@@ -106,10 +120,10 @@ namespace FreeFrame
 
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
-            GL.UseProgram(_shader);
-            GL.BindVertexArray(_vertexArray);
+            //GL.UseProgram(_shader);
+            //GL.BindVertexArray(_vertexArray);
 
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
 
             SwapBuffers();
         }
@@ -119,11 +133,13 @@ namespace FreeFrame
             base.OnUnload();
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindVertexArray(_vertexArray);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.BindVertexArray(0);
             GL.UseProgram(0);
 
             GL.DeleteProgram(_shader);
             GL.DeleteBuffer(_vertexBuffer);
+            GL.DeleteBuffer(_indexBuffer);
             GL.DeleteVertexArray(_vertexArray);
         }
     }

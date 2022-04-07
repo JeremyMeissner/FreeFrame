@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FreeFrame.Shaders;
 
 namespace FreeFrame
 {
@@ -14,7 +15,7 @@ namespace FreeFrame
         int _vertexBuffer;
         int _vertexArray;
         int _indexBuffer;
-        int _shader;
+        Shader _shader;
 
         public readonly float[] _vertices =
         {
@@ -31,45 +32,7 @@ namespace FreeFrame
         };
 
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) { }
-        
-        static int CompileShader(string uri, ShaderType type)
-        {
-            int shader = GL.CreateShader(type);
 
-            GL.ShaderSource(shader, File.ReadAllText(uri)); // Import the source code of the shader
-            GL.CompileShader(shader);
-
-            GL.GetShader(shader, ShaderParameter.CompileStatus, out int compileStatus); // compileStatus is 0 if compile error
-            if (compileStatus == 0)
-            {
-                Console.WriteLine("{0}: {1}", type.ToString(), GL.GetShaderInfoLog(shader));
-                throw new Exception(); // TODO: Remove this exception
-            }
-
-            return shader;
-        }
-
-        static int CreateShader(string uriVertexShader, string uriFragementShader)
-        {
-            int program = GL.CreateProgram();
-
-            int vertexShader = CompileShader(uriVertexShader, ShaderType.VertexShader);
-            int fragmentShader = CompileShader(uriFragementShader, ShaderType.FragmentShader);
-
-            // TODO: Handling error
-
-            GL.AttachShader(program, vertexShader);
-            GL.AttachShader(program, fragmentShader);
-
-            GL.LinkProgram(program); // Put the shaders in their respective processor
-            GL.ValidateProgram(program); // Check if everything correct and store the information on the logs 
-            // TODO: Explain what's the difference with GL.ShaderInfoLog
-
-            GL.DeleteShader(vertexShader);
-            GL.DeleteShader(fragmentShader);
-
-            return program;
-        }
         protected override void OnLoad()
         {
             base.OnLoad();
@@ -94,8 +57,8 @@ namespace FreeFrame
             GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
 
             // Shaders
-            _shader = CreateShader("Shaders/shader.vert", "Shaders/shader.frag");
-            GL.UseProgram(_shader);
+            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+            _shader.Use();
         }
         protected override void OnResize(ResizeEventArgs e)
         {
@@ -120,7 +83,7 @@ namespace FreeFrame
 
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
-            //GL.UseProgram(_shader);
+            //_shader.Use();
             //GL.BindVertexArray(_vertexArray);
 
             GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
@@ -137,7 +100,6 @@ namespace FreeFrame
             GL.BindVertexArray(0);
             GL.UseProgram(0);
 
-            GL.DeleteProgram(_shader);
             GL.DeleteBuffer(_vertexBuffer);
             GL.DeleteBuffer(_indexBuffer);
             GL.DeleteVertexArray(_vertexArray);

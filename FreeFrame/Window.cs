@@ -1,12 +1,13 @@
 ﻿using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using FreeFrame.Shaders;
+using FreeFrame.Lib.ImGuiTools;
 
 namespace FreeFrame
 {
@@ -16,6 +17,7 @@ namespace FreeFrame
         int _vertexArray;
         int _indexBuffer;
         Shader _shader;
+        ImGuiController _ImGuiController;
 
         public readonly float[] _vertices =
         {
@@ -59,11 +61,17 @@ namespace FreeFrame
             // Shaders
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
             _shader.Use();
+
+            _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
             // TODO: map the new NDC to the window
+
+            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+
+            _ImGuiController.WindowResized(ClientSize.X, ClientSize.Y);
         }
         /// <summary>
         /// Triggered at a fixed interval. (Logic, etc.)
@@ -83,10 +91,16 @@ namespace FreeFrame
 
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
-            //_shader.Use();
-            //GL.BindVertexArray(_vertexArray);
+
+            _shader.Use(); // Select current shader
+            GL.BindVertexArray(_vertexArray); // Bind VAO for workspace (because ImGui binds another)
 
             GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+
+            _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
+            //ImGui.ShowDemoWindow();
+            UI.Show(this);
+            _ImGuiController.Render(); // Render ImGui elements
 
             SwapBuffers();
         }

@@ -9,9 +9,9 @@ namespace FreeFrame.Components.Shapes
     public class SVGCircle : Shape
     {
         #region Geometry properties
-        private float _cx;
-        private float _cy;
-        private float _r;
+        private int _cx;
+        private int _cy;
+        private int _r;
         #endregion
         /*
         
@@ -19,8 +19,8 @@ namespace FreeFrame.Components.Shapes
         TODO: take in account the attributes (listed on the doc Basic Shapes)
 
         private Color _fill;
-        private float _fillOpacity;
-        private float _opacity;
+        private int _fillOpacity;
+        private int _opacity;
 
         public SVGCircle(XmlReader reader)
         {
@@ -33,10 +33,10 @@ namespace FreeFrame.Components.Shapes
         public SVGCircle(XmlReader reader) : this(
             Convert.ToInt32(reader["r"]),
             Convert.ToInt32(reader["cx"]),
-            Convert.ToInt32(reader["cy"]))
+            Convert.ToInt32(reader["cy"])) // TODO: Error handler if r, cx or cy are not here
         { }
         public SVGCircle() : this(0, 0, 0) { }
-        public SVGCircle(float r, float cx, float cy)
+        public SVGCircle(int r, int cx, int cy)
         {
             _cx = cx;
             _cy = cy;

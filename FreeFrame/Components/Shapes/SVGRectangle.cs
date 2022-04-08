@@ -8,27 +8,29 @@ namespace FreeFrame.Components.Shapes
     public class SVGRectangle : Shape
     {
         #region Geometry properties
-        private float _x;
-        private float _y;
+        private int _x;
+        private int _y;
 
-        private float _width;
-        private float _height;
+        private int _width;
+        private int _height;
 
-        private float _rx; // Rounded in the x axes
-        private float _ry; // Rounded in the y axes
+        private int _rx; // Rounded in the x axes
+        private int _ry; // Rounded in the y axes
         #endregion
 
         public SVGRectangle(XmlReader reader) : this(
-            Convert.ToInt32(reader["x"]),
-            Convert.ToInt32(reader["y"]),
             Convert.ToInt32(reader["width"]),
             Convert.ToInt32(reader["height"]),
+            Convert.ToInt32(reader["x"]),
+            Convert.ToInt32(reader["y"]),
             Convert.ToInt32(reader["rx"]),
-            Convert.ToInt32(reader["ry"]))
-        { }
-        public SVGRectangle(float width, float height) : this(width, height, 0, 0) { }
-        public SVGRectangle(float width, float height, float x, float y) : this(width, height, x, y, 0, 0) { }
-        public SVGRectangle(float width, float height, float x, float y, float rx, float ry)
+            Convert.ToInt32(reader["ry"])) // TODO: Error handler if one of the properties in reader or note here, it should be dynamic
+        {
+        }
+        public SVGRectangle(): this(0, 0, 0, 0) { }
+        public SVGRectangle(int width, int height) : this(width, height, 0, 0) { }
+        public SVGRectangle(int width, int height, int x, int y) : this(width, height, x, y, 0, 0) { }
+        public SVGRectangle(int width, int height, int x, int y, int rx, int ry)
         {
             _x = x;
             _y = y;

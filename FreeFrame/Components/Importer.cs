@@ -27,13 +27,17 @@ namespace FreeFrame.Components
                 {
                     if (reader.HasAttributes)
                     {
-                        Console.WriteLine("Attributes of <" + reader.Name + ">");
+                        //Console.WriteLine("Attributes of <" + reader.Name + ">");
                         switch (reader.Name)
                         {
                             case "xml":
                             case "svg":
-                            case "rect":
+                                break; // Skip knowned elements
                             case "path":
+                                shapes.Add(new SVGPath(reader));
+                                break;
+                            case "rect":
+                                shapes.Add(new SVGRectangle(reader));
                                 break;
                             case "circle":
                                 shapes.Add(new SVGCircle(reader));
@@ -50,7 +54,7 @@ namespace FreeFrame.Components
         static public List<Shape> ImportFromFile(string pFilename)
         {
             if (!File.Exists(pFilename))
-                throw new ArgumentException($"'{nameof(pFilename)}' file cannot be found.", nameof(pFilename)); //TODO: replace by a simple alert window
+                throw new ArgumentException($"'{pFilename}' file cannot be found.", nameof(pFilename)); //TODO: replace by a simple alert window
 
             byte[] byteArray = Encoding.UTF8.GetBytes(File.ReadAllText(pFilename));
 

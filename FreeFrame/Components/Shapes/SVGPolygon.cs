@@ -11,7 +11,7 @@ namespace FreeFrame.Components.Shapes
         #endregion
         public SVGPolygon()
         {
-
+            // TODO: Finish this class
         }
 
         public override string ToString()

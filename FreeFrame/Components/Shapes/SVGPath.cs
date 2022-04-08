@@ -100,7 +100,7 @@ namespace FreeFrame.Components.Shapes
         }
         public override string ToString() 
         {
-            string output = "";
+            string output = "d: ";
             _drawAttribute.ForEach(d => output += d.ToString() + " ");
             return output.Trim();
         }

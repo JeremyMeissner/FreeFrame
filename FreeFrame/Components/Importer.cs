@@ -33,6 +33,9 @@ namespace FreeFrame.Components
                             case "xml":
                             case "svg":
                                 break; // Skip knowned elements
+                            case "polygon":
+                                shapes.Add(new SVGPolygon(reader));
+                                break;
                             case "path":
                                 shapes.Add(new SVGPath(reader));
                                 break;
@@ -54,7 +57,7 @@ namespace FreeFrame.Components
         static public List<Shape> ImportFromFile(string pFilename)
         {
             if (!File.Exists(pFilename))
-                throw new ArgumentException($"'{pFilename}' file cannot be found.", nameof(pFilename)); //TODO: replace by a simple alert window
+                throw new ArgumentException($"'{pFilename}' file cannot be found.", nameof(pFilename)); // TODO: replace by a simple alert window
 
             byte[] byteArray = Encoding.UTF8.GetBytes(File.ReadAllText(pFilename));
 

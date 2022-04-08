@@ -34,7 +34,20 @@ namespace FreeFrameTests
             List<Shape> result = Importer.ImportFromString(svgString);
 
             // Assert
-            Assert.AreEqual("M 20,0 C 0,100 200,100 180,0 m 50,10 L 10,21 H 10 V 10 s 20,20 10,10 Q 10,10 0,0 t 10,10 A 100 100 60 1 0 20,20 z", ((SVGPath)result[0]).ToString());
+            Assert.AreEqual("d: M 20,0 C 0,100 200,100 180,0 m 50,10 L 10,21 H 10 V 10 s 20,20 10,10 Q 10,10 0,0 t 10,10 A 100 100 60 1 0 20,20 z", ((SVGPath)result[0]).ToString());
+        }
+        [TestMethod]
+        public void ImportFromStream_Test_Polygon()
+        {
+            // Arrange
+            string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1000\" height=\"1000\">" +
+                "<polygon points=\"50,0 21,90 98,35 2,35 79,90\" stroke=\"black\"/>" +
+                "</svg>";
+            List<Shape> result = Importer.ImportFromString(svgString);
+
+            // Assert
+            Assert.AreEqual("points: 50,0 21,90 98,35 2,35 79,90", ((SVGPolygon)result[0]).ToString());
         }
         [TestMethod]
         public void ImportFromStream_Test_Rectangle()

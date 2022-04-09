@@ -39,6 +39,8 @@ namespace FreeFrame
         {
             base.OnLoad();
 
+            Helper.DebugMode();
+
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
             // Vertex Buffer Object
@@ -95,7 +97,11 @@ namespace FreeFrame
             _shader.Use(); // Select current shader
             GL.BindVertexArray(_vertexArray); // Bind VAO for workspace (because ImGui binds another)
 
+            int uColorLocation = _shader.GetUniformLocation("u_Color");
+            GL.Uniform4(uColorLocation, 0.2f, 1.0f, 0.5f, 1.0f);
+
             GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
             //ImGui.ShowDemoWindow();

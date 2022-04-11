@@ -45,7 +45,12 @@ namespace FreeFrame.Components.Shapes
 
         public override string ToString() => $"cx: {_cx}, cy: {_cy}, r: {_r}";
 
-        public override void UpdateProperties()
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override uint[] GetVerticesIndexes()
         {
             throw new NotImplementedException();
         }

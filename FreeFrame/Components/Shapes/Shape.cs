@@ -5,7 +5,7 @@ namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape
     {
-        static GameWindow? _window;
+        protected static Window? _window;
         private Shader _shader;
         private int _vertexBufferObject;
         private int _vertexArrayObject;
@@ -13,10 +13,8 @@ namespace FreeFrame.Components.Shapes
 
         private int _indexCount;
 
-        public Shape()
-        {
-            
-        }
+        public Shape() { }
+        public static void BindWindow(GameWindow window) => _window = (Window)window;
         public void GenerateObjects()
         {
             _vertexArrayObject = GL.GenVertexArray();
@@ -24,35 +22,16 @@ namespace FreeFrame.Components.Shapes
             _indexBufferObject = GL.GenBuffer();
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
         }
-        public static void BindWindow(GameWindow window) => _window = window;
-
-        /// <summary>
-        /// Convert given vertex position attributes in px to NDC 
-        /// </summary>
-        /// <param name="vertexPositions">vertex position attribute</param>
-        /// <returns>vertex position attribute in NDC</returns>
-        /// <exception cref="Exception">Window should be binded before calling</exception>
-        protected static float[] ConvertToNDC(params int[] vertexPositions)
-        {
-            if (_window == null)
-                throw new Exception("Trying to convert to NDC but no Window is binded");
-
-            float[] result = new float[vertexPositions.Length];
-            for (int i = 0; i < vertexPositions.Length; i+=2)
-            {
-                result[i] = vertexPositions[i] / (float)_window.ClientSize.X / 2;
-                result[i+1] = vertexPositions[i + 1] / (float)_window.ClientSize.Y / 2;
-            }
-            return result;
-        }
 
         /// <summary>
         /// Add the given vertex and index to the OpenGL buffers. And link those with an VAO.
         /// </summary>
         /// <param name="vertex">vertex array</param>
         /// <param name="index">index array</param>
-        protected void ImplementObjects(float[] vertex, uint[] index)
+        public void ImplementObjects()
         {
+            float[] vertices = GetVertices();
+            uint[] indexes = GetVerticesIndexes();
             // VAO
             GL.BindVertexArray(_vertexArrayObject);
 
@@ -61,14 +40,14 @@ namespace FreeFrame.Components.Shapes
 
             // VBO
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertex.Length * sizeof(float), vertex, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
             label = $"VBO {GetType().Name}:";
             GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _vertexBufferObject, label.Length, label);
 
             // IBO
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, index.Length * sizeof(uint), index, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indexes.Length * sizeof(uint), indexes, BufferUsageHint.StaticDraw);
 
             label = $"IBO {GetType().Name}:";
             GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _indexBufferObject, label.Length, label);
@@ -77,8 +56,9 @@ namespace FreeFrame.Components.Shapes
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0); // x, y;
             GL.EnableVertexAttribArray(0);
 
-            _indexCount = index.Length;
+            _indexCount = indexes.Length;
         }
+
         /// <summary>
         /// Trigge draw element throw OpenGL context
         /// </summary>
@@ -96,9 +76,15 @@ namespace FreeFrame.Components.Shapes
             _shader.Delete();
         }
         /// <summary>
-        /// Should update the size and the position to the new Window size
+        /// Should return the vertices position in NDC format
         /// </summary>
-        public abstract void UpdateProperties();
+        /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
+        public abstract float[] GetVertices();
+        /// <summary>
+        /// Should return the indexes position of the triangles
+        /// </summary>
+        /// <returns>array of indexes</returns>
+        public abstract uint[] GetVerticesIndexes();
         public abstract override string ToString();
     }
 

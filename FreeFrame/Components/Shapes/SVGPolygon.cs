@@ -25,17 +25,22 @@ namespace FreeFrame.Components.Shapes
                 _points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
         }
 
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString()
         {
             string output = "points: ";
             foreach ((int x, int y) point in _points)
                 output += string.Format("{0},{1} ", point.x, point.y);
             return output.Trim();
-        }
-
-        public override void UpdateProperties()
-        {
-            throw new NotImplementedException();
         }
     }
 }

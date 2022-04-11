@@ -14,7 +14,7 @@ using FreeFrame.Lib.FilePicker;
 
 namespace FreeFrame
 {
-    class Window : GameWindow
+    public class Window : GameWindow
     {
         int _ioX;
         int _ioY;
@@ -74,7 +74,7 @@ namespace FreeFrame
 
             if (_shapes != null)
             {
-                _shapes[0].UpdateProperties();
+                _shapes[0].ImplementObjects();
                 _shapes[0].Draw();
             }
 
@@ -95,17 +95,33 @@ namespace FreeFrame
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.BindVertexArray(0);
-            GL.UseProgram(0);
 
             _shapes.ForEach(shape => shape.DeleteObjects());
         }
+
+        /// <summary>
+        /// Convert given vertex position attributes in px to NDC 
+        /// </summary>
+        /// <param name="vertexPositions">vertex position attribute</param>
+        /// <returns>vertex position attribute in NDC</returns>
+        public float[] ConvertToNDC(params int[] vertexPositions)
+        {
+            float[] result = new float[vertexPositions.Length];
+            for (int i = 0; i < vertexPositions.Length; i += 2)
+            {
+                result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
+                result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
+            }
+            return result;
+        }
+
         public void ShowUI()
         {
+            // ImGui settings
             ImGui.GetStyle().WindowRounding = 0.0f;
             ImGui.GetStyle().ScrollbarRounding = 0.0f;
             ImGui.GetStyle().LogSliderDeadzone = 0.0f;
             ImGui.GetStyle().TabRounding = 0.0f;
-
 
             // Parameters side
             ImGui.Begin("Parameters", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);

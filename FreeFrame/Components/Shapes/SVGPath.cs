@@ -98,16 +98,22 @@ namespace FreeFrame.Components.Shapes
                 }
             }
         }
+
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString() 
         {
             string output = "d: ";
             _drawAttribute.ForEach(d => output += d.ToString() + " ");
             return output.Trim();
-        }
-
-        public override void UpdateProperties()
-        {
-            throw new NotImplementedException();
         }
     }
 }

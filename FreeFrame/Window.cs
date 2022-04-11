@@ -74,7 +74,6 @@ namespace FreeFrame
 
             if (_shapes != null)
             {
-
                 _shapes[0].UpdateProperties();
                 _shapes[0].Draw();
             }
@@ -91,12 +90,14 @@ namespace FreeFrame
         {
             base.OnUnload();
 
+            Console.WriteLine("Program stops");
+
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.BindVertexArray(0);
             GL.UseProgram(0);
 
-            // TODO: Delete the buffer in the Shape class
+            _shapes.ForEach(shape => shape.DeleteObjects());
         }
         public void ShowUI()
         {
@@ -106,6 +107,7 @@ namespace FreeFrame
             ImGui.GetStyle().TabRounding = 0.0f;
 
 
+            // Parameters side
             ImGui.Begin("Parameters", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(200, ClientSize.Y / 2));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), 0));
@@ -125,10 +127,9 @@ namespace FreeFrame
             ImGui.Text("Color");
             ImGui.Spacing();
             ImGui.ColorEdit4("Color", ref _ioColor);
-
             ImGui.End();
 
-
+            // Tree view side
             ImGui.Begin("Tree view", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(200, ClientSize.Y / 2));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
@@ -140,24 +141,23 @@ namespace FreeFrame
             ImGui.Selectable("Rectangle");
             ImGui.End();
 
-
+            // Animation side
             ImGui.Begin("Animation", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(0, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Animation");
             ImGui.End();
 
-
+            // Timeline side
             ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
             ImGui.Spacing();
             ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
-
             ImGui.End();
 
-
+            // Navbar side
             ImGui.Begin("NavBar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.MenuBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X - 200, 0));
             ImGui.SetWindowPos(new System.Numerics.Vector2(0, 0));
@@ -167,9 +167,7 @@ namespace FreeFrame
                 if (ImGui.BeginMenu("File"))
                 {
                     if (ImGui.MenuItem("Open..", "Ctrl+O"))
-                    {
                         _dialogFilePicker = true;
-                    }
                     if (ImGui.BeginMenu("Save"))
                     {
                         if (ImGui.MenuItem("Save as PNG", "Ctrl+S"))
@@ -199,10 +197,10 @@ namespace FreeFrame
                 ImGui.EndPopup();
             }
 
+            // File picker dialog
             if (_dialogFilePicker)
                 ImGui.OpenPopup("open-file");
-
-            if (ImGui.BeginPopupModal("open-file"))
+            if (ImGui.BeginPopupModal("open-file")) // ImGuiWindowFlags.AlwaysAutoResize
             {
                 var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), ".svg");
                 if (picker.Draw())
@@ -211,18 +209,17 @@ namespace FreeFrame
                     _shapes.ForEach(shape => shape.GenerateObjects());
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
-                    {
                         _dialogCompatibility = true;
-                    }
                     
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();
             }
 
+            // Compatibility alert
             if (_dialogCompatibility)
                 ImGui.OpenPopup("Compatibility Problem");
-            if (ImGui.BeginPopupModal("Compatibility Problem"))
+            if (ImGui.BeginPopupModal("Compatibility Problem")) // ImGuiWindowFlags.AlwaysAutoResize
             {
                 ImGui.Text("Some SVG elements are not compatible. Go to the list of compatible SVG elements");
                 ImGui.Separator();

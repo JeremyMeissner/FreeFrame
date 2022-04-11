@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Desktop;
 
 namespace FreeFrame.Components.Shapes
@@ -92,7 +88,13 @@ namespace FreeFrame.Components.Shapes
             GL.BindVertexArray(_vertexArrayObject);
             GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
-
+        public void DeleteObjects()
+        {
+            GL.DeleteBuffer(_vertexBufferObject);
+            GL.DeleteBuffer(_indexBufferObject);
+            GL.DeleteVertexArray(_vertexArrayObject);
+            _shader.Delete();
+        }
         /// <summary>
         /// Should update the size and the position to the new Window size
         /// </summary>

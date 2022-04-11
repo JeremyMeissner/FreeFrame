@@ -47,6 +47,7 @@ namespace FreeFrame
         }
         public int GetUniformLocation(string uniform) => GL.GetUniformLocation(_program, uniform);
         public void Use() => GL.UseProgram(_program);
-        ~Shader() => GL.DeleteProgram(_program);
+        public void Delete() => GL.DeleteProgram(_program);
+        ~Shader() => Delete();
     }
 }

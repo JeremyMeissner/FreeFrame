@@ -14,7 +14,7 @@ namespace FreeFrame
         {
             NativeWindowSettings nativeWindowSettings = new()
             {
-                Size = new Vector2i(600, 600),
+                Size = new Vector2i(800, 600),
                 Title = "FreeFrame"
             };
             using Window window = new(GameWindowSettings.Default, nativeWindowSettings); // Create window context (GLFW, OpenGL)

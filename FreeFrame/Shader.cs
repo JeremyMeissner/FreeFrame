@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FreeFrame
 {
-    class Shader
+    public class Shader
     {
         private int _program;
         int CompileShader(string uri, ShaderType type)

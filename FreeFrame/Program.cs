@@ -12,16 +12,17 @@ namespace FreeFrame
     {
         static void Main()
         {
-            List<Shape> shapes = Importer.ImportFromFile("test.svg");
-            shapes.ForEach(shape => Console.WriteLine(shape));
-
             NativeWindowSettings nativeWindowSettings = new()
             {
                 Size = new Vector2i(600, 600),
                 Title = "FreeFrame"
             };
-            using Window window = new(GameWindowSettings.Default, nativeWindowSettings);
+            using Window window = new(GameWindowSettings.Default, nativeWindowSettings); // Create window context (GLFW, OpenGL)
+
+            
+
             window.Run();
+
         }
     }
 }

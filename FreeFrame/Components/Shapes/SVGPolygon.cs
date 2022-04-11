@@ -32,5 +32,10 @@ namespace FreeFrame.Components.Shapes
                 output += string.Format("{0},{1} ", point.x, point.y);
             return output.Trim();
         }
+
+        public override void UpdateProperties()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

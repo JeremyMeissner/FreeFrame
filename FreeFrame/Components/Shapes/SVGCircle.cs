@@ -44,5 +44,10 @@ namespace FreeFrame.Components.Shapes
         }
 
         public override string ToString() => $"cx: {_cx}, cy: {_cy}, r: {_r}";
+
+        public override void UpdateProperties()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

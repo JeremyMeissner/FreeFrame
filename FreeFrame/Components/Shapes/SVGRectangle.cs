@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
+using OpenTK.Graphics.OpenGL4;
 
 namespace FreeFrame.Components.Shapes
 {
@@ -24,7 +25,7 @@ namespace FreeFrame.Components.Shapes
             Convert.ToInt32(reader["x"]),
             Convert.ToInt32(reader["y"]),
             Convert.ToInt32(reader["rx"]),
-            Convert.ToInt32(reader["ry"])) // TODO: Error handler if one of the properties in reader or note here, it should be dynamic
+            Convert.ToInt32(reader["ry"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
         {
         }
         public SVGRectangle(): this(0, 0, 0, 0) { }
@@ -38,8 +39,16 @@ namespace FreeFrame.Components.Shapes
             _height = height;
             _rx = rx;
             _ry = ry;
+
+            UpdateProperties();
         }
-        
+        public override void UpdateProperties()
+        {
+            // x, y, x, y, x, y, ... (clockwise)
+            ImplementObjects(ConvertToNDC(_x, _y, _x + _width, _y, _x + _width, _y + _height, _x, _y + _height), new uint[] { 0, 1, 2, 0, 2, 3 });
+        }
+
+
         public override string ToString() => $"x: {_x}, y: {_y}, width: {_width}, height: {_height}, rx: {_rx}, ry: {_ry}";
     }
 }

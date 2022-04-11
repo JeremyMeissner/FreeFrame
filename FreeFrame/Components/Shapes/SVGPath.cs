@@ -104,5 +104,10 @@ namespace FreeFrame.Components.Shapes
             _drawAttribute.ForEach(d => output += d.ToString() + " ");
             return output.Trim();
         }
+
+        public override void UpdateProperties()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

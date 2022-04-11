@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FreeFrame.Lib.ImGuiTools;
+using FreeFrame.Components;
+using FreeFrame.Components.Shapes;
 
 namespace FreeFrame
 {
@@ -19,6 +21,9 @@ namespace FreeFrame
         //int _indexBuffer;
         //Shader _shader;
         ImGuiController _ImGuiController;
+
+        List<Shape> shapes;
+
 
         public readonly float[] _vertices =
         {
@@ -44,6 +49,11 @@ namespace FreeFrame
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+            Shape.BindWindow(this);
+
+            shapes = Importer.ImportFromFile("test.svg");
+            //shapes.ForEach(shape => Console.WriteLine(shape));
+
             //// Vertex Buffer Object
             //_vertexBuffer = GL.GenBuffer();
             //GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
@@ -65,7 +75,7 @@ namespace FreeFrame
             //_shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
             //_shader.Use();
 
-            rectangle = new Object(_vertices, _indices);
+            //rectangle = new Object(_vertices, _indices);
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
@@ -105,7 +115,10 @@ namespace FreeFrame
 
             //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
 
-            rectangle.Draw();
+            //rectangle.Draw();
+
+            shapes[0].UpdateProperties();
+            shapes[0].Draw();
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
             //ImGui.ShowDemoWindow();

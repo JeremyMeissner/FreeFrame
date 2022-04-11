@@ -10,22 +10,16 @@ namespace FreeFrame.Components
 {
     public static class Importer
     {
-        static public void Import()
-        {
-            //TODO: find a solution for opening a crossplatform file dialog. Do I need a crossplatform dialog?
-            //using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            //{
-            //}
-        }
-        static public List<Shape> ImportFromStream(Stream pStream)
+        static public (List<Shape>, bool) ImportFromStream(Stream pStream)
         {
             List<Shape> shapes = new List<Shape>();
+            bool compatibilityFlag = false;
 
             using (XmlReader reader = XmlReader.Create(pStream))
             {
                 while (reader.Read())
                 {
-                    if (reader.HasAttributes)
+                    //if (reader.HasAttributes)
                     {
                         //Console.WriteLine("Attributes of <" + reader.Name + ">");
                         switch (reader.Name)
@@ -46,15 +40,15 @@ namespace FreeFrame.Components
                                 shapes.Add(new SVGCircle(reader));
                                 break;
                             default:
-                                // TODO: show all the elemnt are not valid, be careful
+                                compatibilityFlag = true; // If an element is unknow, the flag is trigger
                                 break;
                         }
                     }
                 }
             }
-            return (shapes);
+            return (shapes, compatibilityFlag);
         }
-        static public List<Shape> ImportFromFile(string pFilename)
+        static public (List<Shape>, bool) ImportFromFile(string pFilename)
         {
             if (!File.Exists(pFilename))
                 throw new ArgumentException($"'{pFilename}' file cannot be found.", nameof(pFilename)); // TODO: replace by a simple alert window
@@ -63,7 +57,7 @@ namespace FreeFrame.Components
 
             return ImportFromStream(new MemoryStream(byteArray));
         }
-        static public List<Shape> ImportFromString(string pString)
+        static public (List<Shape>, bool) ImportFromString(string pString)
         {
             byte[] byteArray = Encoding.UTF8.GetBytes(pString);
 

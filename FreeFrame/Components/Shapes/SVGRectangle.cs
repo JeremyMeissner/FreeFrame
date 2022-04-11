@@ -39,8 +39,6 @@ namespace FreeFrame.Components.Shapes
             _height = height;
             _rx = rx;
             _ry = ry;
-
-            UpdateProperties();
         }
         public override void UpdateProperties()
         {

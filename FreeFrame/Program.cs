@@ -19,8 +19,6 @@ namespace FreeFrame
             };
             using Window window = new(GameWindowSettings.Default, nativeWindowSettings); // Create window context (GLFW, OpenGL)
 
-            
-
             window.Run();
 
         }

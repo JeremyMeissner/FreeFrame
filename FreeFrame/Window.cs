@@ -10,34 +10,24 @@ using System.Threading.Tasks;
 using FreeFrame.Lib.ImGuiTools;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
+using FreeFrame.Lib.FilePicker;
 
 namespace FreeFrame
 {
     class Window : GameWindow
     {
-        Object rectangle;
-        //int _vertexBuffer;
-        //int _vertexArray;
-        //int _indexBuffer;
-        //Shader _shader;
+        int _ioX;
+        int _ioY;
+        int _ioWidth;
+        int _ioHeight;
+        System.Numerics.Vector4 _ioColor;
+        int _ioTimeline;
+        bool _dialogFilePicker = false;
+        bool _dialogCompatibility = false;
+
         ImGuiController _ImGuiController;
 
-        List<Shape> shapes;
-
-
-        public readonly float[] _vertices =
-        {
-             0.5f,  0.5f, 0.0f, // Top-Right
-             0.5f, -0.5f, 0.0f,  // Bottom-Right
-            -0.5f, -0.5f, 0.0f, // Bottom-Left
-            -0.5f,  0.5f, 0.0f, // Top-Left
-        };
-
-        public readonly uint[] _indices =
-        {
-            0, 1, 2, // First triangle
-            0, 2, 3, // Second triangle
-        };
+        List<Shape> _shapes;
 
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) { }
 
@@ -51,31 +41,7 @@ namespace FreeFrame
 
             Shape.BindWindow(this);
 
-            shapes = Importer.ImportFromFile("test.svg");
-            //shapes.ForEach(shape => Console.WriteLine(shape));
-
-            //// Vertex Buffer Object
-            //_vertexBuffer = GL.GenBuffer();
-            //GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-            //GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
-
-            //// Vertex Array Object
-            //_vertexArray = GL.GenVertexArray(); // TODO: Why a vertex array is necessary? Why not only use VertexAttribPointer?
-            //GL.BindVertexArray(_vertexArray);
-
-            //GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-            //GL.EnableVertexAttribArray(0);
-
-            //// Index Buffer Object
-            //_indexBuffer = GL.GenBuffer();
-            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-            //GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
-
-            //// Shaders
-            //_shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
-            //_shader.Use();
-
-            //rectangle = new Object(_vertices, _indices);
+            //_shapes = Importer.ImportFromFile("test.svg");
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
@@ -106,28 +72,21 @@ namespace FreeFrame
 
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
+            if (_shapes != null)
+            {
 
-            //_shader.Use(); // Select current shader
-            //GL.BindVertexArray(_vertexArray); // Bind VAO for workspace (because ImGui binds another)
-
-            //int uColorLocation = _shader.GetUniformLocation("u_Color");
-            //GL.Uniform4(uColorLocation, 0.2f, 1.0f, 0.5f, 1.0f);
-
-            //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
-
-            //rectangle.Draw();
-
-            shapes[0].UpdateProperties();
-            shapes[0].Draw();
+                _shapes[0].UpdateProperties();
+                _shapes[0].Draw();
+            }
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
             //ImGui.ShowDemoWindow();
-            UI.Show(this);
+            ShowUI();
             _ImGuiController.Render(); // Render ImGui elements
 
             SwapBuffers();
         }
-        
+
         protected override void OnUnload()
         {
             base.OnUnload();
@@ -137,9 +96,144 @@ namespace FreeFrame
             GL.BindVertexArray(0);
             GL.UseProgram(0);
 
-            //GL.DeleteBuffer(_vertexBuffer);
-            //GL.DeleteBuffer(_indexBuffer);
-            //GL.DeleteVertexArray(_vertexArray);
+            // TODO: Delete the buffer in the Shape class
+        }
+        public void ShowUI()
+        {
+            ImGui.GetStyle().WindowRounding = 0.0f;
+            ImGui.GetStyle().ScrollbarRounding = 0.0f;
+            ImGui.GetStyle().LogSliderDeadzone = 0.0f;
+            ImGui.GetStyle().TabRounding = 0.0f;
+
+
+            ImGui.Begin("Parameters", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.SetWindowSize(new System.Numerics.Vector2(200, ClientSize.Y / 2));
+            ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), 0));
+
+            ImGui.Text("Parameters");
+            ImGui.Spacing();
+            ImGui.InputInt("X", ref _ioX);
+            ImGui.InputInt("Y", ref _ioY);
+            ImGui.Spacing();
+            ImGui.InputInt("Width", ref _ioWidth);
+            ImGui.InputInt("Height", ref _ioHeight);
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.Text("Color");
+            ImGui.Spacing();
+            ImGui.ColorEdit4("Color", ref _ioColor);
+
+            ImGui.End();
+
+
+            ImGui.Begin("Tree view", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.SetWindowSize(new System.Numerics.Vector2(200, ClientSize.Y / 2));
+            ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
+            ImGui.Text("Tree View");
+            ImGui.Spacing();
+
+            ImGui.Selectable("Polygon");
+            ImGui.Selectable("Circle", true);
+            ImGui.Selectable("Rectangle");
+            ImGui.End();
+
+
+            ImGui.Begin("Animation", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2, 200));
+            ImGui.SetWindowPos(new System.Numerics.Vector2(0, ClientSize.Y - ImGui.GetWindowHeight()));
+            ImGui.Text("Animation");
+            ImGui.End();
+
+
+            ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
+            ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
+            ImGui.Text("Timeline");
+            ImGui.Spacing();
+            ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
+
+            ImGui.End();
+
+
+            ImGui.Begin("NavBar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.MenuBar);
+            ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X - 200, 0));
+            ImGui.SetWindowPos(new System.Numerics.Vector2(0, 0));
+
+            if (ImGui.BeginMenuBar())
+            {
+                if (ImGui.BeginMenu("File"))
+                {
+                    if (ImGui.MenuItem("Open..", "Ctrl+O"))
+                    {
+                        _dialogFilePicker = true;
+                    }
+                    if (ImGui.BeginMenu("Save"))
+                    {
+                        if (ImGui.MenuItem("Save as PNG", "Ctrl+S"))
+                        {
+                            // Save the current screen
+                        }
+                        ImGui.EndMenu();
+                    }
+                    if (ImGui.MenuItem("Close", "Ctrl+W")) { /* Do stuff */ }
+                    ImGui.EndMenu();
+                }
+                ImGui.EndMenuBar();
+            }
+            if (ImGui.Button("Line")) { /* Do stuff */ }
+            ImGui.SameLine();
+
+            if (ImGui.Button("Primitive Shape"))
+                ImGui.OpenPopup("primitive_popup");
+
+            if (ImGui.BeginPopup("primitive_popup"))
+            {
+                ImGui.Text("Select a shape");
+                ImGui.Separator();
+                if (ImGui.Selectable("Circle")) { /* Do stuff */ }
+                if (ImGui.Selectable("Rectangle")) { /* Do stuff */ }
+                if (ImGui.Selectable("Triangle")) { /* Do stuff */ }
+                ImGui.EndPopup();
+            }
+
+            if (_dialogFilePicker)
+                ImGui.OpenPopup("open-file");
+
+            if (ImGui.BeginPopupModal("open-file"))
+            {
+                var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), ".svg");
+                if (picker.Draw())
+                {
+                    (_shapes, bool compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
+                    _shapes.ForEach(shape => shape.GenerateObjects());
+                    FilePicker.RemoveFilePicker(this);
+                    if (compatibilityFlag)
+                    {
+                        _dialogCompatibility = true;
+                    }
+                    
+                }
+                _dialogFilePicker = false;
+                ImGui.EndPopup();
+            }
+
+            if (_dialogCompatibility)
+                ImGui.OpenPopup("Compatibility Problem");
+            if (ImGui.BeginPopupModal("Compatibility Problem"))
+            {
+                ImGui.Text("Some SVG elements are not compatible. Go to the list of compatible SVG elements");
+                ImGui.Separator();
+                if (ImGui.Button("OK"))
+                {
+                    ImGui.CloseCurrentPopup();
+                    _dialogCompatibility = false;
+                }
+                ImGui.EndPopup();
+            }
+            ImGui.End();
         }
     }
 }

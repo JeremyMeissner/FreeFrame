@@ -19,6 +19,10 @@ namespace FreeFrame.Components.Shapes
 
         public Shape()
         {
+            
+        }
+        public void GenerateObjects()
+        {
             _vertexArrayObject = GL.GenVertexArray();
             _vertexBufferObject = GL.GenBuffer();
             _indexBufferObject = GL.GenBuffer();

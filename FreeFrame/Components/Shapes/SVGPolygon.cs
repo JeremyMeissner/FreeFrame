@@ -25,6 +25,16 @@ namespace FreeFrame.Components.Shapes
                 _points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
         }
 
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString()
         {
             string output = "points: ";

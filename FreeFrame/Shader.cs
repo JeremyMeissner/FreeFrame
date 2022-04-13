@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FreeFrame
 {
-    class Shader
+    public class Shader
     {
         private int _program;
         int CompileShader(string uri, ShaderType type)
@@ -47,6 +47,7 @@ namespace FreeFrame
         }
         public int GetUniformLocation(string uniform) => GL.GetUniformLocation(_program, uniform);
         public void Use() => GL.UseProgram(_program);
-        ~Shader() => GL.DeleteProgram(_program);
+        public void Delete() => GL.DeleteProgram(_program);
+        ~Shader() => Delete();
     }
 }

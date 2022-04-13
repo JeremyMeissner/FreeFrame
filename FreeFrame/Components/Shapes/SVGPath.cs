@@ -98,6 +98,17 @@ namespace FreeFrame.Components.Shapes
                 }
             }
         }
+
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString() 
         {
             string output = "d: ";

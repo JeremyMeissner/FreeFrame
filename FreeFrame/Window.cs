@@ -73,7 +73,7 @@ namespace FreeFrame
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
             if (_shapes != null)
-            {
+                {
                 _shapes[0].ImplementObjects();
                 _shapes[0].Draw();
             }
@@ -96,7 +96,8 @@ namespace FreeFrame
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.BindVertexArray(0);
 
-            _shapes.ForEach(shape => shape.DeleteObjects());
+            if (_shapes != null)
+                _shapes.ForEach(shape => shape.DeleteObjects());
         }
 
         /// <summary>

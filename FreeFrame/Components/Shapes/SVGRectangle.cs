@@ -26,6 +26,13 @@ namespace FreeFrame.Components.Shapes
 
         private int _rx; // Rounded in the x axes
         private int _ry; // Rounded in the y axes
+
+        public int X { get => _x; set => _x = value; }
+        public int Y { get => _y; set => _y = value; }
+        public int Width { get => _width; set => _width = value; }
+        public int Height { get => _height; set => _height = value; }
+        public int Rx { get => _rx; set => _rx = value; }
+        public int Ry { get => _ry; set => _ry = value; }
         #endregion
 
         public SVGRectangle(XmlReader reader) : this(
@@ -42,24 +49,26 @@ namespace FreeFrame.Components.Shapes
         public SVGRectangle(int width, int height, int x, int y) : this(width, height, x, y, DefaultRX, DefaultRY) { }
         public SVGRectangle(int width, int height, int x, int y, int rx, int ry)
         {
-            _x = x;
-            _y = y;
-            _width = width;
-            _height = height;
-            _rx = rx;
-            _ry = ry;
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+            Rx = rx;
+            Ry = ry;
         }
-        public override float[] GetVertices()
-        {
-            if (_window == null)
-                throw new Exception("Trying to convert to NDC but no Window is binded");
-
-            // x, y, x, y, x, y, ... (clockwise)
-            return _window.ConvertToNDC(_x, _y, _x + _width, _y, _x + _width, _y + _height, _x, _y + _height);
-        }
+        public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
 
 
-        public override string ToString() => $"x: {_x}, y: {_y}, width: {_width}, height: {_height}, rx: {_rx}, ry: {_ry}";
+        public override string ToString() => $"x: {X}, y: {Y}, width: {Width}, height: {Height}, rx: {Rx}, ry: {Ry}";
+
+        public override Hitbox Hitbox()
+        {
+            Hitbox hitbox = new Hitbox();
+
+            hitbox.Areas.Add(new Hitbox.Area(X, Y, Width, Height));
+
+            return hitbox;
+        }
     }
 }

@@ -11,6 +11,8 @@ using FreeFrame.Lib.ImGuiTools;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
 using FreeFrame.Lib.FilePicker;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace FreeFrame
 {
@@ -25,6 +27,9 @@ namespace FreeFrame
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
+        Shape _selectedShape;
+        Shape _selectedShapeBefore;
+
         ImGuiController _ImGuiController;
 
         List<Shape> _shapes;
@@ -35,7 +40,7 @@ namespace FreeFrame
         {
             base.OnLoad();
 
-            Helper.DebugMode();
+            Helper.EnableDebugMode();
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -69,13 +74,55 @@ namespace FreeFrame
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
-
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
+
+
             if (_shapes != null)
+            {
+
+                foreach (Shape shape in _shapes)
                 {
-                _shapes[0].ImplementObjects();
-                _shapes[0].Draw();
+                    shape.ImplementObjects();
+                    shape.Draw();
+                }
+                if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true)
+                {
+                    foreach (Shape shape in _shapes)
+                    {
+                        if (shape.Hitbox().IsThereSomething(MouseState.X, MouseState.Y))
+                        {
+                            Console.WriteLine("Clicked on a new shape");
+                            _selectedShape = shape;
+                            break;
+                        }
+                    }
+                }
+                if (_selectedShape != null)
+                {
+
+                    if (_selectedShape != _selectedShapeBefore)
+                    {
+                        _ioX = ((SVGRectangle)_selectedShape).X;
+                        _ioY = ((SVGRectangle)_selectedShape).Y;
+                        _ioWidth = ((SVGRectangle)_selectedShape).Width;
+                        _ioHeight = ((SVGRectangle)_selectedShape).Height;
+
+                        _ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
+
+                        _selectedShapeBefore = _selectedShape;
+                    }
+                    else
+                    {
+                        // TODO: Check if any input change before changing the values
+                        ((SVGRectangle)_selectedShape).X = _ioX;
+                        ((SVGRectangle)_selectedShape).Y = _ioY;
+                        ((SVGRectangle)_selectedShape).Width = _ioWidth;
+                        ((SVGRectangle)_selectedShape).Height = _ioHeight;
+
+                        _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
+                    }
+                }
             }
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
@@ -152,10 +199,17 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
             ImGui.Text("Tree View");
             ImGui.Spacing();
-
-            ImGui.Selectable("Polygon");
-            ImGui.Selectable("Circle", true);
-            ImGui.Selectable("Rectangle");
+            if (_shapes != null)
+            {
+                foreach (Shape shape in _shapes)
+                {
+                    if (ImGui.Selectable(shape.GetType().Name))
+                    {
+                        _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
+                        Console.WriteLine("New shape selected through tree view");
+                    }
+                }
+            }
             ImGui.End();
 
             // Animation side
@@ -227,7 +281,7 @@ namespace FreeFrame
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;
-                    
+
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();

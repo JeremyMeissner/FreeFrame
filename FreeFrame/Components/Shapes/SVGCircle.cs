@@ -13,23 +13,6 @@ namespace FreeFrame.Components.Shapes
         private int _cy;
         private int _r;
         #endregion
-        /*
-        
-        // https://www.w3.org/TR/SVG2/shapes.html#CircleElement
-        TODO: take in account the attributes (listed on the doc Basic Shapes)
-
-        private Color _fill;
-        private int _fillOpacity;
-        private int _opacity;
-
-        public SVGCircle(XmlReader reader)
-        {
-            for (int i = 0; i < reader.AttributeCount; i++)
-            {
-
-            }
-        }
-        */
         public SVGCircle(XmlReader reader) : this(
             Convert.ToInt32(reader["r"]),
             Convert.ToInt32(reader["cx"]),
@@ -45,12 +28,11 @@ namespace FreeFrame.Components.Shapes
 
         public override string ToString() => $"cx: {_cx}, cy: {_cy}, r: {_r}";
 
-        public override float[] GetVertices()
-        {
-            throw new NotImplementedException();
-        }
+        public override float[] GetVertices() => new float[] { _cx - _r, _cy - _r, _cx + _r, _cy - _r, _cx + _r, _cy + _r, _cx - _r, _cy + _r }; // x, y, x, y, x, y, ... (clockwise)
 
-        public override uint[] GetVerticesIndexes()
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
+
+        public override Hitbox Hitbox()
         {
             throw new NotImplementedException();
         }

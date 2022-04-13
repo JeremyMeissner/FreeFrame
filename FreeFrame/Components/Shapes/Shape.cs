@@ -1,17 +1,24 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using MathNet.Numerics.LinearAlgebra;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 
 namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape
     {
-        protected static Window? _window;
+        #region Common Geometry Properties
+        Color4 _color = new Color4(1.0f, 1.0f, 1.0f, 1.0f); 
+        #endregion
+        private static Window? _window;
         private Shader _shader;
         private int _vertexBufferObject;
         private int _vertexArrayObject;
         private int _indexBufferObject;
 
         private int _indexCount;
+
+        public Color4 Color { get => _color; set => _color = value; }
 
         public Shape() { }
         public static void BindWindow(GameWindow window) => _window = (Window)window;
@@ -30,8 +37,23 @@ namespace FreeFrame.Components.Shapes
         /// <param name="index">index array</param>
         public void ImplementObjects()
         {
+            //float[] vertices =
+            //{
+            //    0.5f, 0.5f, // Top-Right
+            //    0.5f, 0.0f,  // Bottom-Right
+            //    0.0f, 0.0f, // Bottom-Left
+            //    0.0f, 0.5f, // Top-Left
+            //};
+
+            //uint[] indexes =
+            //{
+            //    0, 1, 2, // First triangle
+            //    0, 2, 3, // Second triangle
+            //};
+
             float[] vertices = GetVertices();
             uint[] indexes = GetVerticesIndexes();
+
             // VAO
             GL.BindVertexArray(_vertexArrayObject);
 
@@ -64,7 +86,20 @@ namespace FreeFrame.Components.Shapes
         /// </summary>
         public void Draw()
         {
+            if (_window == null)
+                throw new Exception("Trying to convert to NDC but no Window is binded");
+
             _shader.Use();
+
+            // Applied projection matrix
+            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); // TODO: Don't need to apply projection matrix at each frame I think
+            Matrix4 matrix = Matrix4.CreateOrthographicOffCenter(0, _window.ClientSize.X, _window.ClientSize.Y, 0, -1.0f, 1.0f);
+            _shader.SetUniformMat4(uModelToNDC, matrix);
+
+            // Applied common geometry color
+            int uColor = _shader.GetUniformLocation("u_Color");
+            _shader.SetUniformVec4(uColor, (Vector4)Color);
+
             GL.BindVertexArray(_vertexArrayObject);
             GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
@@ -85,6 +120,7 @@ namespace FreeFrame.Components.Shapes
         /// </summary>
         /// <returns>array of indexes</returns>
         public abstract uint[] GetVerticesIndexes();
+        public abstract Hitbox Hitbox();
         public abstract override string ToString();
     }
 

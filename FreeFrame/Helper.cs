@@ -27,12 +27,31 @@ namespace FreeFrame
         {
             string messageString = Marshal.PtrToStringAnsi(message, length); // Retrieve the string from the pointer
 
+            switch (severity)
+            {
+                case DebugSeverity.DontCare:
+                case DebugSeverity.DebugSeverityNotification:
+                    Console.ForegroundColor = ConsoleColor.White;
+                    break;
+                case DebugSeverity.DebugSeverityHigh:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
+                case DebugSeverity.DebugSeverityMedium:
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    break;
+                case DebugSeverity.DebugSeverityLow:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+                default:
+                    break;
+            }
             Console.WriteLine($"{severity} {type} | {messageString}");
+            Console.ResetColor();
 
             if (type == DebugType.DebugTypeError)
                 throw new Exception("OpenGL error");
         }
-        static public void DebugMode()
+        static public void EnableDebugMode()
         {
             GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
             GL.Enable(EnableCap.DebugOutput);

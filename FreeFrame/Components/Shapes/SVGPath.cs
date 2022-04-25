@@ -153,6 +153,11 @@ namespace FreeFrame.Components.Shapes
             // Edges
             List<float> vertices = new List<float>();
             DrawAttribute? previous = null;
+            DrawAttribute.LastX = 0;
+            DrawAttribute.LastY = 0;
+            DrawAttribute.LastControlPointX = 0;
+            DrawAttribute.LastControlPointY = 0;
+
             foreach (DrawAttribute current in DrawAttributes)
             {
                 if (current.GetType() == typeof(LineTo) ||

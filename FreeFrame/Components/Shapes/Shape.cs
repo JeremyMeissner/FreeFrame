@@ -105,53 +105,22 @@ namespace FreeFrame.Components.Shapes
                 GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
 
             // Can't do a switch because a switch need a const and a type is not
-            //if (GetType() == typeof(SVGLine))
-            //{
-            //    GL.Enable(EnableCap.LineSmooth);
-            //    GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-            //    GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //    GL.Disable(EnableCap.LineSmooth);
-            //}
-            //else if (GetType() == typeof(SVGPath))
-            //{
-            //    //Console.WriteLine("Draw pathttttttttttttttttt");
-            //    /*
-            //    foreach (DrawAttribute attr in ((SVGPath)this).DrawAttributes)
-            //    {
-            //        // Can't do a switch because a switch need a const and a type is not
-            //        if (attr.GetType() == typeof(MoveTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(LineTo))
-            //        {
-            //            //((LineTo)attr).
-            //            continue;
-
-            //        }
-            //        else if (attr.GetType() == typeof(HorizontalLineTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(VerticalLineTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(CurveTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(SmoothCurveTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(QuadraticBezierCurveTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(SmoothQuadraticBezierCurveTo))
-            //            continue;
-            //        else if (attr.GetType() == typeof(EllipticalArc))
-            //            continue;
-            //        else if (attr.GetType() == typeof(ClosePath))
-            //            continue;
-            //    }
-            //    */
-            //    //GL.Enable(EnableCap.LineSmooth);
-            //    //GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-            //    GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //    //GL.Disable(EnableCap.LineSmooth);
-            //}
-            //else
-            //    GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
+            if (GetType() == typeof(SVGLine))
+            {
+                GL.Enable(EnableCap.LineSmooth);
+                GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
+                GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+                GL.Disable(EnableCap.LineSmooth);
+            }
+            else if (GetType() == typeof(SVGPath))
+            {
+                GL.Enable(EnableCap.LineSmooth);
+                GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
+                GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
+                GL.Disable(EnableCap.LineSmooth);
+            }
+            else
+                GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
         public void DeleteObjects()
         {

@@ -14,6 +14,29 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public abstract class DrawAttribute
     {
+        static float _lastX = 0;
+        static float _lastY = 0;
+
+        #region Bézier Curve 
+        static float _lastControlPointX = 0; // Last control point x
+        static float _lastControlPointY = 0; // Last control point y
+        #endregion
+
+        static Type _lastCommand = typeof(MoveTo);
+
+
+        public static float LastX { get => _lastX; set => _lastX = value; }
+        public static float LastY { get => _lastY; set => _lastY = value; }
+        public static float LastControlPointX { get => _lastControlPointX; set => _lastControlPointX = value; }
+        public static float LastControlPointY { get => _lastControlPointY; set => _lastControlPointY = value; }
+        public static Type LastCommand { get => _lastCommand; set => _lastCommand = value; }
+
+        /// <summary>
+        /// Should return the vertices position in NDC format
+        /// </summary>
+        /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
+        public abstract float[] GetVertices();
+
         public abstract override string ToString();
     }
     /// <summary>
@@ -26,6 +49,11 @@ namespace FreeFrame.Components.Shapes.Path
         bool _isRelative;
         int _x;
         int _y;
+
+        public int X { get => _x; private set => _x = value; }
+        public int Y { get => _y; private set => _y = value; }
+        public bool IsRelative { get => _isRelative; private set => _isRelative = value; }
+
         /// <summary>
         /// Moving the current point to another point.
         /// </summary>
@@ -41,11 +69,16 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public MoveTo(int x, int y, bool isRelative = false)
         {
-            _x = x;
-            _y = y;
-            _isRelative = isRelative;
+            X = x;
+            Y = y;
+            IsRelative = isRelative;
         }
-        public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 'm' : 'M', _x, _y);
+
+
+
+        public override float[] GetVertices() => throw new NotImplementedException("MoveTo doesnt have any vertices");
+
+        public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
     }
     /// <summary>
     /// LineTo, L or l.
@@ -57,6 +90,11 @@ namespace FreeFrame.Components.Shapes.Path
         bool _isRelative;
         int _x;
         int _y;
+
+        public int X { get => _x; private set => _x = value; }
+        public int Y { get => _y; private set => _y = value; }
+        public bool IsRelative { get => _isRelative; private set => _isRelative = value; }
+
         /// <summary>
         /// Use to draw a straight line from the current point to the given point.
         /// </summary>
@@ -72,12 +110,20 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public LineTo(int x, int y, bool isRelative = false)
         {
-            _x = x;
-            _y = y;
-            _isRelative = isRelative;
+            X = x;
+            Y = y;
+            IsRelative = isRelative;
         }
 
-        public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 'l' : 'L', _x, _y);
+        public override float[] GetVertices()
+        {
+            if (IsRelative)
+                return new float[] { LastX, LastY, LastX + X, LastY + Y };
+            else
+                return new float[] { LastX, LastY, X, Y };
+        }
+
+        public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'l' : 'L', X, Y);
     }
     /// <summary>
     /// HorizontalLineTo, H or h.
@@ -88,6 +134,9 @@ namespace FreeFrame.Components.Shapes.Path
     {
         bool _isRelative;
         int _x;
+
+        public int X { get => _x; private set => _x = value; }
+        public bool IsRelative { get => _isRelative; private set => _isRelative = value; }
 
         /// <summary>
         /// Use to draw a horizontal line from the current point to the given point.
@@ -102,10 +151,23 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public HorizontalLineTo(int x, bool isRelative = false)
         {
-            _x = x;
-            _isRelative = isRelative;
+            X = x;
+            IsRelative = isRelative;
+
+            LastX = X;
         }
-        public override string ToString() => String.Format("{0} {1}", _isRelative ? 'h' : 'H', _x);
+
+
+
+        public override float[] GetVertices()
+        {
+            if (IsRelative)
+                return new float[] { LastX, LastY, LastX + X, LastY };
+            else
+                return new float[] { LastX, LastY, X, LastY };
+        }
+
+        public override string ToString() => String.Format("{0} {1}", IsRelative ? 'h' : 'H', X);
     }
     /// <summary>
     /// VerticalLineTo, V or v.
@@ -132,6 +194,16 @@ namespace FreeFrame.Components.Shapes.Path
         {
             _y = y;
             _isRelative = isRelative;
+
+            LastY = _y;
+        }
+
+        public override float[] GetVertices()
+        {
+            if (_isRelative)
+                return new float[] { LastX, LastY, LastX, LastY + _y };
+            else
+                return new float[] { LastX, LastY, LastX, _y };
         }
 
         public override string ToString() => String.Format("{0} {1}", _isRelative ? 'v' : 'V', _y);
@@ -150,6 +222,9 @@ namespace FreeFrame.Components.Shapes.Path
         int _y2;
         int _x;
         int _y;
+
+        public int X2 { get => _x2; private set => _x2 = value; }
+        public int Y2 { get => _y2; private set => _y2 = value; }
 
         /// <summary>
         /// Use to draw a cubic Bézier curve from the current point to the given point.
@@ -176,14 +251,48 @@ namespace FreeFrame.Components.Shapes.Path
         {
             _x1 = x1;
             _y1 = y1;
-            _x2 = x2;
-            _y2 = y2;
+            X2 = x2;
+            Y2 = y2;
             _x = x;
             _y = y;
             _isRelative = isRelative;
         }
+        public override float[] GetVertices()
+        {
+            List<float> vertices = new List<float>();
+            double t;
+            float x, y;
 
-        public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', _x1, _y1, _x2, _y2, _x, _y);
+            // Only edges
+            if (_isRelative)
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * (LastX + _x1) + 3 * (1 - t) * Math.Pow(t, 2) * (LastX + X2) + Math.Pow(t, 3) * (LastX + _x));
+                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * (LastY + _y1) + 3 * (1 - t) * Math.Pow(t, 2) * (LastY + Y2) + Math.Pow(t, 3) * (LastY + _y));
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * _x1 + 3 * (1 - t) * Math.Pow(t, 2) * X2 + Math.Pow(t, 3) * _x);
+                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * _y1 + 3 * (1 - t) * Math.Pow(t, 2) * Y2 + Math.Pow(t, 3) * _y);
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+
+            return vertices.ToArray();
+        }
+
+        public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', _x1, _y1, X2, Y2, _x, _y);
     }
     /// <summary>
     /// SmoothCurveTo, Smooth Cubic Bézier Curbe, S or s.
@@ -197,6 +306,12 @@ namespace FreeFrame.Components.Shapes.Path
         int _y2;
         int _x;
         int _y;
+
+        public int X2 { get => _x2; private set => _x2 = value; }
+        public int Y2 { get => _y2; private set => _y2 = value; }
+        public int X { get => _x; private set => _x = value; }
+        public int Y { get => _y; private set => _y = value; }
+        public bool IsRelative { get => _isRelative; private set => _isRelative = value; }
 
         /// <summary>
         /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
@@ -217,14 +332,49 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public SmoothCurveTo(int x2, int y2, int x, int y, bool isRelative = false)
         {
-            _x2 = x2;
-            _y2 = y2;
-            _x = x;
-            _y = y;
-            _isRelative = isRelative;
+            X2 = x2;
+            Y2 = y2;
+            X = x;
+            Y = y;
+            IsRelative = isRelative;
+        }
+        public override float[] GetVertices()
+        {
+            List<float> vertices = new List<float>();
+            double t;
+            float x, y;
+
+            // Only edges
+            if (_isRelative)
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * (LastX + LastControlPointX) + 3 * (1 - t) * Math.Pow(t, 2) * (LastX + X2) + Math.Pow(t, 3) * (LastX + _x));
+                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * (LastY + LastControlPointY) + 3 * (1 - t) * Math.Pow(t, 2) * (LastY + Y2) + Math.Pow(t, 3) * (LastY + _y));
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * LastControlPointX + 3 * (1 - t) * Math.Pow(t, 2) * X2 + Math.Pow(t, 3) * _x);
+                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * LastControlPointY + 3 * (1 - t) * Math.Pow(t, 2) * Y2 + Math.Pow(t, 3) * _y);
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+
+            return vertices.ToArray();
         }
 
-        public override string ToString() => String.Format("{0} {1},{2} {3},{4}", _isRelative ? 's' : 'S', _x2, _y2, _x, _y);
+        public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 's' : 'S', X2, Y2, X, Y);
+
     }
     /// <summary>
     /// QuadraticBezierCurveTo, Q, q.
@@ -238,6 +388,9 @@ namespace FreeFrame.Components.Shapes.Path
         int _y1;
         int _x;
         int _y;
+        public bool IsRelative { get => _isRelative; set => _isRelative = value; }
+        public int X1 { get => _x1; set => _x1 = value; }
+        public int Y1 { get => _y1; set => _y1 = value; }
 
         /// <summary>
         /// Use to draw a quadratic Bézier curve.
@@ -259,14 +412,49 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public QuadraticBezierCurveTo(int x1, int y1, int x, int y, bool isRelative = false)
         {
-            _x1 = x1;
-            _y1 = y1;
+            X1 = x1;
+            Y1 = y1;
             _x = x;
             _y = y;
-            _isRelative = isRelative;
+            IsRelative = isRelative;
+        }
+        public override float[] GetVertices()
+        {
+            List<float> vertices = new List<float>();
+            double t;
+            float x, y;
+
+            // Only edges
+            if (_isRelative)
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * (LastX + X1) + Math.Pow(t, 2) * (LastX + _x));
+                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * (LastY + Y1) + Math.Pow(t, 2) * (LastY + _y));
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * X1 + Math.Pow(t, 2) * _x);
+                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * Y1 + Math.Pow(t, 2) * _y);
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+
+            return vertices.ToArray();
         }
 
-        public override string ToString() => String.Format("{0} {1},{2} {3},{4}", _isRelative ? 'q' : 'Q', _x1, _y1, _x, _y);
+        public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, _x, _y);
+
     }
     /// <summary>
     /// SmoothQuadraticBezierCurveTo, T, t.
@@ -297,6 +485,41 @@ namespace FreeFrame.Components.Shapes.Path
             _x = x;
             _y = y;
             _isRelative = isRelative;
+        }
+
+        public override float[] GetVertices()
+        {
+            List<float> vertices = new List<float>();
+            double t;
+            float x, y;
+
+            // Only edges
+            if (_isRelative)
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * (LastX + LastControlPointX) + Math.Pow(t, 2) * (LastX + _x));
+                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * (LastY + LastControlPointY) + Math.Pow(t, 2) * (LastY + _y));
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                {
+                    t = i / 100.0f;
+
+                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * LastControlPointX + Math.Pow(t, 2) * _x);
+                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * LastControlPointY + Math.Pow(t, 2) * _y);
+
+                    vertices.AddRange(new float[] { x, y });
+                }
+            }
+
+            return vertices.ToArray();
         }
 
         public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 't' : 'T', _x, _y);
@@ -352,6 +575,12 @@ namespace FreeFrame.Components.Shapes.Path
             _y = y;
             _isRelative = isRelative;
         }
+
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", _isRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), _x, _y);
     }
     /// <summary>
@@ -365,6 +594,12 @@ namespace FreeFrame.Components.Shapes.Path
         /// Draw a straight line from the current position to the first point in the path.
         /// </summary>
         public ClosePath() { }
+
+        public override float[] GetVertices()
+        {
+            throw new NotImplementedException();
+        }
+
 
         public override string ToString() => "z";
     }

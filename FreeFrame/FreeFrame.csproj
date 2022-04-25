@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Delaunator" Version="1.0.9" />
     <PackageReference Include="ImGui.NET" Version="1.87.3" />
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     <PackageReference Include="OpenTK" Version="4.7.1" />

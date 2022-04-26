@@ -27,6 +27,11 @@ namespace FreeFrame
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
+        public Vector2i? WindowSize
+        {
+            get => this.ClientSize;
+        }
+
         Shape _selectedShape;
         Shape _selectedShapeBefore;
 
@@ -44,7 +49,7 @@ namespace FreeFrame
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-            Shape.BindWindow(this);
+            Shape.Window = this;
 
             //_shapes = Importer.ImportFromFile("test.svg");
 
@@ -76,15 +81,12 @@ namespace FreeFrame
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
-
-
             if (_shapes != null)
             {
-
                 foreach (Shape shape in _shapes)
                 {
                     shape.ImplementObjects();
-                    shape.Draw();
+                    shape.Draw(ClientSize);
                 }
                 if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true)
                 {

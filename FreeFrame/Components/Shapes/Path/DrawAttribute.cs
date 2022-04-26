@@ -73,9 +73,6 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-
-
-
         public override float[] GetVertices() => throw new NotImplementedException("MoveTo doesnt have any vertices");
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
@@ -225,6 +222,10 @@ namespace FreeFrame.Components.Shapes.Path
 
         public int X2 { get => _x2; private set => _x2 = value; }
         public int Y2 { get => _y2; private set => _y2 = value; }
+        public int Y1 { get => _y1; set => _y1 = value; }
+        public int X1 { get => _x1; set => _x1 = value; }
+        public int X { get => _x; set => _x = value; }
+        public int Y { get => _y; set => _y = value; }
 
         /// <summary>
         /// Use to draw a cubic Bézier curve from the current point to the given point.
@@ -249,12 +250,12 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public CurveTo(int x1, int y1, int x2, int y2, int x, int y, bool isRelative = false)
         {
-            _x1 = x1;
-            _y1 = y1;
+            X1 = x1;
+            Y1 = y1;
             X2 = x2;
             Y2 = y2;
-            _x = x;
-            _y = y;
+            X = x;
+            Y = y;
             _isRelative = isRelative;
         }
         public override float[] GetVertices()
@@ -270,8 +271,8 @@ namespace FreeFrame.Components.Shapes.Path
                 {
                     t = i / 100.0f;
 
-                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * (LastX + _x1) + 3 * (1 - t) * Math.Pow(t, 2) * (LastX + X2) + Math.Pow(t, 3) * (LastX + _x));
-                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * (LastY + _y1) + 3 * (1 - t) * Math.Pow(t, 2) * (LastY + Y2) + Math.Pow(t, 3) * (LastY + _y));
+                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * (LastX + X1) + 3 * (1 - t) * Math.Pow(t, 2) * (LastX + X2) + Math.Pow(t, 3) * (LastX + X));
+                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * (LastY + Y1) + 3 * (1 - t) * Math.Pow(t, 2) * (LastY + Y2) + Math.Pow(t, 3) * (LastY + Y));
 
                     vertices.AddRange(new float[] { x, y });
                 }
@@ -282,8 +283,8 @@ namespace FreeFrame.Components.Shapes.Path
                 {
                     t = i / 100.0f;
 
-                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * _x1 + 3 * (1 - t) * Math.Pow(t, 2) * X2 + Math.Pow(t, 3) * _x);
-                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * _y1 + 3 * (1 - t) * Math.Pow(t, 2) * Y2 + Math.Pow(t, 3) * _y);
+                    x = (float)(Math.Pow((1 - t), 3) * LastX + 3 * Math.Pow((1 - t), 2) * t * X1 + 3 * (1 - t) * Math.Pow(t, 2) * X2 + Math.Pow(t, 3) * X);
+                    y = (float)(Math.Pow((1 - t), 3) * LastY + 3 * Math.Pow((1 - t), 2) * t * Y1 + 3 * (1 - t) * Math.Pow(t, 2) * Y2 + Math.Pow(t, 3) * Y);
 
                     vertices.AddRange(new float[] { x, y });
                 }
@@ -292,7 +293,7 @@ namespace FreeFrame.Components.Shapes.Path
             return vertices.ToArray();
         }
 
-        public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', _x1, _y1, X2, Y2, _x, _y);
+        public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', X1, Y1, X2, Y2, X, Y);
     }
     /// <summary>
     /// SmoothCurveTo, Smooth Cubic Bézier Curbe, S or s.

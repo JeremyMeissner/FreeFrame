@@ -5,6 +5,8 @@ using System.Xml;
 using System.Text.RegularExpressions;
 using FreeFrame.Components.Shapes.Path;
 using DelaunatorSharp;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes
 {
@@ -12,29 +14,31 @@ namespace FreeFrame.Components.Shapes
     {
         readonly Dictionary<char, Regex> _dAttributesRegex = new()
         {
-            { 'M', new Regex(@" *(\d+) *, *(\d+) *") },
-            { 'm', new Regex(@" *(\d+) *, *(\d+) *") },
-            { 'L', new Regex(@" *(\d+) *, *(\d+) *") },
-            { 'l', new Regex(@" *(\d+) *, *(\d+) *") },
-            { 'H', new Regex(@" *(\d+) *") },
-            { 'h', new Regex(@" *(\d+) *") },
-            { 'V', new Regex(@" *(\d+) *") },
-            { 'v', new Regex(@" *(\d+) *") },
-            { 'C', new Regex(@" *(\d+) *, *(\d+) +(\d+) *, *(\d+) +(\d+) *, *(\d+) *") },
-            { 'c', new Regex(@" *(\d+) *, *(\d+) +(\d+) *, *(\d+) +(\d+) *, *(\d+) *") },
-            { 'S', new Regex(@" *(\d+) *, *(\d+) +(\d+) *, *(\d+) *") },
-            { 's', new Regex(@" *(\d+) *, *(\d+) +(\d+) *, *(\d+) *") },
-            { 'Q', new Regex(@" *(\d+) *, *(\d+) +(\d+) *, *(\d+) *") },
-            { 'q', new Regex(@" *(\d+) *, *(\d+) +(\d+) *, *(\d+) *") },
-            { 'T', new Regex(@" *(\d+) *, *(\d+) *") },
-            { 't', new Regex(@" *(\d+) *, *(\d+) *") },
-            { 'A', new Regex(@" *(\d+) +(\d+) +(\d+) +(\d) +(\d) +(\d+) *, *(\d+) *") },
-            { 'a', new Regex(@" *(\d+) +(\d+) +(\d+) +(\d) +(\d) +(\d+) *, *(\d+) *") },
+            { 'M', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
+            { 'm', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
+            { 'L', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
+            { 'l', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
+            { 'H', new Regex(@" *(-?\d+) *") },
+            { 'h', new Regex(@" *(-?\d+) *") },
+            { 'V', new Regex(@" *(-?\d+) *") },
+            { 'v', new Regex(@" *(-?\d+) *") },
+            { 'C', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
+            { 'c', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
+            { 'S', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
+            { 's', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
+            { 'Q', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
+            { 'q', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
+            { 'T', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
+            { 't', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
+            { 'A', new Regex(@" *(-?\d+) +(-?\d+) +(-?\d+) +(-?\d) +(-?\d) +(-?\d+) *, *(-?\d+) *") },
+            { 'a', new Regex(@" *(-?\d+) +(-?\d+) +(-?\d+) +(-?\d) +(-?\d) +(-?\d+) *, *(-?\d+) *") },
             { 'Z', new Regex("") },
             { 'z', new Regex("") },
         };
 
         List<DrawAttribute> _drawAttributes = new();
+
+        List<uint> _indexes = new();
 
         public List<DrawAttribute> DrawAttributes { get => _drawAttributes; set => _drawAttributes = value; }
 
@@ -101,54 +105,16 @@ namespace FreeFrame.Components.Shapes
                 }
             }
         }
+        public override void Draw(Vector2i clientSize)
+        {
+            base.Draw(clientSize);
 
+            foreach (VertexArrayObject vao in _vaos)
+                vao.Draw(clientSize);
+        }
         public override float[] GetVertices()
         {
             //  Delaunator polygon = new Delaunator(new IPoint[] { new Point(0.0, 0.0) });
-
-
-            /*
-            DrawAttribute? prev = null;
-            DrawAttribute? current = null;
-            foreach (DrawAttribute next in DrawAttributes)
-            {
-                if (current != null)
-                {
-                    if (current.GetType() == typeof(LineTo))
-                    {
-                        vertices.AddRange(((LineTo)current).GetVertices());
-                    }
-                    else if (current.GetType() == typeof(HorizontalLineTo))
-                    {
-                        vertices.AddRange(((HorizontalLineTo)current).GetVertices());
-                    }
-                    else if (current.GetType() == typeof(VerticalLineTo))
-                    {
-                        vertices.AddRange(((VerticalLineTo)current).GetVertices());
-                    }
-
-                    if (prev != null)
-                    {
-                        if (current.GetType() == typeof(CurveTo) || current.GetType() == typeof(SmoothCurveTo))
-                        {
-                            DrawAttribute.LastControlPointX = ((CurveTo)prev).X2; // Update last x and y (for relatives attributes points)
-                            DrawAttribute.LastControlPointY = ((CurveTo)prev).Y2;
-                        }
-                        if (current.GetType() != typeof(MoveTo)) // Avoid trying to get last added vertices but MoveTo doesnt add vertices
-                        {
-                            DrawAttribute.LastX = vertices[-2]; // Update last x and y (for relatives attributes points)
-                            DrawAttribute.LastY = vertices[-1];
-                        }
-                    }
-                }
-                (prev, current) = (current, next);
-            }
-
-            if (current != null) // Last element
-            {
-
-            }
-            */
 
             // Edges
             List<float> vertices = new List<float>();
@@ -168,35 +134,75 @@ namespace FreeFrame.Components.Shapes
                     current.GetType() == typeof(QuadraticBezierCurveTo) ||
                     current.GetType() == typeof(SmoothQuadraticBezierCurveTo)) // TODO: Add EllipticalArc support
                 {
+                    int previousLength = vertices.Count;
+
+                    int i = 0;
+                    int count = 0;
                     foreach (float item in current.GetVertices())
                     {
                         vertices.Add(item);
+                        i++;
                     }
+                    if (_indexes.Count > 0)
+                        count = (int)_indexes.Last();
+                    _indexes.AddRange(Enumerable.Range(count, i / 2).Select(i => (uint)i).ToArray());
+
+                    //i++;
                 }
 
-                if (current.GetType() != typeof(MoveTo)) // MoveTo already update the lasts
+                if (current.GetType() == typeof(MoveTo))
+                {
+                    if (previous != null)
+                    {
+                        if (previous.GetType() != typeof(MoveTo))
+                        {
+                            _indexes.Add(_indexes.Last());
+                        }
+                    }
+                    if (((MoveTo)current).IsRelative)
+                    {
+                        DrawAttribute.LastX += ((MoveTo)current).X; // Update last x and y (for relatives attributes points)
+                        DrawAttribute.LastY += ((MoveTo)current).Y;
+                    }
+                    else
+                    {
+                        DrawAttribute.LastX = ((MoveTo)current).X; // Update last x and y (for relatives attributes points)
+                        DrawAttribute.LastY = ((MoveTo)current).Y;
+                    }
+                }
+                else
                 {
                     DrawAttribute.LastX = vertices[^2]; // Update last x and y (for relatives attributes points)
                     DrawAttribute.LastY = vertices[^1];
                 }
-                if (previous != null)
+
+                if (current.GetType() == typeof(CurveTo)) // Cubic Bézier Curves
                 {
-                    if (previous.GetType() == typeof(CurveTo)) // Cubic Bézier Curves
-                    {
-                        DrawAttribute.LastControlPointX = ((CurveTo)previous).X2;
-                        DrawAttribute.LastControlPointY = ((CurveTo)previous).Y2;
-                    }
-                    else if (previous.GetType() == typeof(QuadraticBezierCurveTo)) // Quadratic Bézier Curves
-                    {
-                        DrawAttribute.LastControlPointX = ((QuadraticBezierCurveTo)previous).X1;
-                        DrawAttribute.LastControlPointY = ((QuadraticBezierCurveTo)previous).Y1;
-                    }
-                    else if (current.GetType() != typeof(SmoothCurveTo) && current.GetType() != typeof(SmoothQuadraticBezierCurveTo)) // Only reset if we're done with bézier curves
-                    {
-                        (DrawAttribute.LastControlPointX, DrawAttribute.LastControlPointY) = (0, 0);
-                    }
+                    if (((CurveTo)current).X > ((CurveTo)current).X2) // Control end point on the left
+                        DrawAttribute.LastControlPointX = ((CurveTo)current).X + ((CurveTo)current).X2;
+                    else if (((CurveTo)current).X < ((CurveTo)current).X2) // Control end point on the right
+                        DrawAttribute.LastControlPointX = ((CurveTo)current).X - ((CurveTo)current).X2;
+                    else // On the middle
+                        DrawAttribute.LastControlPointX = ((CurveTo)current).X;
+
+                    if (((CurveTo)current).Y > ((CurveTo)current).Y2) // Control end point on the top
+                        DrawAttribute.LastControlPointY = ((CurveTo)current).Y + ((CurveTo)current).Y2;
+                    else if (((CurveTo)current).Y < ((CurveTo)current).Y2) // Control end point on the bottom
+                        DrawAttribute.LastControlPointY = ((CurveTo)current).Y - ((CurveTo)current).Y2;
+                    else // On the middle
+                        DrawAttribute.LastControlPointY = ((CurveTo)current).Y;
                 }
-                previous = current; // previous element
+                else if (current.GetType() == typeof(QuadraticBezierCurveTo)) // Quadratic Bézier Curves
+                {
+                    DrawAttribute.LastControlPointX = ((QuadraticBezierCurveTo)current).X1;
+                    DrawAttribute.LastControlPointY = ((QuadraticBezierCurveTo)current).Y1;
+                }
+                else if (current.GetType() != typeof(SmoothCurveTo) && current.GetType() != typeof(SmoothQuadraticBezierCurveTo)) // Only reset if we're done with bézier curves
+                {
+                    (DrawAttribute.LastControlPointX, DrawAttribute.LastControlPointY) = (0, 0);
+                }
+
+                previous = current;
             }
 
             return vertices.ToArray();
@@ -220,9 +226,13 @@ namespace FreeFrame.Components.Shapes
             return indexes.ToArray();
             */
 
-            uint[] indexes = Enumerable.Range(0, GetVertices().Length / 2).Select(i => (uint)i).ToArray();
+            //uint[] indexes = Enumerable.Range(0, GetVertices().Length / 2).Select(i => (uint)i).ToArray();
 
-            return indexes;
+            //return indexes;
+
+            _indexes = new List<uint>();
+            GetVertices();
+            return _indexes.ToArray();
         }
 
         public override Hitbox Hitbox()

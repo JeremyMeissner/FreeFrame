@@ -11,24 +11,18 @@ namespace FreeFrame.Components.Shapes
         #region Common Geometry Properties
         Color4 _color = new Color4(1.0f, 1.0f, 1.0f, 1.0f);
         #endregion
-        private static Window? _window;
-        private Shader _shader;
-        private int _vertexBufferObject;
-        private int _vertexArrayObject;
-        private int _indexBufferObject;
 
-        private int _indexCount;
+        protected List<VertexArrayObject> _vaos;
+
+        private static Window? _window;
 
         public Color4 Color { get => _color; set => _color = value; }
+        public static Window? Window { get => _window; set => _window = value; }
 
         public Shape() { }
-        public static void BindWindow(GameWindow window) => _window = (Window)window;
         public void GenerateObjects()
         {
-            _vertexArrayObject = GL.GenVertexArray();
-            _vertexBufferObject = GL.GenBuffer();
-            _indexBufferObject = GL.GenBuffer();
-            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+            _vaos = new List<VertexArrayObject>();
         }
 
         /// <summary>
@@ -38,96 +32,44 @@ namespace FreeFrame.Components.Shapes
         /// <param name="index">index array</param>
         public void ImplementObjects()
         {
-            //float[] vertices =
-            //{
-            //    0, 0, // Top-Left
-            //    500, 500,  // Bottom-Right
-            //    500, 500,  // Bottom-Right
-            //    100, 300, // Top-right
-            //};
-
-            //uint[] indexes =
-            //{
-            //    0, 1, 2, 3
-            //};
-
-            float[] vertices = GetVertices();
-            uint[] indexes = GetVerticesIndexes();
-
-            // VAO
-            GL.BindVertexArray(_vertexArrayObject);
-
-            string label = $"VAO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.VertexArray, _vertexArrayObject, label.Length, label);
-
-            // VBO
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-
-            label = $"VBO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _vertexBufferObject, label.Length, label);
-
-            // IBO
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indexes.Length * sizeof(uint), indexes, BufferUsageHint.StaticDraw);
-
-            label = $"IBO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _indexBufferObject, label.Length, label);
-
-            // Link Attributes
-            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0); // x, y;
-            GL.EnableVertexAttribArray(0);
-
-            _indexCount = indexes.Length;
         }
 
         /// <summary>
-        /// Trigge draw element throw OpenGL context
+        /// Trigge draw element through OpenGL context
         /// </summary>
-        public void Draw()
+        public virtual void Draw(Vector2i clientSize)
         {
-            if (_window == null)
+            if (Window == null)
                 throw new Exception("Trying to convert to NDC but no Window is binded");
 
-            _shader.Use();
+            // Call me using a child that override me
 
-            // Applied projection matrix
-            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); // TODO: Don't need to apply projection matrix at each frame I think
-            Matrix4 matrix = Matrix4.CreateOrthographicOffCenter(0, _window.ClientSize.X, _window.ClientSize.Y, 0, -1.0f, 1.0f);
-            _shader.SetUniformMat4(uModelToNDC, matrix);
+            //GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //    if (GetType() == typeof(SVGPath))
+            //        GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
 
-            // Applied common geometry color
-            int uColor = _shader.GetUniformLocation("u_Color");
-            _shader.SetUniformVec4(uColor, (Vector4)Color);
-
-            GL.BindVertexArray(_vertexArrayObject);
-            if (GetType() == typeof(SVGPath))
-                GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
-
-            // Can't do a switch because a switch need a const and a type is not
-            if (GetType() == typeof(SVGLine))
-            {
-                GL.Enable(EnableCap.LineSmooth);
-                GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-                GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-                GL.Disable(EnableCap.LineSmooth);
-            }
-            else if (GetType() == typeof(SVGPath))
-            {
-                GL.Enable(EnableCap.LineSmooth);
-                GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-                GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
-                GL.Disable(EnableCap.LineSmooth);
-            }
-            else
-                GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //    // Can't do a switch because a switch need a const and a type is not
+            //    if (GetType() == typeof(SVGLine))
+            //    {
+            //        GL.Enable(EnableCap.LineSmooth);
+            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
+            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //        GL.Disable(EnableCap.LineSmooth);
+            //    }
+            //    else if (GetType() == typeof(SVGPath))
+            //    {
+            //        GL.Enable(EnableCap.LineSmooth);
+            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
+            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //        GL.Disable(EnableCap.LineSmooth);
+            //    }
+            //    else
+            //        GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
         public void DeleteObjects()
         {
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteBuffer(_indexBufferObject);
-            GL.DeleteVertexArray(_vertexArrayObject);
-            _shader.Delete();
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
         }
         /// <summary>
         /// Should return the vertices position in NDC format

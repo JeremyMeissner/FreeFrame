@@ -9,18 +9,29 @@ namespace FreeFrame.Components.Shapes
     public abstract class Shape
     {
         #region Common Geometry Properties
-        Color4 _color = new Color4(1.0f, 1.0f, 1.0f, 1.0f);
+        public struct DefaultProperties
+        {
+            public int x;
+            public int y;
+            public int width;
+            public int height;
+            public Color4 color;
+            public static bool operator == (DefaultProperties p1, DefaultProperties p2) => p1.Equals(p2);
+            public static bool operator != (DefaultProperties p1, DefaultProperties p2) => !p1.Equals(p2);
+        }
+        protected int _propertiesHashCode;
+        DefaultProperties _properties;
         #endregion
 
         protected List<VertexArrayObject> _vaos;
-
-        private static Window? _window;
-
-        public Color4 Color { get => _color; set => _color = value; }
-        public static Window? Window { get => _window; set => _window = value; }
+        public DefaultProperties Properties { get => _properties; set => _properties = value; }
 
         public Shape() 
         {
+            Properties = new DefaultProperties()
+            {
+                x = 0, y = 0, width = 0, height = 0, color = Color4.White
+            };
             _vaos = new List<VertexArrayObject>();
         }
 
@@ -69,6 +80,9 @@ namespace FreeFrame.Components.Shapes
         /// </summary>
         /// <returns>array of indexes</returns>
         public abstract uint[] GetVerticesIndexes();
+        public abstract List<Vector2i> GetSelectablePoints();
+        public abstract void UpdateProperties(DefaultProperties properties);
+        public abstract void ImplementObject();
         public abstract Hitbox Hitbox();
         public abstract override string ToString();
     }

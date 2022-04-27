@@ -57,18 +57,55 @@ namespace FreeFrame.Components.Shapes
             Rx = rx;
             Ry = ry;
 
+            Properties = new DefaultProperties()
+            {
+                x = X,
+                y = Y,
+                width = Width,
+                height = Height,
+                color = Properties.color
+            };
+            ImplementObject();
+        }
+        public override void ImplementObject()
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
+            _vaos.Clear();
+
             _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles));
         }
         public override void Draw(Vector2i clientSize)
         {
             foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize);
+                vao.Draw(clientSize, Properties.color); // Because that color doesnt depend of the shape TODO: Make it dependend
         }
+        public override void UpdateProperties(DefaultProperties properties)
+        {
+            X = Properties.x;
+            Y = Properties.y;
+            Width = Properties.width;
+            Height = Properties.height;
+
+            Properties = properties;
+
+            ImplementObject();
+        }
+
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
 
-
         public override string ToString() => $"x: {X}, y: {Y}, width: {Width}, height: {Height}, rx: {Rx}, ry: {Ry}";
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new();
+            points.Add(new Vector2i(X, Y));
+            points.Add(new Vector2i(X + Width, Y));
+            points.Add(new Vector2i(X + Width, Y + Height));
+            points.Add(new Vector2i(X, Y + Height));
+            return points;
+        }
 
         public override Hitbox Hitbox()
         {
@@ -78,5 +115,7 @@ namespace FreeFrame.Components.Shapes
 
             return hitbox;
         }
+
+
     }
 }

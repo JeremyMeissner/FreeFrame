@@ -58,5 +58,20 @@ namespace FreeFrame.Components.Shapes
 
             return hitbox;
         }
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void UpdateProperties(DefaultProperties properties)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ImplementObject()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

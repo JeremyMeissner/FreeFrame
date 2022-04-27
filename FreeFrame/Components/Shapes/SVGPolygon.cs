@@ -27,6 +27,12 @@ namespace FreeFrame.Components.Shapes
         }
 
         public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            throw new NotImplementedException();
+        }
+
         public override float[] GetVertices()
         {
             throw new NotImplementedException();
@@ -42,12 +48,22 @@ namespace FreeFrame.Components.Shapes
             throw new NotImplementedException();
         }
 
+        public override void ImplementObject()
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString()
         {
             string output = "points: ";
             foreach ((int x, int y) point in _points)
                 output += string.Format("{0},{1} ", point.x, point.y);
             return output.Trim();
+        }
+
+        public override void UpdateProperties(DefaultProperties properties)
+        {
+            throw new NotImplementedException();
         }
     }
 }

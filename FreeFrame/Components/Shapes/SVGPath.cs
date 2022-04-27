@@ -104,6 +104,22 @@ namespace FreeFrame.Components.Shapes
                     startIndex += match.Groups[0].Length + 1;
                 }
             }
+            ImplementObject();
+        }
+        public override void UpdateProperties(DefaultProperties properties)
+        {
+            if (Properties != properties)
+            {
+                ImplementObject();
+                //throw new NotImplementedException();
+            }
+        }
+        public override void ImplementObject()
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
+            _vaos.Clear();
+
             foreach (DrawAttribute attr in DrawAttributes)
             {
                 if (attr.GetType() == typeof(CurveTo) ||
@@ -121,10 +137,11 @@ namespace FreeFrame.Components.Shapes
                 }
             }
         }
+
         public override void Draw(Vector2i clientSize)
         {
             foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize);
+                vao.Draw(clientSize, Properties.color);
         }
         public override float[] GetVertices()
         {
@@ -186,8 +203,8 @@ namespace FreeFrame.Components.Shapes
                 }
                 else
                 {
-                    DrawAttribute.LastX = vertices[^2]; // Update last x and y (for relatives attributes points)
-                    DrawAttribute.LastY = vertices[^1];
+                    DrawAttribute.LastX = (int)vertices[^2]; // Update last x and y (for relatives attributes points)
+                    DrawAttribute.LastY = (int)vertices[^1];
                 }
 
                 if (current.GetType() == typeof(CurveTo)) // Cubic Bézier Curves
@@ -247,6 +264,14 @@ namespace FreeFrame.Components.Shapes
             _indexes = new List<uint>();
             GetVertices();
             return _indexes.ToArray();
+        }
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+            foreach (DrawAttribute attr in DrawAttributes)
+                points.AddRange(attr.GetSelectablePoints());
+            return points;
         }
 
         public override Hitbox Hitbox()

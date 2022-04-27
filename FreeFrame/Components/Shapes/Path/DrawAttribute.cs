@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes.Path
 {
@@ -14,21 +15,21 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public abstract class DrawAttribute
     {
-        static float _lastX = 0;
-        static float _lastY = 0;
+        static int _lastX = 0;
+        static int _lastY = 0;
 
         #region Bézier Curve 
-        static float _lastControlPointX = 0; // Last control point x
-        static float _lastControlPointY = 0; // Last control point y
+        static int _lastControlPointX = 0; // Last control point x
+        static int _lastControlPointY = 0; // Last control point y
         #endregion
 
         static Type _lastCommand = typeof(MoveTo);
 
 
-        public static float LastX { get => _lastX; set => _lastX = value; }
-        public static float LastY { get => _lastY; set => _lastY = value; }
-        public static float LastControlPointX { get => _lastControlPointX; set => _lastControlPointX = value; }
-        public static float LastControlPointY { get => _lastControlPointY; set => _lastControlPointY = value; }
+        public static int LastX { get => _lastX; set => _lastX = value; }
+        public static int LastY { get => _lastY; set => _lastY = value; }
+        public static int LastControlPointX { get => _lastControlPointX; set => _lastControlPointX = value; }
+        public static int LastControlPointY { get => _lastControlPointY; set => _lastControlPointY = value; }
         public static Type LastCommand { get => _lastCommand; set => _lastCommand = value; }
 
         /// <summary>
@@ -37,6 +38,8 @@ namespace FreeFrame.Components.Shapes.Path
         /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
         public abstract float[] GetVertices();
         public abstract uint[] GetVerticesIndexes();
+
+        public abstract List<Vector2i> GetSelectablePoints();
 
         public abstract override string ToString();
     }
@@ -95,6 +98,8 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
+
+        public override List<Vector2i> GetSelectablePoints() => new List<Vector2i>();
     }
     /// <summary>
     /// LineTo, L or l.
@@ -153,6 +158,23 @@ namespace FreeFrame.Components.Shapes.Path
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'l' : 'L', X, Y);
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (IsRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX + X, LastY + Y));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(X, Y));
+            }
+            return points;
+        }
     }
     /// <summary>
     /// HorizontalLineTo, H or h.
@@ -207,6 +229,23 @@ namespace FreeFrame.Components.Shapes.Path
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1}", IsRelative ? 'h' : 'H', X);
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (IsRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX + X, LastY));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(X, LastY));
+            }
+            return points;
+        }
     }
     /// <summary>
     /// VerticalLineTo, V or v.
@@ -253,6 +292,23 @@ namespace FreeFrame.Components.Shapes.Path
             return vertices;
         }
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (_isRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX, LastY + _y));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX, _y));
+            }
+            return points;
+        }
 
         public override string ToString() => String.Format("{0} {1}", _isRelative ? 'v' : 'V', _y);
     }
@@ -361,6 +417,27 @@ namespace FreeFrame.Components.Shapes.Path
         }
         public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (_isRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX + X1, LastY + Y1));
+                points.Add(new Vector2i(LastX + X2, LastY + X2));
+                points.Add(new Vector2i(LastX + X, LastY + Y));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(X1, Y1));
+                points.Add(new Vector2i(X2, X2));
+                points.Add(new Vector2i(X, Y));
+            }
+            return points;
+        }
+
         public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', X1, Y1, X2, Y2, X, Y);
     }
     /// <summary>
@@ -459,6 +536,27 @@ namespace FreeFrame.Components.Shapes.Path
         }
         public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (IsRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX + LastControlPointX, LastY + LastControlPointY));
+                points.Add(new Vector2i(LastX + X2, LastY + X2));
+                points.Add(new Vector2i(LastX + X, LastY + Y));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastControlPointX, LastControlPointY));
+                points.Add(new Vector2i(X2, X2));
+                points.Add(new Vector2i(X, Y));
+            }
+            return points;
+        }
+
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 's' : 'S', X2, Y2, X, Y);
 
     }
@@ -477,6 +575,8 @@ namespace FreeFrame.Components.Shapes.Path
         public bool IsRelative { get => _isRelative; set => _isRelative = value; }
         public int X1 { get => _x1; set => _x1 = value; }
         public int Y1 { get => _y1; set => _y1 = value; }
+        public int X { get => _x; set => _x = value; }
+        public int Y { get => _y; set => _y = value; }
 
         /// <summary>
         /// Use to draw a quadratic Bézier curve.
@@ -500,8 +600,8 @@ namespace FreeFrame.Components.Shapes.Path
         {
             X1 = x1;
             Y1 = y1;
-            _x = x;
-            _y = y;
+            X = x;
+            Y = y;
             IsRelative = isRelative;
         }
         public override float[] GetVertices()
@@ -517,19 +617,19 @@ namespace FreeFrame.Components.Shapes.Path
                 {
                     t = i / 100.0f;
 
-                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * (LastX + X1) + Math.Pow(t, 2) * (LastX + _x));
-                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * (LastY + Y1) + Math.Pow(t, 2) * (LastY + _y));
+                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * (LastX + X1) + Math.Pow(t, 2) * (LastX + X));
+                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * (LastY + Y1) + Math.Pow(t, 2) * (LastY + Y));
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (_x > X1)
-                    LastControlPointX += _x + X1;
-                else if (_x < X1)
-                    LastControlPointX += _x - X1;
+                if (X > X1)
+                    LastControlPointX += X + X1;
+                else if (X < X1)
+                    LastControlPointX += X - X1;
                 else
-                    LastControlPointX += _x;
-                LastX += _x;
-                LastY += _y;
+                    LastControlPointX += X;
+                LastX += X;
+                LastY += Y;
             }
             else
             {
@@ -537,26 +637,45 @@ namespace FreeFrame.Components.Shapes.Path
                 {
                     t = i / 100.0f;
 
-                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * X1 + Math.Pow(t, 2) * _x);
-                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * Y1 + Math.Pow(t, 2) * _y);
+                    x = (float)(Math.Pow((1 - t), 2) * LastX + 2 * (1 - t) * t * X1 + Math.Pow(t, 2) * X);
+                    y = (float)(Math.Pow((1 - t), 2) * LastY + 2 * (1 - t) * t * Y1 + Math.Pow(t, 2) * Y);
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (_x > X1)
-                    LastControlPointX = _x + X1;
-                else if (_x < X1)
-                    LastControlPointX = _x - X1;
+                if (X > X1)
+                    LastControlPointX = X + X1;
+                else if (X < X1)
+                    LastControlPointX = X - X1;
                 else
-                    LastControlPointX = _x;
-                LastX = _x;
-                LastY = _y;
+                    LastControlPointX = X;
+                LastX = X;
+                LastY = Y;
             }
 
             return vertices.ToArray();
         }
         public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
-        public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, _x, _y);
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (IsRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX + X1, LastY + Y1));
+                points.Add(new Vector2i(LastX + X, LastY + Y));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(X1, Y1));
+                points.Add(new Vector2i(X, Y));
+            }
+            return points;
+        }
+
+        public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, X, Y);
 
     }
     /// <summary>
@@ -642,6 +761,25 @@ namespace FreeFrame.Components.Shapes.Path
         }
         public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new List<Vector2i>();
+
+            if (_isRelative)
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastX + LastControlPointX, LastY + LastControlPointY));
+                points.Add(new Vector2i(LastX + _x, LastY + _y));
+            }
+            else
+            {
+                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(LastControlPointX, LastControlPointY));
+                points.Add(new Vector2i(_x, _y));
+            }
+            return points;
+        }
+
         public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 't' : 'T', _x, _y);
     }
 
@@ -696,6 +834,11 @@ namespace FreeFrame.Components.Shapes.Path
             _isRelative = isRelative;
         }
 
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            throw new NotImplementedException();
+        }
+
         public override float[] GetVertices()
         {
             throw new NotImplementedException();
@@ -718,6 +861,11 @@ namespace FreeFrame.Components.Shapes.Path
         /// Draw a straight line from the current position to the first point in the path.
         /// </summary>
         public ClosePath() { }
+
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            throw new NotImplementedException();
+        }
 
         public override float[] GetVertices()
         {

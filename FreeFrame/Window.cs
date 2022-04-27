@@ -27,10 +27,7 @@ namespace FreeFrame
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
-        public Vector2i? WindowSize
-        {
-            get => this.ClientSize;
-        }
+        Selector _selector;
 
         Shape _selectedShape;
         Shape _selectedShapeBefore;
@@ -47,11 +44,11 @@ namespace FreeFrame
 
             Helper.EnableDebugMode();
 
-            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
 
-            Shape.Window = this;
+            _shapes = new List<Shape>();
 
-            //_shapes = Importer.ImportFromFile("test.svg");
+            _selector = new Selector();
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
@@ -80,52 +77,63 @@ namespace FreeFrame
         {
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
-
-            if (_shapes != null)
+            
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            foreach (Shape shape in _shapes)
             {
-                foreach (Shape shape in _shapes)
+                //shape.ImplementObjects();
+                shape.Draw(ClientSize);
+            }
+            if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true)
+            {
+                if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
                 {
-                    //shape.ImplementObjects();
-                    shape.Draw(ClientSize);
-                }
-                if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true)
-                {
-                    foreach (Shape shape in _shapes)
+                    Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                    if (nearestShape != null)
                     {
-                        if (shape.Hitbox().IsThereSomething(MouseState.X, MouseState.Y))
+                        if (nearestShape != _selectedShape)
                         {
-                            Console.WriteLine("Clicked on a new shape");
-                            _selectedShape = shape;
-                            break;
+                            Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
+                            _selector.Select(nearestShape);
+                            _selectedShape = nearestShape;
                         }
                     }
                 }
-                if (_selectedShape != null)
+            }
+            if (_selectedShape != null)
+            {
+                if (_selectedShape != _selectedShapeBefore) // New shape
                 {
+                    _ioX = _selectedShape.Properties.x;
+                    _ioY = _selectedShape.Properties.y;
+                    _ioWidth = _selectedShape.Properties.width;
+                    _ioHeight = _selectedShape.Properties.height;
+                    _ioColor = new System.Numerics.Vector4(_selectedShape.Properties.color.R, _selectedShape.Properties.color.G, _selectedShape.Properties.color.B, _selectedShape.Properties.color.A);
 
-                    if (_selectedShape != _selectedShapeBefore)
+                    _selectedShapeBefore = _selectedShape;
+                }
+                else
+                {
+                    Shape.DefaultProperties properties = new()
                     {
-                        //_ioX = ((SVGRectangle)_selectedShape).X;
-                        //_ioY = ((SVGRectangle)_selectedShape).Y;
-                        //_ioWidth = ((SVGRectangle)_selectedShape).Width;
-                        //_ioHeight = ((SVGRectangle)_selectedShape).Height;
-
-                        //_ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
-
-                        _selectedShapeBefore = _selectedShape;
-                    }
-                    else
+                        x = _ioX,
+                        y = _ioY,
+                        width = _ioWidth,
+                        height = _ioHeight,
+                        color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W)
+                    };
+                    if (properties != _selectedShape.Properties)
                     {
-                        // TODO: Check if any input change before changing the values
-                        //((SVGRectangle)_selectedShape).X = _ioX;
-                        //((SVGRectangle)_selectedShape).Y = _ioY;
-                        //((SVGRectangle)_selectedShape).Width = _ioWidth;
-                        //((SVGRectangle)_selectedShape).Height = _ioHeight;
+                        Console.WriteLine("change properties {0}",properties.x);
+                        _selectedShape.UpdateProperties(properties);
+                        _selector.Select(_selectedShape);
 
-                        //_selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
                     }
                 }
             }
+
+            _selector.Draw(ClientSize);
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
             //ImGui.ShowDemoWindow();
@@ -145,8 +153,26 @@ namespace FreeFrame
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.BindVertexArray(0);
 
-            if (_shapes != null)
-                _shapes.ForEach(shape => shape.DeleteObjects());
+            _shapes.ForEach(shape => shape.DeleteObjects());
+        }
+
+        public Shape? GetNearestShape(Vector2i currentLocation)
+        {
+            (Shape? shape, double pythagore) nearest = (null, double.MaxValue);
+
+            foreach (Shape shape in _shapes)
+            {
+                List<Vector2i> points = shape.GetSelectablePoints();
+
+                foreach (Vector2i point in points)
+                {
+                    double pythagore = Math.Sqrt(Math.Pow(point.X - currentLocation.X, 2) + Math.Pow(point.Y - currentLocation.Y, 2));
+
+                    if (pythagore < nearest.pythagore) // Get the nearest pythagore value
+                        nearest = (shape, pythagore);
+                }
+            }
+            return nearest.shape;
         }
 
         /// <summary>
@@ -201,15 +227,13 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
             ImGui.Text("Tree View");
             ImGui.Spacing();
-            if (_shapes != null)
+            foreach (Shape shape in _shapes)
             {
-                foreach (Shape shape in _shapes)
+                if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
                 {
-                    if (ImGui.Selectable(shape.GetType().Name))
-                    {
-                        _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
-                        Console.WriteLine("New shape selected through tree view");
-                    }
+                    _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
+                    _selector.Select(shape);
+                    Console.WriteLine("New shape selected through tree view");
                 }
             }
             ImGui.End();

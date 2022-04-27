@@ -52,7 +52,8 @@ namespace FreeFrame
         public void SetUniformMat4(int uniform, Matrix4 matrix) => GL.UniformMatrix4(uniform, false, ref matrix);
 
         public void Use() => GL.UseProgram(_program);
-        public void Delete() => GL.DeleteProgram(_program);
-        ~Shader() => Delete();
+        public void Delete() { } //=> GL.DeleteProgram(_program);
+        //~Shader() => Delete(); 
+        //TODO: Make deletion program correctly
     }
 }

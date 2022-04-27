@@ -32,7 +32,7 @@ namespace FreeFrame
             ImplementObjects(vertices, indexes);
         }
 
-        public void Draw(Vector2i clientSize)
+        public void Draw(Vector2i clientSize, Color4 color)
         {
             _shader.Use();
 
@@ -43,7 +43,7 @@ namespace FreeFrame
 
             // Applied common geometry color
             int uColor = _shader.GetUniformLocation("u_Color");
-            _shader.SetUniformVec4(uColor, new Vector4(255, 255, 255, 255)); // (Vector4)Color
+            _shader.SetUniformVec4(uColor, (Vector4)color); // (Vector4)Color
 
             GL.BindVertexArray(_vertexArrayObject);
 

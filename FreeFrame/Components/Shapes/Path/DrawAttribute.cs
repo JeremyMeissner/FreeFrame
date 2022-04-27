@@ -36,6 +36,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// </summary>
         /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
         public abstract float[] GetVertices();
+        public abstract uint[] GetVerticesIndexes();
 
         public abstract override string ToString();
     }
@@ -73,7 +74,25 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-        public override float[] GetVertices() => throw new NotImplementedException("MoveTo doesnt have any vertices");
+        public override float[] GetVertices()
+        {
+            if (IsRelative)
+            {
+                LastX += X;
+                LastY += Y;
+            }
+            else
+            {
+                LastX = X;
+                LastY = Y;
+            }
+
+            return new float[] { }; // Move doesnt have any vertices
+        }
+        public override uint[] GetVerticesIndexes()
+        {
+            return new uint[] { };
+        }
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
     }
@@ -114,11 +133,24 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override float[] GetVertices()
         {
+            float[] vertices;
+
             if (IsRelative)
-                return new float[] { LastX, LastY, LastX + X, LastY + Y };
+            {
+                vertices = new float[] { LastX, LastY, LastX + X, LastY + Y };
+                LastX += X; // Update last position
+                LastY += Y; // Update last position
+            }
             else
-                return new float[] { LastX, LastY, X, Y };
+            {
+                vertices = new float[] { LastX, LastY, X, Y };
+                LastX = X; // Update last position
+                LastY = Y; // Update last position
+            }
+
+            return vertices;
         }
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'l' : 'L', X, Y);
     }
@@ -150,19 +182,29 @@ namespace FreeFrame.Components.Shapes.Path
         {
             X = x;
             IsRelative = isRelative;
-
-            LastX = X;
         }
 
 
 
         public override float[] GetVertices()
         {
+            float[] vertices;
+
             if (IsRelative)
-                return new float[] { LastX, LastY, LastX + X, LastY };
+            {
+                vertices = new float[] { LastX, LastY, LastX + X, LastY };
+                LastX += X; // Update last position
+            }
             else
-                return new float[] { LastX, LastY, X, LastY };
+            {
+                vertices = new float[] { LastX, LastY, X, LastY };
+                LastX = X; // Update last position
+            }
+
+            return vertices;
         }
+
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1}", IsRelative ? 'h' : 'H', X);
     }
@@ -191,17 +233,26 @@ namespace FreeFrame.Components.Shapes.Path
         {
             _y = y;
             _isRelative = isRelative;
-
-            LastY = _y;
         }
 
         public override float[] GetVertices()
         {
+            float[] vertices;
+
             if (_isRelative)
-                return new float[] { LastX, LastY, LastX, LastY + _y };
+            {
+                vertices = new float[] { LastX, LastY, LastX, LastY + _y };
+                LastY += _y; // Update last position
+            }
             else
-                return new float[] { LastX, LastY, LastX, _y };
+            {
+                vertices = new float[] { LastX, LastY, LastX, _y };
+                LastY = _y; // Update last position
+            }
+
+            return vertices;
         }
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1}", _isRelative ? 'v' : 'V', _y);
     }
@@ -276,6 +327,14 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (X > X2)
+                    LastControlPointX += X + X2;
+                else if (X < X2)
+                    LastControlPointX += X - X2;
+                else
+                    LastControlPointX += X;
+                LastX += X;
+                LastY += Y;
             }
             else
             {
@@ -288,10 +347,19 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (X > X2)
+                    LastControlPointX = X + X2;
+                else if (X < X2)
+                    LastControlPointX = X - X2;
+                else
+                    LastControlPointX = X;
+                LastX = X;
+                LastY = Y;
             }
 
             return vertices.ToArray();
         }
+        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', X1, Y1, X2, Y2, X, Y);
     }
@@ -357,6 +425,14 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (X > X2)
+                    LastControlPointX += X + X2;
+                else if (X < X2)
+                    LastControlPointX += X - X2;
+                else
+                    LastControlPointX += X;
+                LastX += X;
+                LastY += Y;
             }
             else
             {
@@ -369,10 +445,19 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (X > X2)
+                    LastControlPointX = X + X2;
+                else if (X < X2)
+                    LastControlPointX = X - X2;
+                else
+                    LastControlPointX = X;
+                LastX = X;
+                LastY = Y;
             }
 
             return vertices.ToArray();
         }
+        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 's' : 'S', X2, Y2, X, Y);
 
@@ -437,6 +522,14 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (_x > X1)
+                    LastControlPointX += _x + X1;
+                else if (_x < X1)
+                    LastControlPointX += _x - X1;
+                else
+                    LastControlPointX += _x;
+                LastX += _x;
+                LastY += _y;
             }
             else
             {
@@ -449,10 +542,19 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (_x > X1)
+                    LastControlPointX = _x + X1;
+                else if (_x < X1)
+                    LastControlPointX = _x - X1;
+                else
+                    LastControlPointX = _x;
+                LastX = _x;
+                LastY = _y;
             }
 
             return vertices.ToArray();
         }
+        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, _x, _y);
 
@@ -506,6 +608,14 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (_x > LastControlPointX)
+                    LastControlPointX += _x + LastControlPointX;
+                else if (_x < LastControlPointX)
+                    LastControlPointX += _x - LastControlPointX;
+                else
+                    LastControlPointX += _x;
+                LastX += _x;
+                LastY += _y;
             }
             else
             {
@@ -518,10 +628,19 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
+                if (_x > LastControlPointX)
+                    LastControlPointX = _x + LastControlPointX;
+                else if (_x < LastControlPointX)
+                    LastControlPointX = _x - LastControlPointX;
+                else
+                    LastControlPointX = _x;
+                LastX = _x;
+                LastY = _y;
             }
 
             return vertices.ToArray();
         }
+        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
         public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 't' : 'T', _x, _y);
     }
@@ -581,6 +700,10 @@ namespace FreeFrame.Components.Shapes.Path
         {
             throw new NotImplementedException();
         }
+        public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
 
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", _isRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), _x, _y);
     }
@@ -600,7 +723,10 @@ namespace FreeFrame.Components.Shapes.Path
         {
             throw new NotImplementedException();
         }
-
+        public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
 
         public override string ToString() => "z";
     }

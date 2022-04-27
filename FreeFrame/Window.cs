@@ -85,7 +85,7 @@ namespace FreeFrame
             {
                 foreach (Shape shape in _shapes)
                 {
-                    shape.ImplementObjects();
+                    //shape.ImplementObjects();
                     shape.Draw(ClientSize);
                 }
                 if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true)
@@ -105,24 +105,24 @@ namespace FreeFrame
 
                     if (_selectedShape != _selectedShapeBefore)
                     {
-                        _ioX = ((SVGRectangle)_selectedShape).X;
-                        _ioY = ((SVGRectangle)_selectedShape).Y;
-                        _ioWidth = ((SVGRectangle)_selectedShape).Width;
-                        _ioHeight = ((SVGRectangle)_selectedShape).Height;
+                        //_ioX = ((SVGRectangle)_selectedShape).X;
+                        //_ioY = ((SVGRectangle)_selectedShape).Y;
+                        //_ioWidth = ((SVGRectangle)_selectedShape).Width;
+                        //_ioHeight = ((SVGRectangle)_selectedShape).Height;
 
-                        _ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
+                        //_ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
 
                         _selectedShapeBefore = _selectedShape;
                     }
                     else
                     {
                         // TODO: Check if any input change before changing the values
-                        ((SVGRectangle)_selectedShape).X = _ioX;
-                        ((SVGRectangle)_selectedShape).Y = _ioY;
-                        ((SVGRectangle)_selectedShape).Width = _ioWidth;
-                        ((SVGRectangle)_selectedShape).Height = _ioHeight;
+                        //((SVGRectangle)_selectedShape).X = _ioX;
+                        //((SVGRectangle)_selectedShape).Y = _ioY;
+                        //((SVGRectangle)_selectedShape).Width = _ioWidth;
+                        //((SVGRectangle)_selectedShape).Height = _ioHeight;
 
-                        _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
+                        //_selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
                     }
                 }
             }
@@ -279,7 +279,6 @@ namespace FreeFrame
                 if (picker.Draw())
                 {
                     (_shapes, bool compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
-                    _shapes.ForEach(shape => shape.GenerateObjects());
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;

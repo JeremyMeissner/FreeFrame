@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes
 {
@@ -55,6 +56,13 @@ namespace FreeFrame.Components.Shapes
             Height = height;
             Rx = rx;
             Ry = ry;
+
+            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles));
+        }
+        public override void Draw(Vector2i clientSize)
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.Draw(clientSize);
         }
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode

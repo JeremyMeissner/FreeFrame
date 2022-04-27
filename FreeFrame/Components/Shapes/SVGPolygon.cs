@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using System.Text.RegularExpressions;
+using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes
 {
@@ -25,6 +26,7 @@ namespace FreeFrame.Components.Shapes
                 _points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
         }
 
+        public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
         public override float[] GetVertices()
         {
             throw new NotImplementedException();

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,7 +47,7 @@ namespace FreeFrame.Components.Shapes
         public override float[] GetVertices() => new float[] { X1, Y1, X2, Y2 }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: please dont hardcode
 
-
+        public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
         public override string ToString() => $"x1: {X1}, y1: {Y1}, x2: {X2}, y2: {Y2}";
 
         public override Hitbox Hitbox()

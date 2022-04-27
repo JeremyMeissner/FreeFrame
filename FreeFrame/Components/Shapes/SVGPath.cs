@@ -104,11 +104,25 @@ namespace FreeFrame.Components.Shapes
                     startIndex += match.Groups[0].Length + 1;
                 }
             }
+            foreach (DrawAttribute attr in DrawAttributes)
+            {
+                if (attr.GetType() == typeof(CurveTo) ||
+                    attr.GetType() == typeof(SmoothCurveTo) ||
+                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
+                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
+                    attr.GetType() == typeof(EllipticalArc)
+                    )
+                {
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
+                }
+                else
+                {
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
+                }
+            }
         }
         public override void Draw(Vector2i clientSize)
         {
-            base.Draw(clientSize);
-
             foreach (VertexArrayObject vao in _vaos)
                 vao.Draw(clientSize);
         }

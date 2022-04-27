@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK.Mathematics;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
@@ -25,6 +26,7 @@ namespace FreeFrame.Components.Shapes
             _cy = cy;
             _r = r;
         }
+        public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
 
         public override string ToString() => $"cx: {_cx}, cy: {_cy}, r: {_r}";
 
@@ -36,5 +38,6 @@ namespace FreeFrame.Components.Shapes
         {
             throw new NotImplementedException();
         }
+
     }
 }

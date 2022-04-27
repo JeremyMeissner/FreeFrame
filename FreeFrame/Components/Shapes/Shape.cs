@@ -19,28 +19,17 @@ namespace FreeFrame.Components.Shapes
         public Color4 Color { get => _color; set => _color = value; }
         public static Window? Window { get => _window; set => _window = value; }
 
-        public Shape() { }
-        public void GenerateObjects()
+        public Shape() 
         {
             _vaos = new List<VertexArrayObject>();
         }
 
         /// <summary>
-        /// Add the given vertex and index to the OpenGL buffers. And link those with an VAO.
-        /// </summary>
-        /// <param name="vertex">vertex array</param>
-        /// <param name="index">index array</param>
-        public void ImplementObjects()
-        {
-        }
-
-        /// <summary>
         /// Trigge draw element through OpenGL context
         /// </summary>
-        public virtual void Draw(Vector2i clientSize)
-        {
-            if (Window == null)
-                throw new Exception("Trying to convert to NDC but no Window is binded");
+        public abstract void Draw(Vector2i clientSize);
+            //if (Window == null)
+            //    throw new Exception("Trying to convert to NDC but no Window is binded");
 
             // Call me using a child that override me
 
@@ -65,7 +54,6 @@ namespace FreeFrame.Components.Shapes
             //    }
             //    else
             //        GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
-        }
         public void DeleteObjects()
         {
             foreach (VertexArrayObject vao in _vaos)

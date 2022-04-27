@@ -19,14 +19,19 @@ namespace FreeFrame
         private PrimitiveType _primitiveType;
         private Shader _shader;
 
-        public VertexArrayObject()
+        public VertexArrayObject(PrimitiveType primitiveType)
         {
-            _primitiveType = PrimitiveType.Triangles;
+            _primitiveType = primitiveType;
             _vertexArrayObject = GL.GenVertexArray();
             _vertexBufferObject = GL.GenBuffer();
             _indexBufferObject = GL.GenBuffer();
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
         }
+        public VertexArrayObject(float[] vertices, uint[] indexes, PrimitiveType primitiveType) : this(primitiveType)
+        {
+            ImplementObjects(vertices, indexes);
+        }
+
         public void Draw(Vector2i clientSize)
         {
             _shader.Use();
@@ -38,7 +43,7 @@ namespace FreeFrame
 
             // Applied common geometry color
             int uColor = _shader.GetUniformLocation("u_Color");
-            _shader.SetUniformVec4(uColor, (Vector4)Color);
+            _shader.SetUniformVec4(uColor, new Vector4(255, 255, 255, 255)); // (Vector4)Color
 
             GL.BindVertexArray(_vertexArrayObject);
 

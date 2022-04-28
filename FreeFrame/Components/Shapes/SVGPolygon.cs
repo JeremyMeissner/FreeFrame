@@ -53,6 +53,16 @@ namespace FreeFrame.Components.Shapes
             throw new NotImplementedException();
         }
 
+        public override void Move(Vector2i position)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Resize(Vector2i size)
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString()
         {
             string output = "points: ";

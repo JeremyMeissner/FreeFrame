@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,35 +44,105 @@ namespace FreeFrame.Components.Shapes
             Y1 = y1;
             X2 = x2;
             Y2 = y2;
+
+            Properties = new DefaultProperties()
+            {
+                x = X1,
+                y = Y1,
+                width = X2 - X1,
+                height = Y2 - Y1,
+                color = Properties.color
+            };
+
+            ImplementObject();
         }
         public override float[] GetVertices() => new float[] { X1, Y1, X2, Y2 }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: please dont hardcode
 
-        public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
+        public override void Draw(Vector2i clientSize)
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.Draw(clientSize, Properties.color); // Because that color doesnt depend of the shape TODO: Make it dependend
+        }
         public override string ToString() => $"x1: {X1}, y1: {Y1}, x2: {X2}, y2: {Y2}";
 
         public override Hitbox Hitbox()
         {
             Hitbox hitbox = new Hitbox();
 
-            hitbox.Areas.Add(new Hitbox.Area(0, 0, 0, 0)); // TODO: please dont hardcode
+            hitbox.Areas.Add(new Hitbox.Area(X1, Y1, X2, Y2));
 
             return hitbox;
         }
 
         public override List<Vector2i> GetSelectablePoints()
         {
-            throw new NotImplementedException();
+            List<Vector2i> points = new();
+            points.Add(new Vector2i(X1, Y1));
+            points.Add(new Vector2i(X2, Y2));
+            return points;
         }
 
         public override void UpdateProperties(DefaultProperties properties)
         {
-            throw new NotImplementedException();
+            X1 = Properties.x;
+            Y1 = Properties.y;
+            X2 = X1 + Properties.width;
+            Y2 = Y1 + Properties.height;
+
+            Properties = properties;
+
+            ImplementObject();
         }
 
         public override void ImplementObject()
         {
-            throw new NotImplementedException();
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
+            _vaos.Clear();
+
+            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines));
+        }
+
+        public override void Move(Vector2i position)
+        {
+            int width = X2 - X1;
+            int height = Y2 - Y1;
+
+            X1 = position.X;
+            Y1 = position.Y;
+
+            X2 = position.X + width;
+            Y2 = position.Y + height;
+
+
+            Properties = new DefaultProperties()
+            {
+                x = X1,
+                y = Y1,
+                width = width,
+                height = height,
+                color = Properties.color
+            };
+
+            ImplementObject();
+        }
+
+        public override void Resize(Vector2i size)
+        {
+            X2 = X1 + size.X;
+            Y2 = Y1 + size.Y;
+
+            Properties = new DefaultProperties()
+            {
+                x = X1,
+                y = Y1,
+                width = X2 - X1,
+                height = Y2 - Y1,
+                color = Properties.color
+            };
+
+            ImplementObject();
         }
     }
 }

@@ -11,17 +11,33 @@ namespace FreeFrame
 {
     public class Selector
     {
-        protected enum SelectorType
+        public struct Area
+        {
+            public int X;
+            public int Y;
+            public int Width;
+            public int Height;
+            public Area(int x, int y, int width, int height)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+            }
+        }
+        public enum SelectorType
         {
             Edge,
-            Move
+            Move,
+            Resize,
+            None
         }
 
         // I'm actually implementing selection for selector
-        protected List<(VertexArrayObject vao, Vector4i[] vertices, SelectorType type)> _vaos;
+        protected List<(VertexArrayObject vao, Area hitbox, SelectorType type)> _vaos;
         public Selector()
         {
-            _vaos = new List<(VertexArrayObject vao, Vector4i[] vertices, SelectorType type)>();
+            _vaos = new List<(VertexArrayObject vao, Area hitbox, SelectorType type)>();
         }
         public void Select(Shape shape)
         {
@@ -31,18 +47,48 @@ namespace FreeFrame
             List<Vector2i> points = shape.GetSelectablePoints();
 
             // Edge
-            float[] vertices = new float[] { points.Min(i => i.X), points.Min(i => i.Y), points.Max(i => i.X), points.Min(i => i.Y), points.Max(i => i.X), points.Max(i => i.Y), points.Min(i => i.X), points.Max(i => i.Y) };
-            _vaos.Add((new VertexArrayObject(vertices, new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), vertices, SelectorType.Edge));
+            Area hitbox = new Area
+            {
+                X = points.Min(i => i.X),
+                Y = points.Min(i => i.Y),
+                Width = points.Max(i => i.X) - points.Min(i => i.X),
+                Height = points.Max(i => i.Y) - points.Min(i => i.Y)
+            };
+            _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
 
-            vertices = new float[] { points.Min(i => i.X) - 5, points.Min(i => i.Y) - 5, points.Min(i => i.X) + 5, points.Min(i => i.Y) - 5, points.Min(i => i.X) + 5, points.Min(i => i.Y) + 5, points.Min(i => i.X) - 5, points.Min(i => i.Y) + 5 };
-            _vaos.Add((new VertexArrayObject(vertices, new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), vertices, SelectorType.Move));
+            // Move selector (top-left)
+            hitbox = new Area
+            {
+                X = points.Min(i => i.X) - 5,
+                Y = points.Min(i => i.Y) - 5,
+                Width = 10,
+                Height = 10
+            };
+            _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
 
+            // Move selector (bottom-right)
+            hitbox = new Area
+            {
+                X = points.Max(i => i.X) - 5,
+                Y = points.Max(i => i.Y) - 5,
+                Width = 10,
+                Height = 10
+            };
+            _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
+
+        }
+        public static float[] AreaToFloatArray(Area area)
+        {
+            return new float[]
+            {
+                area.X, area.Y, area.X + area.Width, area.Y, area.X + area.Width, area.Y + area.Height, area.X, area.Y + area.Height // Clockwise
+            };
         }
         public void Draw(Vector2i clientSize)
         {
             GL.Enable(EnableCap.LineSmooth);
             GL.LineWidth(3.0f);
-            foreach ((VertexArrayObject vao, float[] vertices, SelectorType type) part in _vaos)
+            foreach ((VertexArrayObject vao, Area _, SelectorType type) part in _vaos)
             {
                 if (part.type == SelectorType.Edge)
                     part.vao.Draw(clientSize, new Color4(0, 125, 200, 255));
@@ -52,15 +98,13 @@ namespace FreeFrame
             GL.Disable(EnableCap.LineSmooth);
 
         }
-        public bool HitBox(Vector2i mousePosition)
+        public (bool, SelectorType?) HitBox(Vector2i mousePosition)
         {
-
-            (_, float[] vertices, _) = _vaos.Where(part => part.type == SelectorType.Move).Single();
-            foreach (var item in collection)
-            {
-
-            }
-            return true;
+            if (_vaos.Count > 0)
+                foreach ((VertexArrayObject _, Area hitbox, SelectorType type) part in _vaos)
+                    if (part.hitbox.X < mousePosition.X && part.hitbox.X + part.hitbox.Width > mousePosition.X && part.hitbox.Y < mousePosition.Y && part.hitbox.Y + part.hitbox.Height > mousePosition.Y)
+                        return (true, part.type);
+            return (false, null);
         }
     }
 }

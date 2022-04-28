@@ -120,6 +120,7 @@ namespace FreeFrame.Components.Shapes
                 vao.DeleteObjects();
             _vaos.Clear();
 
+            DrawAttribute previousAttribute = new MoveTo(0, 0);
             foreach (DrawAttribute attr in DrawAttributes)
             {
                 if (attr.GetType() == typeof(CurveTo) ||
@@ -129,12 +130,13 @@ namespace FreeFrame.Components.Shapes
                     attr.GetType() == typeof(EllipticalArc)
                     )
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(previousAttribute), attr.GetVerticesIndexes(previousAttribute), PrimitiveType.LineStrip));
                 }
                 else
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(previousAttribute), attr.GetVerticesIndexes(previousAttribute), PrimitiveType.Lines));
                 }
+                previousAttribute = attr;
             }
         }
 
@@ -169,7 +171,7 @@ namespace FreeFrame.Components.Shapes
 
                     int i = 0;
                     int count = 0;
-                    foreach (float item in current.GetVertices())
+                    foreach (float item in current.GetVertices(null))
                     {
                         vertices.Add(item);
                         i++;
@@ -269,8 +271,13 @@ namespace FreeFrame.Components.Shapes
         public override List<Vector2i> GetSelectablePoints()
         {
             List<Vector2i> points = new List<Vector2i>();
+
+            DrawAttribute previousAttribute = new MoveTo(0, 0);
             foreach (DrawAttribute attr in DrawAttributes)
-                points.AddRange(attr.GetSelectablePoints());
+            {
+                points.AddRange(attr.GetSelectablePoints(previousAttribute));
+                previousAttribute = attr;
+            }
             return points;
         }
 
@@ -288,6 +295,50 @@ namespace FreeFrame.Components.Shapes
             string output = "d: ";
             DrawAttributes.ForEach(d => output += d.ToString() + " ");
             return output.Trim();
+        }
+
+        public override void Move(Vector2i position)
+        {
+            DrawAttribute previousAttribute = new MoveTo(0, 0);
+            foreach (DrawAttribute attr in DrawAttributes)
+            {
+                attr.MoveDelta(position, previousAttribute);
+                previousAttribute = attr;
+            }
+
+            //List<Vector2i> points = GetSelectablePoints();
+            //Properties = new DefaultProperties()
+            //{
+            //    x = points.Min(i => i.X),
+            //    y = points.Min(i => i.Y),
+            //    width = points.Max(i => i.X) - points.Min(i => i.X),
+            //    height = points.Max(i => i.Y) - points.Min(i => i.Y),
+            //    color = Properties.color
+            //};
+
+            ImplementObject();
+        }
+
+        public override void Resize(Vector2i size)
+        {
+            DrawAttribute previousAttribute = new MoveTo(0, 0);
+            foreach (DrawAttribute attr in DrawAttributes)
+            {
+                attr.ResizeDelta(size, previousAttribute);
+                previousAttribute = attr;
+            }
+
+            //List<Vector2i> points = GetSelectablePoints();
+            //Properties = new DefaultProperties()
+            //{
+            //    x = points.Min(i => i.X),
+            //    y = points.Min(i => i.Y),
+            //    width = points.Max(i => i.X) - points.Min(i => i.X),
+            //    height = points.Max(i => i.Y) - points.Min(i => i.Y),
+            //    color = Properties.color
+            //};
+
+            ImplementObject();
         }
     }
 }

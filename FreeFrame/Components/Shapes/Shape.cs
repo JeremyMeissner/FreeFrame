@@ -82,7 +82,12 @@ namespace FreeFrame.Components.Shapes
         public abstract uint[] GetVerticesIndexes();
         public abstract List<Vector2i> GetSelectablePoints();
         public abstract void UpdateProperties(DefaultProperties properties);
+        /// <summary>
+        /// Reset the vaos and create new ones (use when update any properties of the shape)
+        /// </summary>
         public abstract void ImplementObject();
+        public abstract void Move(Vector2i position);
+        public abstract void Resize(Vector2i size);
         public abstract Hitbox Hitbox();
         public abstract override string ToString();
     }

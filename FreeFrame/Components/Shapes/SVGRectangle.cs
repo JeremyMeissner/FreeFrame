@@ -65,6 +65,7 @@ namespace FreeFrame.Components.Shapes
                 height = Height,
                 color = Properties.color
             };
+
             ImplementObject();
         }
         public override void ImplementObject()
@@ -106,6 +107,38 @@ namespace FreeFrame.Components.Shapes
             points.Add(new Vector2i(X, Y + Height));
             return points;
         }
+        public override void Move(Vector2i position)
+        {
+            X = position.X;
+            Y = position.Y;
+
+            Properties = new DefaultProperties()
+            {
+                x = X,
+                y = Y,
+                width = Width,
+                height = Height,
+                color = Properties.color
+            };
+
+            ImplementObject();
+        }
+        public override void Resize(Vector2i size)
+        {
+            Width = size.X;
+            Height = size.Y;
+
+            Properties = new DefaultProperties()
+            {
+                x = X,
+                y = Y,
+                width = Width,
+                height = Height,
+                color = Properties.color
+            };
+
+            ImplementObject();
+        }
 
         public override Hitbox Hitbox()
         {
@@ -113,9 +146,10 @@ namespace FreeFrame.Components.Shapes
 
             hitbox.Areas.Add(new Hitbox.Area(X, Y, Width, Height));
 
+
             return hitbox;
         }
 
-
+        
     }
 }

@@ -38,6 +38,8 @@ namespace FreeFrame.Components.Shapes.Path
         /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
         public abstract float[] GetVertices();
         public abstract uint[] GetVerticesIndexes();
+        public abstract void MoveDelta(Vector2i deltaPosition);
+        public abstract void ResizeDelta(Vector2i size);
 
         public abstract List<Vector2i> GetSelectablePoints();
 
@@ -100,6 +102,16 @@ namespace FreeFrame.Components.Shapes.Path
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
 
         public override List<Vector2i> GetSelectablePoints() => new List<Vector2i>();
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            //throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            //throw new NotImplementedException();
+        }
     }
     /// <summary>
     /// LineTo, L or l.
@@ -175,6 +187,18 @@ namespace FreeFrame.Components.Shapes.Path
             }
             return points;
         }
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            X += deltaPosition.X;
+            Y += deltaPosition.Y;
+        }
+
+        public override void ResizeDelta(Vector2i deltaSize)
+        {
+            X += deltaSize.X;
+            Y += deltaSize.Y;
+        }
     }
     /// <summary>
     /// HorizontalLineTo, H or h.
@@ -246,6 +270,18 @@ namespace FreeFrame.Components.Shapes.Path
             }
             return points;
         }
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            X += deltaPosition.X;
+            //LastY += deltaPosition.Y;
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            X += size.X;
+            //LastY += size.Y;
+        }
     }
     /// <summary>
     /// VerticalLineTo, V or v.
@@ -311,6 +347,16 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override string ToString() => String.Format("{0} {1}", _isRelative ? 'v' : 'V', _y);
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            throw new NotImplementedException();
+        }
     }
     /// <summary>
     /// CurveTo, Cubic Bézier Curve, C or c.
@@ -439,6 +485,26 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', X1, Y1, X2, Y2, X, Y);
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            X1 += deltaPosition.X;
+            Y1 += deltaPosition.Y;
+            X2 += deltaPosition.X;
+            Y2 += deltaPosition.Y;
+            X += deltaPosition.X;
+            Y += deltaPosition.Y;
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            X1 += size.X;
+            Y1 += size.Y;
+            X2 += size.X;
+            Y2 += size.Y;
+            X += size.X;
+            Y += size.Y;
+        }
     }
     /// <summary>
     /// SmoothCurveTo, Smooth Cubic Bézier Curbe, S or s.
@@ -559,6 +625,15 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 's' : 'S', X2, Y2, X, Y);
 
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            throw new NotImplementedException();
+        }
     }
     /// <summary>
     /// QuadraticBezierCurveTo, Q, q.
@@ -677,6 +752,15 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, X, Y);
 
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            throw new NotImplementedException();
+        }
     }
     /// <summary>
     /// SmoothQuadraticBezierCurveTo, T, t.
@@ -781,6 +865,16 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 't' : 'T', _x, _y);
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -848,6 +942,16 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
 
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
+        {
+            throw new NotImplementedException();
+        }
+
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", _isRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), _x, _y);
     }
     /// <summary>
@@ -872,6 +976,16 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
         public override uint[] GetVerticesIndexes()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void MoveDelta(Vector2i deltaPosition)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void ResizeDelta(Vector2i size)
         {
             throw new NotImplementedException();
         }

@@ -13,11 +13,23 @@ using FreeFrame.Components.Shapes;
 using FreeFrame.Lib.FilePicker;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using static FreeFrame.Selector;
 
 namespace FreeFrame
 {
     public class Window : GameWindow
     {
+        enum UserMode
+        {
+            Idle,
+            Edit,
+            Create
+        }
+        enum CreateMode
+        {
+            Line,
+            Rectangle
+        }
         int _ioX;
         int _ioY;
         int _ioWidth;
@@ -27,10 +39,15 @@ namespace FreeFrame
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
+        SelectorType _selectorType = SelectorType.None;
+
         Selector _selector;
 
         Shape _selectedShape;
         Shape _selectedShapeBefore;
+
+        UserMode _userMode;
+        CreateMode _createMode;
 
         ImGuiController _ImGuiController;
 
@@ -45,6 +62,9 @@ namespace FreeFrame
             Helper.EnableDebugMode();
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
+
+            _userMode = UserMode.Idle;
+            _createMode = CreateMode.Rectangle;
 
             _shapes = new List<Shape>();
 
@@ -77,39 +97,26 @@ namespace FreeFrame
         {
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
-            
+
+            if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
+                OnLeftMouseDown();
+            else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == true) // Long left click
+                OnLeftMouseEnter();
+            else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == false) // Release left click
+                OnLeftMouseUp();
+
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             foreach (Shape shape in _shapes)
             {
                 //shape.ImplementObjects();
                 shape.Draw(ClientSize);
             }
-            if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true)
-            {
-                if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
-                {
-                    Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                    if (nearestShape != null)
-                    {
-                        if (nearestShape != _selectedShape)
-                        {
-                            Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
-                            _selector.Select(nearestShape);
-                            _selectedShape = nearestShape;
-                        }
-                    }
-                }
-            }
+
             if (_selectedShape != null)
             {
                 if (_selectedShape != _selectedShapeBefore) // New shape
                 {
-                    _ioX = _selectedShape.Properties.x;
-                    _ioY = _selectedShape.Properties.y;
-                    _ioWidth = _selectedShape.Properties.width;
-                    _ioHeight = _selectedShape.Properties.height;
-                    _ioColor = new System.Numerics.Vector4(_selectedShape.Properties.color.R, _selectedShape.Properties.color.G, _selectedShape.Properties.color.B, _selectedShape.Properties.color.A);
-
+                    UpdateUIProperties();
                     _selectedShapeBefore = _selectedShape;
                 }
                 else
@@ -124,15 +131,24 @@ namespace FreeFrame
                     };
                     if (properties != _selectedShape.Properties)
                     {
-                        Console.WriteLine("change properties {0}",properties.x);
+                        Console.WriteLine("change properties {0}", properties.x);
                         _selectedShape.UpdateProperties(properties);
                         _selector.Select(_selectedShape);
 
                     }
                 }
             }
-
-            _selector.Draw(ClientSize);
+            switch (_userMode)
+            {
+                case UserMode.Edit:
+                    _selector.Draw(ClientSize);
+                    break;
+                case UserMode.Create:
+                    break;
+                case UserMode.Idle:
+                default:
+                    break;
+            }
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
@@ -155,7 +171,17 @@ namespace FreeFrame
 
             _shapes.ForEach(shape => shape.DeleteObjects());
         }
-
+        /// <summary>
+        /// Update shape properties windows using shape properties
+        /// </summary>
+        public void UpdateUIProperties()
+        {
+            _ioX = _selectedShape.Properties.x;
+            _ioY = _selectedShape.Properties.y;
+            _ioWidth = _selectedShape.Properties.width;
+            _ioHeight = _selectedShape.Properties.height;
+            _ioColor = new System.Numerics.Vector4(_selectedShape.Properties.color.R, _selectedShape.Properties.color.G, _selectedShape.Properties.color.B, _selectedShape.Properties.color.A);
+        }
         public Shape? GetNearestShape(Vector2i currentLocation)
         {
             (Shape? shape, double pythagore) nearest = (null, double.MaxValue);
@@ -191,6 +217,90 @@ namespace FreeFrame
             return result;
         }
 
+        public void OnLeftMouseDown()
+        {
+            if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
+            {
+                (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                if (click)
+                {
+                    Console.WriteLine("Click on selector");
+                    _selectorType = type ?? SelectorType.None;
+                }
+                Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                if (nearestShape != null)
+                {
+                    if (nearestShape != _selectedShape)
+                    {
+                        Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
+                        _userMode = UserMode.Edit;
+                        _selector.Select(nearestShape);
+                        _selectedShape = nearestShape;
+                    }
+                }
+            }
+        }
+        public void OnLeftMouseEnter()
+        {
+            switch (_userMode)
+            {
+                case UserMode.Create:
+                    switch (_createMode)
+                    {
+                        case CreateMode.Line:
+                            _selectedShape = new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
+                            break;
+                        case CreateMode.Rectangle:
+                            _selectedShape = new SVGRectangle((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
+                            break;
+                        default:
+                            break;
+                    }
+                    _shapes.Add(_selectedShape);
+                    _userMode = UserMode.Edit;
+                    _selectorType = SelectorType.Resize;
+                    OnLeftMouseEnter();
+                    break;
+                case UserMode.Edit:
+                    switch (_selectorType)
+                    {
+                        case SelectorType.Edge:
+                            break;
+                        case SelectorType.Move:
+                            _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                            _selector.Select(_selectedShape);
+                            UpdateUIProperties();
+                            break;
+                        case SelectorType.Resize:
+                            float width, height;
+                            width = MouseState.X - _selectedShape.Properties.x;
+                            height = MouseState.Y - _selectedShape.Properties.y;
+                            if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                            {
+                                if (width > height)
+                                    height = width;
+                                else
+                                    width = height;
+                            }
+                            _selectedShape.Resize(new Vector2i((int)width, (int)height));
+                            _selector.Select(_selectedShape);
+                            UpdateUIProperties();
+                            break;
+                        case SelectorType.None:
+                        default:
+                            break;
+                    }
+                    break;
+                case UserMode.Idle:
+                default:
+                    break;
+            }
+
+        }
+        public void OnLeftMouseUp()
+        {
+            _selectorType = SelectorType.None;
+        }
         public void ShowUI()
         {
             // ImGui settings
@@ -233,6 +343,7 @@ namespace FreeFrame
                 {
                     _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
                     _selector.Select(shape);
+                    _userMode = UserMode.Edit;
                     Console.WriteLine("New shape selected through tree view");
                 }
             }

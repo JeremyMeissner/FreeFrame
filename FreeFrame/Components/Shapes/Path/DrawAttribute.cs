@@ -15,34 +15,17 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public abstract class DrawAttribute
     {
-        static int _lastX = 0;
-        static int _lastY = 0;
-
-        #region Bézier Curve 
-        static int _lastControlPointX = 0; // Last control point x
-        static int _lastControlPointY = 0; // Last control point y
-        #endregion
-
-        static Type _lastCommand = typeof(MoveTo);
-
-
-        public static int LastX { get => _lastX; set => _lastX = value; }
-        public static int LastY { get => _lastY; set => _lastY = value; }
-        public static int LastControlPointX { get => _lastControlPointX; set => _lastControlPointX = value; }
-        public static int LastControlPointY { get => _lastControlPointY; set => _lastControlPointY = value; }
-        public static Type LastCommand { get => _lastCommand; set => _lastCommand = value; }
-
         /// <summary>
         /// Should return the vertices position in NDC format
         /// </summary>
         /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
-        public abstract float[] GetVertices();
-        public abstract uint[] GetVerticesIndexes();
-        public abstract void MoveDelta(Vector2i deltaPosition);
-        public abstract void ResizeDelta(Vector2i size);
-
-        public abstract List<Vector2i> GetSelectablePoints();
-
+        /// 
+        public abstract (Vector2i position, Vector2i? controlPosition) Information();
+        public abstract float[] GetVertices(DrawAttribute previous);
+        public abstract uint[] GetVerticesIndexes(DrawAttribute previous);
+        public abstract void MoveDelta(Vector2i deltaPosition, DrawAttribute previous);
+        public abstract void ResizeDelta(Vector2i size, DrawAttribute previous);
+        public abstract List<Vector2i> GetSelectablePoints(DrawAttribute previous);
         public abstract override string ToString();
     }
     /// <summary>
@@ -79,39 +62,41 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
-            if (IsRelative)
-            {
-                LastX += X;
-                LastY += Y;
-            }
-            else
-            {
-                LastX = X;
-                LastY = Y;
-            }
+            //if (IsRelative)
+            //{
+            //    LastX += X;
+            //    LastY += Y;
+            //}
+            //else
+            //{
+            //    LastX = X;
+            //    LastY = Y;
+            //}
 
             return new float[] { }; // Move doesnt have any vertices
         }
-        public override uint[] GetVerticesIndexes()
+        public override uint[] GetVerticesIndexes(DrawAttribute previous)
         {
             return new uint[] { };
         }
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
 
-        public override List<Vector2i> GetSelectablePoints() => new List<Vector2i>();
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous) => new List<Vector2i>();
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             //throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
         {
             //throw new NotImplementedException();
         }
+
+        public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(_x, _y), null);
     }
     /// <summary>
     /// LineTo, L or l.
@@ -148,57 +133,58 @@ namespace FreeFrame.Components.Shapes.Path
             IsRelative = isRelative;
         }
 
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             float[] vertices;
 
             if (IsRelative)
             {
-                vertices = new float[] { LastX, LastY, LastX + X, LastY + Y };
-                LastX += X; // Update last position
-                LastY += Y; // Update last position
+                vertices = new float[] { previous.Information().position.X, previous.Information().position.Y, previous.Information().position.X + X, previous.Information().position.Y + Y };
+                //LastX += X; // Update last position
+                //LastY += Y; // Update last position
             }
             else
             {
-                vertices = new float[] { LastX, LastY, X, Y };
-                LastX = X; // Update last position
-                LastY = Y; // Update last position
+                vertices = new float[] { previous.Information().position.X, previous.Information().position.Y, X, Y };
+                //LastX = X; // Update last position
+                //LastY = Y; // Update last position
             }
 
             return vertices;
         }
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'l' : 'L', X, Y);
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
             if (IsRelative)
             {
-                points.Add(new Vector2i(LastX, LastY));
-                points.Add(new Vector2i(LastX + X, LastY + Y));
+                points.Add(new Vector2i(previous.Information().position.X, previous.Information().position.Y));
+                points.Add(new Vector2i(previous.Information().position.X + X, previous.Information().position.Y + Y));
             }
             else
             {
-                points.Add(new Vector2i(LastX, LastY));
+                points.Add(new Vector2i(previous.Information().position.X, previous.Information().position.Y));
                 points.Add(new Vector2i(X, Y));
             }
             return points;
         }
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             X += deltaPosition.X;
             Y += deltaPosition.Y;
         }
 
-        public override void ResizeDelta(Vector2i deltaSize)
+        public override void ResizeDelta(Vector2i deltaSize, DrawAttribute previous)
         {
             X += deltaSize.X;
             Y += deltaSize.Y;
         }
+        public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(_x, _y), null);
     }
     /// <summary>
     /// HorizontalLineTo, H or h.
@@ -232,7 +218,7 @@ namespace FreeFrame.Components.Shapes.Path
 
 
 
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             float[] vertices;
 
@@ -250,11 +236,11 @@ namespace FreeFrame.Components.Shapes.Path
             return vertices;
         }
 
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
         public override string ToString() => String.Format("{0} {1}", IsRelative ? 'h' : 'H', X);
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
@@ -271,17 +257,18 @@ namespace FreeFrame.Components.Shapes.Path
             return points;
         }
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             X += deltaPosition.X;
             //LastY += deltaPosition.Y;
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
         {
             X += size.X;
             //LastY += size.Y;
         }
+        public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(_x, _y), null);
     }
     /// <summary>
     /// VerticalLineTo, V or v.
@@ -310,7 +297,7 @@ namespace FreeFrame.Components.Shapes.Path
             _isRelative = isRelative;
         }
 
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             float[] vertices;
 
@@ -327,9 +314,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices;
         }
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
@@ -348,12 +335,16 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1}", _isRelative ? 'v' : 'V', _y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
+        {
+            throw new NotImplementedException();
+        }
+        public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
         }
@@ -411,7 +402,7 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             _isRelative = isRelative;
         }
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             List<float> vertices = new List<float>();
             double t;
@@ -461,9 +452,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices.ToArray();
         }
-        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
@@ -486,7 +477,7 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", _isRelative ? 'c' : 'C', X1, Y1, X2, Y2, X, Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             X1 += deltaPosition.X;
             Y1 += deltaPosition.Y;
@@ -496,7 +487,7 @@ namespace FreeFrame.Components.Shapes.Path
             Y += deltaPosition.Y;
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
         {
             X1 += size.X;
             Y1 += size.Y;
@@ -504,6 +495,11 @@ namespace FreeFrame.Components.Shapes.Path
             Y2 += size.Y;
             X += size.X;
             Y += size.Y;
+        }
+
+        public override (Vector2i position, Vector2i? controlPosition) Information()
+        {
+            throw new NotImplementedException();
         }
     }
     /// <summary>
@@ -550,7 +546,7 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             List<float> vertices = new List<float>();
             double t;
@@ -600,9 +596,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices.ToArray();
         }
-        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
@@ -625,12 +621,17 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 's' : 'S', X2, Y2, X, Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
         }
@@ -679,7 +680,7 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             List<float> vertices = new List<float>();
             double t;
@@ -729,9 +730,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices.ToArray();
         }
-        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
@@ -752,12 +753,17 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, X, Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
         }
@@ -793,7 +799,7 @@ namespace FreeFrame.Components.Shapes.Path
             _isRelative = isRelative;
         }
 
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             List<float> vertices = new List<float>();
             double t;
@@ -843,9 +849,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices.ToArray();
         }
-        public override uint[] GetVerticesIndexes() => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
+        public override uint[] GetVerticesIndexes(DrawAttribute previous) => Enumerable.Range(0, 100).Select(i => (uint)i).ToArray(); // Magic value please dont hard code this
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             List<Vector2i> points = new List<Vector2i>();
 
@@ -866,12 +872,17 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2}", _isRelative ? 't' : 'T', _x, _y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
         }
@@ -928,30 +939,33 @@ namespace FreeFrame.Components.Shapes.Path
             _isRelative = isRelative;
         }
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
-        public override uint[] GetVerticesIndexes()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override uint[] GetVerticesIndexes(DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
+        {
+            throw new NotImplementedException();
+        }
+        public override (Vector2i position, Vector2i? controlPosition) Information()
+        {
+            throw new NotImplementedException();
+        }
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", _isRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), _x, _y);
     }
     /// <summary>
@@ -966,30 +980,33 @@ namespace FreeFrame.Components.Shapes.Path
         /// </summary>
         public ClosePath() { }
 
-        public override List<Vector2i> GetSelectablePoints()
+        public override List<Vector2i> GetSelectablePoints(DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override float[] GetVertices()
+        public override float[] GetVertices(DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
-        public override uint[] GetVerticesIndexes()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void MoveDelta(Vector2i deltaPosition)
+        public override uint[] GetVerticesIndexes(DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
+        public override void MoveDelta(Vector2i deltaPosition, DrawAttribute previous)
         {
             throw new NotImplementedException();
         }
 
+        public override void ResizeDelta(Vector2i size, DrawAttribute previous)
+        {
+            throw new NotImplementedException();
+        }
+        public override (Vector2i position, Vector2i? controlPosition) Information()
+        {
+            throw new NotImplementedException();
+        }
         public override string ToString() => "z";
     }
 }

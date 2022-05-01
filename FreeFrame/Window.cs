@@ -11,6 +11,8 @@ using FreeFrame.Lib.ImGuiTools;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
 using FreeFrame.Lib.FilePicker;
+using System.Runtime.InteropServices;
+using FreeFrame.Lib.IconsFontAwesome;
 
 namespace FreeFrame
 {
@@ -73,13 +75,13 @@ namespace FreeFrame
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
             if (_shapes != null)
-                {
+            {
                 _shapes[0].ImplementObjects();
                 _shapes[0].Draw();
             }
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
-            //ImGui.ShowDemoWindow();
+            ImGui.ShowDemoWindow();
             ShowUI();
             _ImGuiController.Render(); // Render ImGui elements
 
@@ -116,6 +118,14 @@ namespace FreeFrame
             return result;
         }
 
+        static ImFontPtr LoadIconFont(string name, int size, (ushort, ushort) range)
+        {
+
+            string path = Path.Combine(".", "Resources", "Fonts", name + ".ttf");
+            return ImGui.GetIO().Fonts.AddFontFromFileTTF(path, size);
+            
+        }
+
         public void ShowUI()
         {
             // ImGui settings
@@ -125,7 +135,7 @@ namespace FreeFrame
             ImGui.GetStyle().TabRounding = 0.0f;
 
             // Parameters side
-            ImGui.Begin("Parameters", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.Begin("Parameters", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
             ImGui.SetWindowSize(new System.Numerics.Vector2(200, ClientSize.Y / 2));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), 0));
 
@@ -147,7 +157,7 @@ namespace FreeFrame
             ImGui.End();
 
             // Tree view side
-            ImGui.Begin("Tree view", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.Begin("Tree view", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
             ImGui.SetWindowSize(new System.Numerics.Vector2(200, ClientSize.Y / 2));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
             ImGui.Text("Tree View");
@@ -159,14 +169,14 @@ namespace FreeFrame
             ImGui.End();
 
             // Animation side
-            ImGui.Begin("Animation", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.Begin("Animation", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(0, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Animation");
             ImGui.End();
 
             // Timeline side
-            ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
+            ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
@@ -175,9 +185,37 @@ namespace FreeFrame
             ImGui.End();
 
             // Navbar side
-            ImGui.Begin("NavBar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.MenuBar);
+
+            ImGui.BeginMainMenuBar();
+            if (ImGui.BeginMenu("File"))
+            {
+                if (ImGui.MenuItem("Open..", "Ctrl+O"))
+                    _dialogFilePicker = true;
+                if (ImGui.BeginMenu("Save"))
+                {
+                    if (ImGui.MenuItem("Save as PNG", "Ctrl+S"))
+                    {
+                        // Save the current screen
+                    }
+                    ImGui.EndMenu();
+                }
+                if (ImGui.MenuItem("Close", "Ctrl+W")) { /* Do stuff */ }
+                ImGui.EndMenu();
+            }
+            ImGui.EndMenu();
+            ImGui.EndMainMenuBar();
+
+            ImGui.GetIO().Fonts.AddFontDefault();
+
+            ImFontConfig iconConfig = new ImFontConfig();
+
+            IntPtr[] iconRange = { FontAwesome5.IconMin, FontAwesome5.IconMax };
+
+            ImGui.GetIO().Fonts.AddFontFromFileTTF(FontAwesome5.FontIconFileNameRegular, 16.0f, iconConfig, )
+
+            ImGui.Begin("NavBar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.MenuBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X - 200, 0));
-            ImGui.SetWindowPos(new System.Numerics.Vector2(0, 0));
+            ImGui.SetWindowPos(new System.Numerics.Vector2(0, 50));
 
             if (ImGui.BeginMenuBar())
             {
@@ -227,7 +265,7 @@ namespace FreeFrame
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;
-                    
+
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();

@@ -19,19 +19,8 @@ namespace FreeFrame.Components.Shapes
         #endregion
 
         #region Geometry properties
-        private int _x;
-        private int _y;
-
-        private int _width;
-        private int _height;
-
         private int _rx; // Rounded in the x axes
         private int _ry; // Rounded in the y axes
-
-        public int X { get => _x; set => _x = value; }
-        public int Y { get => _y; set => _y = value; }
-        public int Width { get => _width; set => _width = value; }
-        public int Height { get => _height; set => _height = value; }
         public int Rx { get => _rx; set => _rx = value; }
         public int Ry { get => _ry; set => _ry = value; }
         #endregion
@@ -57,15 +46,6 @@ namespace FreeFrame.Components.Shapes
             Rx = rx;
             Ry = ry;
 
-            Properties = new DefaultProperties()
-            {
-                x = X,
-                y = Y,
-                width = Width,
-                height = Height,
-                color = Properties.color
-            };
-
             ImplementObject();
         }
         public override void ImplementObject()
@@ -79,18 +59,7 @@ namespace FreeFrame.Components.Shapes
         public override void Draw(Vector2i clientSize)
         {
             foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Properties.color); // Because that color doesnt depend of the shape TODO: Make it dependend
-        }
-        public override void UpdateProperties(DefaultProperties properties)
-        {
-            X = Properties.x;
-            Y = Properties.y;
-            Width = Properties.width;
-            Height = Properties.height;
-
-            Properties = properties;
-
-            ImplementObject();
+                vao.Draw(clientSize, Color); // Because that color doesnt depend of the shape TODO: Make it dependend
         }
 
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
@@ -111,32 +80,12 @@ namespace FreeFrame.Components.Shapes
         {
             X = position.X;
             Y = position.Y;
-
-            Properties = new DefaultProperties()
-            {
-                x = X,
-                y = Y,
-                width = Width,
-                height = Height,
-                color = Properties.color
-            };
-
             ImplementObject();
         }
         public override void Resize(Vector2i size)
         {
             Width = size.X;
             Height = size.Y;
-
-            Properties = new DefaultProperties()
-            {
-                x = X,
-                y = Y,
-                width = Width,
-                height = Height,
-                color = Properties.color
-            };
-
             ImplementObject();
         }
 

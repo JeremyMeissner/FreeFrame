@@ -42,9 +42,8 @@ namespace FreeFrame
         SelectorType _selectorType = SelectorType.None;
 
         Selector _selector;
-
-        Shape _selectedShape;
-        Shape _selectedShapeBefore;
+        Shape? _selectedShape;
+        Shape? _selectedShapeBefore;
 
         UserMode _userMode;
         CreateMode _createMode;
@@ -59,7 +58,7 @@ namespace FreeFrame
         {
             base.OnLoad();
 
-            Helper.EnableDebugMode();
+            //Helper.EnableDebugMode();
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
 
@@ -88,6 +87,9 @@ namespace FreeFrame
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+
+            if (_selectedShape != null)
+                Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)
@@ -97,6 +99,21 @@ namespace FreeFrame
         {
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
+
+            if (KeyboardState.IsKeyDown(Keys.Escape))
+            {
+                _userMode = UserMode.Idle;
+                _selectorType = SelectorType.None;
+                _selectedShape = null;
+                _selectedShapeBefore = null;
+
+                _ioX = 0;
+                _ioY = 0;
+                _ioWidth = 0;
+                _ioHeight = 0;
+                _ioColor = new System.Numerics.Vector4(0);
+                // TODO: Disable the inputs
+            }
 
             if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
                 OnLeftMouseDown();
@@ -116,26 +133,28 @@ namespace FreeFrame
             {
                 if (_selectedShape != _selectedShapeBefore) // New shape
                 {
-                    UpdateUIProperties();
+                    UpdateIO_UI();
                     _selectedShapeBefore = _selectedShape;
                 }
                 else
                 {
-                    Shape.DefaultProperties properties = new()
+                    //_selectedShape.UpdateProperties(properties);
+                    if (_selectedShape.X != _ioX || 
+                        _selectedShape.Y != _ioY || 
+                        _selectedShape.Width != _ioWidth || 
+                        _selectedShape.Height != _ioHeight ||
+                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W))
                     {
-                        x = _ioX,
-                        y = _ioY,
-                        width = _ioWidth,
-                        height = _ioHeight,
-                        color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W)
-                    };
-                    if (properties != _selectedShape.Properties)
-                    {
-                        Console.WriteLine("change properties {0}", properties.x);
-                        _selectedShape.UpdateProperties(properties);
-                        _selector.Select(_selectedShape);
+                        _selectedShape.X = _ioX;
+                        _selectedShape.Y = _ioY;
+                        _selectedShape.Width = _ioWidth;
+                        _selectedShape.Height = _ioHeight;
+                        _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
 
+                        _selectedShape.ImplementObject();
+                        _selector.Select(_selectedShape);
                     }
+
                 }
             }
             switch (_userMode)
@@ -174,13 +193,16 @@ namespace FreeFrame
         /// <summary>
         /// Update shape properties windows using shape properties
         /// </summary>
-        public void UpdateUIProperties()
+        public void UpdateIO_UI()
         {
-            _ioX = _selectedShape.Properties.x;
-            _ioY = _selectedShape.Properties.y;
-            _ioWidth = _selectedShape.Properties.width;
-            _ioHeight = _selectedShape.Properties.height;
-            _ioColor = new System.Numerics.Vector4(_selectedShape.Properties.color.R, _selectedShape.Properties.color.G, _selectedShape.Properties.color.B, _selectedShape.Properties.color.A);
+            if (_selectedShape != null)
+            {
+                _ioX = _selectedShape.X;
+                _ioY = _selectedShape.Y;
+                _ioWidth = _selectedShape.Width;
+                _ioHeight = _selectedShape.Height;
+                _ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
+            }
         }
         public Shape? GetNearestShape(Vector2i currentLocation)
         {
@@ -206,17 +228,20 @@ namespace FreeFrame
         /// </summary>
         /// <param name="vertexPositions">vertex position attribute</param>
         /// <returns>vertex position attribute in NDC</returns>
-        public float[] ConvertToNDC(params int[] vertexPositions)
-        {
-            float[] result = new float[vertexPositions.Length];
-            for (int i = 0; i < vertexPositions.Length; i += 2)
-            {
-                result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
-                result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
-            }
-            return result;
-        }
+        //public float[] ConvertToNDC(params int[] vertexPositions)
+        //{
+        //    float[] result = new float[vertexPositions.Length];
+        //    for (int i = 0; i < vertexPositions.Length; i += 2)
+        //    {
+        //        result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
+        //        result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
+        //    }
+        //    return result;
+        //}
+        //public void OnKeyDown()
+        //{
 
+        //}
         public void OnLeftMouseDown()
         {
             if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
@@ -240,7 +265,7 @@ namespace FreeFrame
                 }
             }
         }
-        public void OnLeftMouseEnter()
+        public void OnLeftMouseEnter() // TODO: Rename this
         {
             switch (_userMode)
             {
@@ -251,9 +276,8 @@ namespace FreeFrame
                             _selectedShape = new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
                             break;
                         case CreateMode.Rectangle:
-                            _selectedShape = new SVGRectangle((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
-                            break;
                         default:
+                            _selectedShape = new SVGRectangle((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
                             break;
                     }
                     _shapes.Add(_selectedShape);
@@ -262,33 +286,35 @@ namespace FreeFrame
                     OnLeftMouseEnter();
                     break;
                 case UserMode.Edit:
-                    switch (_selectorType)
+                    if (_selectedShape != null)
                     {
-                        case SelectorType.Edge:
-                            break;
-                        case SelectorType.Move:
-                            _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                            _selector.Select(_selectedShape);
-                            UpdateUIProperties();
-                            break;
-                        case SelectorType.Resize:
-                            float width, height;
-                            width = MouseState.X - _selectedShape.Properties.x;
-                            height = MouseState.Y - _selectedShape.Properties.y;
-                            if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
-                            {
-                                if (width > height)
-                                    height = width;
-                                else
-                                    width = height;
-                            }
-                            _selectedShape.Resize(new Vector2i((int)width, (int)height));
-                            _selector.Select(_selectedShape);
-                            UpdateUIProperties();
-                            break;
-                        case SelectorType.None:
-                        default:
-                            break;
+                        switch (_selectorType)
+                        {
+                            case SelectorType.Move:
+                                _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                                _selector.Select(_selectedShape);
+                                UpdateIO_UI();
+                                break;
+                            case SelectorType.Resize:
+                                float width, height;
+                                width = MouseState.X - _selectedShape.X;
+                                height = MouseState.Y - _selectedShape.Y;
+                                if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                {
+                                    if (width > height)
+                                        height = width;
+                                    else
+                                        width = height;
+                                }
+                                _selectedShape.Resize(new Vector2i((int)width, (int)height));
+                                _selector.Select(_selectedShape);
+                                UpdateIO_UI();
+                                break;
+                            case SelectorType.Edge:
+                            case SelectorType.None:
+                            default:
+                                break;
+                        }
                     }
                     break;
                 case UserMode.Idle:

@@ -71,9 +71,5 @@ namespace FreeFrame.Components.Shapes
             return output.Trim();
         }
 
-        public override void UpdateProperties(DefaultProperties properties)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

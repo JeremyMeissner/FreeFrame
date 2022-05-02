@@ -9,29 +9,19 @@ namespace FreeFrame.Components.Shapes
     public abstract class Shape
     {
         #region Common Geometry Properties
-        public struct DefaultProperties
-        {
-            public int x;
-            public int y;
-            public int width;
-            public int height;
-            public Color4 color;
-            public static bool operator == (DefaultProperties p1, DefaultProperties p2) => p1.Equals(p2);
-            public static bool operator != (DefaultProperties p1, DefaultProperties p2) => !p1.Equals(p2);
-        }
-        protected int _propertiesHashCode;
-        DefaultProperties _properties;
+        private int _x, _y, _width, _height;
+        private Color4 _color;
         #endregion
 
         protected List<VertexArrayObject> _vaos;
-        public DefaultProperties Properties { get => _properties; set => _properties = value; }
+        public virtual int X { get => _x; set => _x = value; }
+        public virtual int Y { get => _y; set => _y = value; }
+        public virtual int Width { get => _width; set => _width = value; }
+        public virtual int Height { get => _height; set => _height = value; }
+        public Color4 Color { get => _color; set => _color = value; }
 
         public Shape() 
         {
-            Properties = new DefaultProperties()
-            {
-                x = 0, y = 0, width = 0, height = 0, color = Color4.White
-            };
             _vaos = new List<VertexArrayObject>();
         }
 
@@ -81,7 +71,6 @@ namespace FreeFrame.Components.Shapes
         /// <returns>array of indexes</returns>
         public abstract uint[] GetVerticesIndexes();
         public abstract List<Vector2i> GetSelectablePoints();
-        public abstract void UpdateProperties(DefaultProperties properties);
         /// <summary>
         /// Reset the vaos and create new ones (use when update any properties of the shape)
         /// </summary>

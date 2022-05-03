@@ -33,7 +33,6 @@ namespace FreeFrame.Components.Shapes.Path
         public abstract float[] GetVertices();
         public abstract uint[] GetVerticesIndexes();
         public abstract void MoveDelta(Vector2i deltaPosition);
-        public abstract void ResizeDelta(Vector2i size);
         public abstract List<Vector2i> GetSelectablePoints();
         public abstract override string ToString();
     }
@@ -95,11 +94,6 @@ namespace FreeFrame.Components.Shapes.Path
         {
             X += deltaPosition.X;
             Y += deltaPosition.Y;
-            //throw new NotImplementedException();
-        }
-
-        public override void ResizeDelta(Vector2i size)
-        {
             //throw new NotImplementedException();
         }
 
@@ -180,12 +174,6 @@ namespace FreeFrame.Components.Shapes.Path
             X += deltaPosition.X;
             Y += deltaPosition.Y;
         }
-
-        public override void ResizeDelta(Vector2i deltaSize)
-        {
-            X += deltaSize.X;
-            Y += deltaSize.Y;
-        }
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Y), null);
     }
     /// <summary>
@@ -259,12 +247,6 @@ namespace FreeFrame.Components.Shapes.Path
             X += deltaPosition.X;
             //LastY += deltaPosition.Y;
         }
-
-        public override void ResizeDelta(Vector2i size)
-        {
-            X += size.X;
-            //LastY += size.Y;
-        }
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Last.Y), null);
     }
     /// <summary>
@@ -337,10 +319,6 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
-        {
-            throw new NotImplementedException();
-        }
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
@@ -476,15 +454,6 @@ namespace FreeFrame.Components.Shapes.Path
             Y += deltaPosition.Y;
         }
 
-        public override void ResizeDelta(Vector2i size)
-        {
-            X1 += size.X;
-            Y1 += size.Y;
-            X2 += size.X;
-            Y2 += size.Y;
-            X += size.X;
-            Y += size.Y;
-        }
 
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
@@ -610,12 +579,6 @@ namespace FreeFrame.Components.Shapes.Path
         {
             throw new NotImplementedException();
         }
-
-        public override void ResizeDelta(Vector2i size)
-        {
-            throw new NotImplementedException();
-        }
-
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
@@ -735,11 +698,6 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
-        {
-            throw new NotImplementedException();
-        }
-
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
@@ -853,11 +811,6 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
 
-        public override void ResizeDelta(Vector2i size)
-        {
-            throw new NotImplementedException();
-        }
-
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
@@ -931,11 +884,6 @@ namespace FreeFrame.Components.Shapes.Path
         {
             throw new NotImplementedException();
         }
-
-        public override void ResizeDelta(Vector2i size)
-        {
-            throw new NotImplementedException();
-        }
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
@@ -969,11 +917,6 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void ResizeDelta(Vector2i size)
         {
             throw new NotImplementedException();
         }

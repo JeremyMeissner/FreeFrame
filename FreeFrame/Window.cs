@@ -58,7 +58,7 @@ namespace FreeFrame
         {
             base.OnLoad();
 
-            //Helper.EnableDebugMode();
+            Helper.EnableDebugMode();
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
 
@@ -88,8 +88,8 @@ namespace FreeFrame
         {
             base.OnUpdateFrame(e);
 
-            if (_selectedShape != null)
-                Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
+            //if (_selectedShape != null)
+            //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)
@@ -99,6 +99,7 @@ namespace FreeFrame
         {
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
+
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
             {
@@ -114,7 +115,6 @@ namespace FreeFrame
                 _ioColor = new System.Numerics.Vector4(0);
                 // TODO: Disable the inputs
             }
-
             if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
                 OnLeftMouseDown();
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == true) // Long left click
@@ -139,9 +139,9 @@ namespace FreeFrame
                 else
                 {
                     //_selectedShape.UpdateProperties(properties);
-                    if (_selectedShape.X != _ioX || 
-                        _selectedShape.Y != _ioY || 
-                        _selectedShape.Width != _ioWidth || 
+                    if (_selectedShape.X != _ioX ||
+                        _selectedShape.Y != _ioY ||
+                        _selectedShape.Width != _ioWidth ||
                         _selectedShape.Height != _ioHeight ||
                         _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W))
                     {
@@ -154,7 +154,6 @@ namespace FreeFrame
                         _selectedShape.ImplementObject();
                         _selector.Select(_selectedShape);
                     }
-
                 }
             }
             switch (_userMode)
@@ -291,24 +290,30 @@ namespace FreeFrame
                         switch (_selectorType)
                         {
                             case SelectorType.Move:
-                                _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                                _selector.Select(_selectedShape);
-                                UpdateIO_UI();
+                                if (_selectedShape.Moveable)
+                                {
+                                    _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                                    _selector.Select(_selectedShape);
+                                    UpdateIO_UI();
+                                }
                                 break;
                             case SelectorType.Resize:
-                                float width, height;
-                                width = MouseState.X - _selectedShape.X;
-                                height = MouseState.Y - _selectedShape.Y;
-                                if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                if (_selectedShape.Resizeable)
                                 {
-                                    if (width > height)
-                                        height = width;
-                                    else
-                                        width = height;
+                                    float width, height;
+                                    width = MouseState.X - _selectedShape.X;
+                                    height = MouseState.Y - _selectedShape.Y;
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    {
+                                        if (width > height)
+                                            height = width;
+                                        else
+                                            width = height;
+                                    }
+                                    _selectedShape.Resize(new Vector2i((int)width, (int)height));
+                                    _selector.Select(_selectedShape);
+                                    UpdateIO_UI();
                                 }
-                                _selectedShape.Resize(new Vector2i((int)width, (int)height));
-                                _selector.Select(_selectedShape);
-                                UpdateIO_UI();
                                 break;
                             case SelectorType.Edge:
                             case SelectorType.None:
@@ -382,13 +387,13 @@ namespace FreeFrame
             ImGui.Text("Animation");
             ImGui.End();
 
+
             // Timeline side
             ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
             ImGui.Spacing();
-            ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
             ImGui.End();
 
             // Navbar side
@@ -443,7 +448,6 @@ namespace FreeFrame
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;
-
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();

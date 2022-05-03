@@ -81,6 +81,7 @@ namespace FreeFrame.Components.Shapes
 
         public SVGPath(XmlReader reader) //: this()
         {
+            Resizeable = false;
             string d = reader["d"] ?? throw new Exception("d not here"); // TODO: Error handler if d is note here
             Match match;
             int startIndex = 0;
@@ -397,29 +398,6 @@ namespace FreeFrame.Components.Shapes
 
         public override void Resize(Vector2i size)
         {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
-
-            DrawAttribute previousAttribute = new MoveTo(0, 0);
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                if (attr.GetType() == typeof(CurveTo) ||
-                    attr.GetType() == typeof(SmoothCurveTo) ||
-                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(EllipticalArc))
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
-                }
-                else
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
-                }
-                attr.ResizeDelta(size - new Vector2i(attr.X, attr.Y));
-                previousAttribute = attr;
-            }
-
             //List<Vector2i> points = GetSelectablePoints();
             //Properties = new DefaultProperties()
             //{

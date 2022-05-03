@@ -8,6 +8,8 @@ namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape
     {
+        bool _moveable = true;
+        bool _resizeable = true;
         #region Common Geometry Properties
         private int _x, _y, _width, _height;
         private Color4 _color;
@@ -19,6 +21,10 @@ namespace FreeFrame.Components.Shapes
         public virtual int Width { get => _width; set => _width = value; }
         public virtual int Height { get => _height; set => _height = value; }
         public Color4 Color { get => _color; set => _color = value; }
+        public bool Moveable { get => _moveable; protected set => _moveable = value; }
+        public bool Resizeable { get => _resizeable; protected set => _resizeable = value; }
+
+        List<Shape>[] _timeline;
 
         public Shape() 
         {
@@ -59,6 +65,11 @@ namespace FreeFrame.Components.Shapes
         {
             foreach (VertexArrayObject vao in _vaos)
                 vao.DeleteObjects();
+        }
+        public Shape Clone()
+        {
+            Shape shape = (Shape)this.MemberwiseClone();
+            return shape;
         }
         /// <summary>
         /// Should return the vertices position in NDC format

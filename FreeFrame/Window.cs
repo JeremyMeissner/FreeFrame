@@ -134,6 +134,7 @@ namespace FreeFrame
                 if (_selectedShape != _selectedShapeBefore) // New shape
                 {
                     UpdateIO_UI();
+                    _selectedShape.ImplementObject();
                     _selectedShapeBefore = _selectedShape;
                 }
                 else
@@ -347,11 +348,26 @@ namespace FreeFrame
 
             ImGui.Text("Parameters");
             ImGui.Spacing();
+            if (_selectedShape == null || _selectedShape.Moveable == false)
+                ImGui.BeginDisabled();
             ImGui.InputInt("X", ref _ioX);
             ImGui.InputInt("Y", ref _ioY);
+            if (_selectedShape == null || _selectedShape.Moveable == false)
+            {
+                ImGui.EndDisabled();
+                HelpMarker("This shape is not moveable");
+            }
+
             ImGui.Spacing();
+            if (_selectedShape == null || _selectedShape.Resizeable == false)
+                ImGui.BeginDisabled();
             ImGui.InputInt("Width", ref _ioWidth);
             ImGui.InputInt("Height", ref _ioHeight);
+            if (_selectedShape == null || _selectedShape.Resizeable == false)
+            {
+                ImGui.EndDisabled();
+                HelpMarker("This shape is not resizeable");
+            }
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -359,7 +375,11 @@ namespace FreeFrame
 
             ImGui.Text("Color");
             ImGui.Spacing();
+            if (_selectedShape == null)
+                ImGui.BeginDisabled();
             ImGui.ColorEdit4("Color", ref _ioColor);
+            if (_selectedShape == null)
+                ImGui.EndDisabled();
             ImGui.End();
 
             // Tree view side
@@ -468,6 +488,19 @@ namespace FreeFrame
                 ImGui.EndPopup();
             }
             ImGui.End();
+        }
+
+        static void HelpMarker(string desc)
+        {
+            ImGui.TextDisabled("(?)");
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.BeginTooltip();
+                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35.0f);
+                ImGui.TextUnformatted(desc);
+                ImGui.PopTextWrapPos();
+                ImGui.EndTooltip();
+            }
         }
     }
 }

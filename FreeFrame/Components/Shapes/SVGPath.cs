@@ -13,39 +13,44 @@ namespace FreeFrame.Components.Shapes
     public class SVGPath : Shape
     {
         private int _x, _y, _width, _height;
-        public override int X { 
-            get => _x; 
+        public override int X
+        {
+            get => _x; // GetSelectablePoints().Min(i => i.X);
             set
             {
                 _x = value;
-                Move(new Vector2i(_x, Y));
+                //Move(new Vector2i(_x, Y));
             }
         }
         public override int Y
         {
-            get => _y;
+            get => _y; // GetSelectablePoints().Min(i => i.Y);
             set
             {
                 _y = value;
-                Move(new Vector2i(X, _y));
+                //Move(new Vector2i(X, _y));
             }
         }
         public override int Width
         {
-            get => _width;
+            get 
+            {
+                return _width;
+            } 
             set
             {
                 _width = value;
-                Resize(new Vector2i(_width, Height));
             }
         }
         public override int Height
         {
-            get => _height;
+            get
+            {
+                return _height;
+            }
             set
             {
                 _height = value;
-                Resize(new Vector2i(Width, _height));
             }
         }
 
@@ -143,42 +148,39 @@ namespace FreeFrame.Components.Shapes
                 }
             }
 
-            //List<Vector2i> points = GetSelectablePoints();
-            //X = points.Min(i => i.X);
-            //Y = points.Min(i => i.Y);
-            //Width = points.Max(i => i.X) - points.Min(i => i.X);
-            //Height = points.Max(i => i.Y) - points.Min(i => i.Y);
-            ImplementObject();
+            // Update common properties
+            List<Vector2i> points = GetSelectablePoints();
+            X = points.Min(i => i.X);
+            Y = points.Min(i => i.Y);
+            Width = points.Max(i => i.X) - points.Min(i => i.X);
+            Height = points.Max(i => i.Y) - points.Min(i => i.Y);
+            // ImplementObject();
         }
         public override void ImplementObject()
         {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
+            Move(new Vector2i(X, Y));
 
-            DrawAttribute previousAttribute = new MoveTo(0, 0);
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                if (attr.GetType() == typeof(CurveTo) ||
-                    attr.GetType() == typeof(SmoothCurveTo) ||
-                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(EllipticalArc))
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
-                }
-                else
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
-                }
-                previousAttribute = attr;
-            }
+            //foreach (VertexArrayObject vao in _vaos)
+            //    vao.DeleteObjects();
+            //_vaos.Clear();
 
-            //List<Vector2i> points = GetSelectablePoints();
-            //X = points.Min(i => i.X);
-            //Y = points.Min(i => i.Y);
-            //Width = points.Max(i => i.X) - points.Min(i => i.X);
-            //Height = points.Max(i => i.Y) - points.Min(i => i.Y);
+            ////DrawAttribute previousAttribute = new MoveTo(0, 0);
+            //foreach (DrawAttribute attr in DrawAttributes)
+            //{
+            //    if (attr.GetType() == typeof(CurveTo) ||
+            //        attr.GetType() == typeof(SmoothCurveTo) ||
+            //        attr.GetType() == typeof(QuadraticBezierCurveTo) ||
+            //        attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
+            //        attr.GetType() == typeof(EllipticalArc))
+            //    {
+            //        _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
+            //    }
+            //    else
+            //    {
+            //        _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
+            //    }
+            //    //previousAttribute = attr;
+            //}
         }
 
         public override void Draw(Vector2i clientSize)
@@ -308,9 +310,11 @@ namespace FreeFrame.Components.Shapes
 
             //return indexes;
 
-            _indexes = new List<uint>();
-            GetVertices();
-            return _indexes.ToArray();
+            //_indexes = new List<uint>();
+            //GetVertices();
+            //return _indexes.ToArray();
+
+            return new uint[] { };
         }
 
         public override List<Vector2i> GetSelectablePoints()
@@ -321,7 +325,7 @@ namespace FreeFrame.Components.Shapes
                 vao.DeleteObjects();
             _vaos.Clear();
 
-            DrawAttribute previousAttribute = new MoveTo(0, 0);
+            //DrawAttribute previousAttribute = new MoveTo(0, 0);
             foreach (DrawAttribute attr in DrawAttributes)
             {
                 if (attr.GetType() == typeof(CurveTo) ||
@@ -337,7 +341,7 @@ namespace FreeFrame.Components.Shapes
                     _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
                 }
                 points.AddRange(attr.GetSelectablePoints());
-                previousAttribute = attr;
+                //previousAttribute = attr;
             }
             return points;
         }
@@ -351,12 +355,7 @@ namespace FreeFrame.Components.Shapes
             return hitbox;
         }
 
-        public override string ToString()
-        {
-            string output = "d: ";
-            DrawAttributes.ForEach(d => output += d.ToString() + " ");
-            return output.Trim();
-        }
+        
 
         public override void Move(Vector2i position)
         {
@@ -364,9 +363,22 @@ namespace FreeFrame.Components.Shapes
                 vao.DeleteObjects();
             _vaos.Clear();
 
-            DrawAttribute previousAttribute = new MoveTo(0, 0);
+            int? deltaX = null, deltaY = null;
+
+            //DrawAttribute previousAttribute = new MoveTo(0, 0);
             foreach (DrawAttribute attr in DrawAttributes)
             {
+                if (attr.GetType() == typeof(MoveTo) && attr.IsRelative == false)
+                {
+                    if (deltaX == null || deltaY == null)
+                    {
+                        // Get delta X and Y one time
+                        deltaX = position.X - X;
+                        deltaY = position.Y - Y;
+                    }
+                    attr.X += (int)deltaX;
+                    attr.Y += (int)deltaY;
+                }
                 if (attr.GetType() == typeof(CurveTo) ||
                     attr.GetType() == typeof(SmoothCurveTo) ||
                     attr.GetType() == typeof(QuadraticBezierCurveTo) ||
@@ -379,9 +391,14 @@ namespace FreeFrame.Components.Shapes
                 {
                     _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
                 }
-                attr.MoveDelta(position - new Vector2i(DrawAttribute.Last.X, DrawAttribute.Last.Y));
-                previousAttribute = attr;
+                //previousAttribute = attr;
             }
+            // Update common properties
+            List<Vector2i> points = GetSelectablePoints();
+            X = points.Min(i => i.X);
+            Y = points.Min(i => i.Y);
+            Width = points.Max(i => i.X) - points.Min(i => i.X);
+            Height = points.Max(i => i.Y) - points.Min(i => i.Y);
 
             //List<Vector2i> points = GetSelectablePoints();
             //Properties = new DefaultProperties()
@@ -393,7 +410,7 @@ namespace FreeFrame.Components.Shapes
             //    color = Properties.color
             //};
 
-            //ImplementObject();
+            // ImplementObject();
         }
 
         public override void Resize(Vector2i size)
@@ -408,7 +425,14 @@ namespace FreeFrame.Components.Shapes
             //    color = Properties.color
             //};
 
-            ImplementObject();
+            //ImplementObject();
+        }
+
+        public override string ToString()
+        {
+            string output = "d: ";
+            DrawAttributes.ForEach(d => output += d.ToString() + " ");
+            return output.Trim();
         }
     }
 }

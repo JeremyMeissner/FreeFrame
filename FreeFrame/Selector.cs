@@ -70,7 +70,7 @@ namespace FreeFrame
                 Y = shape.Y - 5,
                 Width = 10,
                 Height = 10
-            }; 
+            };
             //hitbox = new Area
             //{
             //    X = points.Min(i => i.X) - 5,
@@ -78,9 +78,10 @@ namespace FreeFrame
             //    Width = 10,
             //    Height = 10
             //};
-            _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
+            if (shape.Moveable)
+                _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
 
-            // Move selector (bottom-right)
+            // Resize selector (bottom-right)
             hitbox = new Area
             {
                 X = shape.X + shape.Width - 5,
@@ -95,7 +96,8 @@ namespace FreeFrame
             //    Width = 10,
             //    Height = 10
             //};
-            _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
+            if (shape.Resizeable)
+                _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
 
         }
         public static float[] AreaToFloatArray(Area area)

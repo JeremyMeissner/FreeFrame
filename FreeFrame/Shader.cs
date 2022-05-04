@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OpenTK.Mathematics;
 
 namespace FreeFrame
 {
@@ -46,8 +47,13 @@ namespace FreeFrame
             GL.DeleteShader(fragmentShader);
         }
         public int GetUniformLocation(string uniform) => GL.GetUniformLocation(_program, uniform);
+
+        public void SetUniformVec4(int uniform, Vector4 vector) => GL.Uniform4(uniform, vector);
+        public void SetUniformMat4(int uniform, Matrix4 matrix) => GL.UniformMatrix4(uniform, false, ref matrix);
+
         public void Use() => GL.UseProgram(_program);
-        public void Delete() => GL.DeleteProgram(_program);
-        ~Shader() => Delete();
+        public void Delete() { } //=> GL.DeleteProgram(_program);
+        //~Shader() => Delete(); 
+        //TODO: Make deletion program correctly
     }
 }

@@ -1,79 +1,75 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using FreeFrame.Components.Shapes.Path;
+using MathNet.Numerics.LinearAlgebra;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 
 namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape
     {
-        protected static Window? _window;
-        private Shader _shader;
-        private int _vertexBufferObject;
-        private int _vertexArrayObject;
-        private int _indexBufferObject;
+        bool _moveable = true;
+        bool _resizeable = true;
+        #region Common Geometry Properties
+        private int _x, _y, _width, _height;
+        private Color4 _color;
+        #endregion
 
-        private int _indexCount;
+        protected List<VertexArrayObject> _vaos;
+        public virtual int X { get => _x; set => _x = value; }
+        public virtual int Y { get => _y; set => _y = value; }
+        public virtual int Width { get => _width; set => _width = value; }
+        public virtual int Height { get => _height; set => _height = value; }
+        public Color4 Color { get => _color; set => _color = value; }
+        public bool Moveable { get => _moveable; protected set => _moveable = value; }
+        public bool Resizeable { get => _resizeable; protected set => _resizeable = value; }
 
-        public Shape() { }
-        public static void BindWindow(GameWindow window) => _window = (Window)window;
-        public void GenerateObjects()
+        List<Shape>[] _timeline;
+
+        public Shape() 
         {
-            _vertexArrayObject = GL.GenVertexArray();
-            _vertexBufferObject = GL.GenBuffer();
-            _indexBufferObject = GL.GenBuffer();
-            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+            _vaos = new List<VertexArrayObject>();
         }
 
         /// <summary>
-        /// Add the given vertex and index to the OpenGL buffers. And link those with an VAO.
+        /// Trigge draw element through OpenGL context
         /// </summary>
-        /// <param name="vertex">vertex array</param>
-        /// <param name="index">index array</param>
-        public void ImplementObjects()
-        {
-            float[] vertices = GetVertices();
-            uint[] indexes = GetVerticesIndexes();
-            // VAO
-            GL.BindVertexArray(_vertexArrayObject);
+        public abstract void Draw(Vector2i clientSize);
+            //if (Window == null)
+            //    throw new Exception("Trying to convert to NDC but no Window is binded");
 
-            string label = $"VAO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.VertexArray, _vertexArrayObject, label.Length, label);
+            // Call me using a child that override me
 
-            // VBO
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            //GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //    if (GetType() == typeof(SVGPath))
+            //        GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
 
-            label = $"VBO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _vertexBufferObject, label.Length, label);
-
-            // IBO
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indexes.Length * sizeof(uint), indexes, BufferUsageHint.StaticDraw);
-
-            label = $"IBO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _indexBufferObject, label.Length, label);
-
-            // Link Attributes
-            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0); // x, y;
-            GL.EnableVertexAttribArray(0);
-
-            _indexCount = indexes.Length;
-        }
-
-        /// <summary>
-        /// Trigge draw element throw OpenGL context
-        /// </summary>
-        public void Draw()
-        {
-            _shader.Use();
-            GL.BindVertexArray(_vertexArrayObject);
-            GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
-        }
+            //    // Can't do a switch because a switch need a const and a type is not
+            //    if (GetType() == typeof(SVGLine))
+            //    {
+            //        GL.Enable(EnableCap.LineSmooth);
+            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
+            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //        GL.Disable(EnableCap.LineSmooth);
+            //    }
+            //    else if (GetType() == typeof(SVGPath))
+            //    {
+            //        GL.Enable(EnableCap.LineSmooth);
+            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
+            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
+            //        GL.Disable(EnableCap.LineSmooth);
+            //    }
+            //    else
+            //        GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
         public void DeleteObjects()
         {
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteBuffer(_indexBufferObject);
-            GL.DeleteVertexArray(_vertexArrayObject);
-            _shader.Delete();
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
+        }
+        public Shape Clone()
+        {
+            Shape shape = (Shape)this.MemberwiseClone();
+            return shape;
         }
         /// <summary>
         /// Should return the vertices position in NDC format
@@ -85,6 +81,14 @@ namespace FreeFrame.Components.Shapes
         /// </summary>
         /// <returns>array of indexes</returns>
         public abstract uint[] GetVerticesIndexes();
+        public abstract List<Vector2i> GetSelectablePoints();
+        /// <summary>
+        /// Reset the vaos and create new ones (use when update any properties of the shape)
+        /// </summary>
+        public abstract void ImplementObject();
+        public abstract void Move(Vector2i position);
+        public abstract void Resize(Vector2i size);
+        public abstract Hitbox Hitbox();
         public abstract override string ToString();
     }
 

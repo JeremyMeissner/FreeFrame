@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes
 {
@@ -18,14 +19,10 @@ namespace FreeFrame.Components.Shapes
         #endregion
 
         #region Geometry properties
-        private int _x;
-        private int _y;
-
-        private int _width;
-        private int _height;
-
         private int _rx; // Rounded in the x axes
         private int _ry; // Rounded in the y axes
+        public int Rx { get => _rx; set => _rx = value; }
+        public int Ry { get => _ry; set => _ry = value; }
         #endregion
 
         public SVGRectangle(XmlReader reader) : this(
@@ -42,24 +39,66 @@ namespace FreeFrame.Components.Shapes
         public SVGRectangle(int width, int height, int x, int y) : this(width, height, x, y, DefaultRX, DefaultRY) { }
         public SVGRectangle(int width, int height, int x, int y, int rx, int ry)
         {
-            _x = x;
-            _y = y;
-            _width = width;
-            _height = height;
-            _rx = rx;
-            _ry = ry;
-        }
-        public override float[] GetVertices()
-        {
-            if (_window == null)
-                throw new Exception("Trying to convert to NDC but no Window is binded");
+            X = x;
+            Y = y;
+            Width = width;
+            Height = height;
+            Rx = rx;
+            Ry = ry;
 
-            // x, y, x, y, x, y, ... (clockwise)
-            return _window.ConvertToNDC(_x, _y, _x + _width, _y, _x + _width, _y + _height, _x, _y + _height);
+            ImplementObject();
         }
+        public override void ImplementObject()
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
+            _vaos.Clear();
+
+            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles));
+        }
+        public override void Draw(Vector2i clientSize)
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.Draw(clientSize, Color); // Because that color doesnt depend of the shape TODO: Make it dependend
+        }
+
+        public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
 
+        public override string ToString() => $"x: {X}, y: {Y}, width: {Width}, height: {Height}, rx: {Rx}, ry: {Ry}";
 
-        public override string ToString() => $"x: {_x}, y: {_y}, width: {_width}, height: {_height}, rx: {_rx}, ry: {_ry}";
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new();
+            points.Add(new Vector2i(X, Y));
+            points.Add(new Vector2i(X + Width, Y));
+            points.Add(new Vector2i(X + Width, Y + Height));
+            points.Add(new Vector2i(X, Y + Height));
+            return points;
+        }
+        public override void Move(Vector2i position)
+        {
+            X = position.X;
+            Y = position.Y;
+            ImplementObject();
+        }
+        public override void Resize(Vector2i size)
+        {
+            Width = size.X;
+            Height = size.Y;
+            ImplementObject();
+        }
+
+        public override Hitbox Hitbox()
+        {
+            Hitbox hitbox = new Hitbox();
+
+            hitbox.Areas.Add(new Hitbox.Area(X, Y, Width, Height));
+
+
+            return hitbox;
+        }
+
+        
     }
 }

@@ -11,11 +11,25 @@ using FreeFrame.Lib.ImGuiTools;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
 using FreeFrame.Lib.FilePicker;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using static FreeFrame.Selector;
 
 namespace FreeFrame
 {
     public class Window : GameWindow
     {
+        enum UserMode
+        {
+            Idle,
+            Edit,
+            Create
+        }
+        enum CreateMode
+        {
+            Line,
+            Rectangle
+        }
         int _ioX;
         int _ioY;
         int _ioWidth;
@@ -24,6 +38,15 @@ namespace FreeFrame
         int _ioTimeline;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+
+        SelectorType _selectorType = SelectorType.None;
+
+        Selector _selector;
+        Shape? _selectedShape;
+        Shape? _selectedShapeBefore;
+
+        UserMode _userMode;
+        CreateMode _createMode;
 
         ImGuiController _ImGuiController;
 
@@ -35,13 +58,16 @@ namespace FreeFrame
         {
             base.OnLoad();
 
-            Helper.DebugMode();
+            Helper.EnableDebugMode();
 
-            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
 
-            Shape.BindWindow(this);
+            _userMode = UserMode.Idle;
+            _createMode = CreateMode.Rectangle;
 
-            //_shapes = Importer.ImportFromFile("test.svg");
+            _shapes = new List<Shape>();
+
+            _selector = new Selector();
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
@@ -61,6 +87,9 @@ namespace FreeFrame
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
+
+            //if (_selectedShape != null)
+            //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)
@@ -69,14 +98,77 @@ namespace FreeFrame
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
-
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
-            if (_shapes != null)
-                {
-                _shapes[0].ImplementObjects();
-                _shapes[0].Draw();
+
+            if (KeyboardState.IsKeyDown(Keys.Escape))
+            {
+                _userMode = UserMode.Idle;
+                _selectorType = SelectorType.None;
+                _selectedShape = null;
+                _selectedShapeBefore = null;
+
+                _ioX = 0;
+                _ioY = 0;
+                _ioWidth = 0;
+                _ioHeight = 0;
+                _ioColor = new System.Numerics.Vector4(0);
+                // TODO: Disable the inputs
             }
+            if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
+                OnLeftMouseDown();
+            else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == true) // Long left click
+                OnLeftMouseEnter();
+            else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == false) // Release left click
+                OnLeftMouseUp();
+
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            foreach (Shape shape in _shapes)
+            {
+                //shape.ImplementObjects();
+                shape.Draw(ClientSize);
+            }
+
+            if (_selectedShape != null)
+            {
+                if (_selectedShape != _selectedShapeBefore) // New shape
+                {
+                    UpdateIO_UI();
+                    _selectedShape.ImplementObject();
+                    _selectedShapeBefore = _selectedShape;
+                }
+                else
+                {
+                    //_selectedShape.UpdateProperties(properties);
+                    if (_selectedShape.X != _ioX ||
+                        _selectedShape.Y != _ioY ||
+                        _selectedShape.Width != _ioWidth ||
+                        _selectedShape.Height != _ioHeight ||
+                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W))
+                    {
+                        _selectedShape.X = _ioX;
+                        _selectedShape.Y = _ioY;
+                        _selectedShape.Width = _ioWidth;
+                        _selectedShape.Height = _ioHeight;
+                        _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
+
+                        _selectedShape.ImplementObject();
+                        _selector.Select(_selectedShape);
+                    }
+                }
+            }
+            switch (_userMode)
+            {
+                case UserMode.Edit:
+                    _selector.Draw(ClientSize);
+                    break;
+                case UserMode.Create:
+                    break;
+                case UserMode.Idle:
+                default:
+                    break;
+            }
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
             //ImGui.ShowDemoWindow();
@@ -96,8 +188,39 @@ namespace FreeFrame
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.BindVertexArray(0);
 
-            if (_shapes != null)
-                _shapes.ForEach(shape => shape.DeleteObjects());
+            _shapes.ForEach(shape => shape.DeleteObjects());
+        }
+        /// <summary>
+        /// Update shape properties windows using shape properties
+        /// </summary>
+        public void UpdateIO_UI()
+        {
+            if (_selectedShape != null)
+            {
+                _ioX = _selectedShape.X;
+                _ioY = _selectedShape.Y;
+                _ioWidth = _selectedShape.Width;
+                _ioHeight = _selectedShape.Height;
+                _ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
+            }
+        }
+        public Shape? GetNearestShape(Vector2i currentLocation)
+        {
+            (Shape? shape, double pythagore) nearest = (null, double.MaxValue);
+
+            foreach (Shape shape in _shapes)
+            {
+                List<Vector2i> points = shape.GetSelectablePoints();
+
+                foreach (Vector2i point in points)
+                {
+                    double pythagore = Math.Sqrt(Math.Pow(point.X - currentLocation.X, 2) + Math.Pow(point.Y - currentLocation.Y, 2));
+
+                    if (pythagore < nearest.pythagore) // Get the nearest pythagore value
+                        nearest = (shape, pythagore);
+                }
+            }
+            return nearest.shape;
         }
 
         /// <summary>
@@ -105,17 +228,111 @@ namespace FreeFrame
         /// </summary>
         /// <param name="vertexPositions">vertex position attribute</param>
         /// <returns>vertex position attribute in NDC</returns>
-        public float[] ConvertToNDC(params int[] vertexPositions)
-        {
-            float[] result = new float[vertexPositions.Length];
-            for (int i = 0; i < vertexPositions.Length; i += 2)
-            {
-                result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
-                result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
-            }
-            return result;
-        }
+        //public float[] ConvertToNDC(params int[] vertexPositions)
+        //{
+        //    float[] result = new float[vertexPositions.Length];
+        //    for (int i = 0; i < vertexPositions.Length; i += 2)
+        //    {
+        //        result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
+        //        result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
+        //    }
+        //    return result;
+        //}
+        //public void OnKeyDown()
+        //{
 
+        //}
+        public void OnLeftMouseDown()
+        {
+            if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
+            {
+                (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                if (click)
+                {
+                    Console.WriteLine("Click on selector");
+                    _selectorType = type ?? SelectorType.None;
+                }
+                Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                if (nearestShape != null)
+                {
+                    if (nearestShape != _selectedShape)
+                    {
+                        Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
+                        _userMode = UserMode.Edit;
+                        _selector.Select(nearestShape);
+                        _selectedShape = nearestShape;
+                    }
+                }
+            }
+        }
+        public void OnLeftMouseEnter() // TODO: Rename this
+        {
+            switch (_userMode)
+            {
+                case UserMode.Create:
+                    switch (_createMode)
+                    {
+                        case CreateMode.Line:
+                            _selectedShape = new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
+                            break;
+                        case CreateMode.Rectangle:
+                        default:
+                            _selectedShape = new SVGRectangle((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
+                            break;
+                    }
+                    _shapes.Add(_selectedShape);
+                    _userMode = UserMode.Edit;
+                    _selectorType = SelectorType.Resize;
+                    OnLeftMouseEnter();
+                    break;
+                case UserMode.Edit:
+                    if (_selectedShape != null)
+                    {
+                        switch (_selectorType)
+                        {
+                            case SelectorType.Move:
+                                if (_selectedShape.Moveable)
+                                {
+                                    _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                                    _selector.Select(_selectedShape);
+                                    UpdateIO_UI();
+                                }
+                                break;
+                            case SelectorType.Resize:
+                                if (_selectedShape.Resizeable)
+                                {
+                                    float width, height;
+                                    width = MouseState.X - _selectedShape.X;
+                                    height = MouseState.Y - _selectedShape.Y;
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    {
+                                        if (width > height)
+                                            height = width;
+                                        else
+                                            width = height;
+                                    }
+                                    _selectedShape.Resize(new Vector2i((int)width, (int)height));
+                                    _selector.Select(_selectedShape);
+                                    UpdateIO_UI();
+                                }
+                                break;
+                            case SelectorType.Edge:
+                            case SelectorType.None:
+                            default:
+                                break;
+                        }
+                    }
+                    break;
+                case UserMode.Idle:
+                default:
+                    break;
+            }
+
+        }
+        public void OnLeftMouseUp()
+        {
+            _selectorType = SelectorType.None;
+        }
         public void ShowUI()
         {
             // ImGui settings
@@ -131,11 +348,26 @@ namespace FreeFrame
 
             ImGui.Text("Parameters");
             ImGui.Spacing();
+            if (_selectedShape == null || _selectedShape.Moveable == false)
+                ImGui.BeginDisabled();
             ImGui.InputInt("X", ref _ioX);
             ImGui.InputInt("Y", ref _ioY);
+            if (_selectedShape == null || _selectedShape.Moveable == false)
+            {
+                ImGui.EndDisabled();
+                HelpMarker("This shape is not moveable");
+            }
+
             ImGui.Spacing();
+            if (_selectedShape == null || _selectedShape.Resizeable == false)
+                ImGui.BeginDisabled();
             ImGui.InputInt("Width", ref _ioWidth);
             ImGui.InputInt("Height", ref _ioHeight);
+            if (_selectedShape == null || _selectedShape.Resizeable == false)
+            {
+                ImGui.EndDisabled();
+                HelpMarker("This shape is not resizeable");
+            }
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -143,7 +375,11 @@ namespace FreeFrame
 
             ImGui.Text("Color");
             ImGui.Spacing();
+            if (_selectedShape == null)
+                ImGui.BeginDisabled();
             ImGui.ColorEdit4("Color", ref _ioColor);
+            if (_selectedShape == null)
+                ImGui.EndDisabled();
             ImGui.End();
 
             // Tree view side
@@ -152,10 +388,16 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
             ImGui.Text("Tree View");
             ImGui.Spacing();
-
-            ImGui.Selectable("Polygon");
-            ImGui.Selectable("Circle", true);
-            ImGui.Selectable("Rectangle");
+            foreach (Shape shape in _shapes)
+            {
+                if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
+                {
+                    _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
+                    _selector.Select(shape);
+                    _userMode = UserMode.Edit;
+                    Console.WriteLine("New shape selected through tree view");
+                }
+            }
             ImGui.End();
 
             // Animation side
@@ -165,13 +407,13 @@ namespace FreeFrame
             ImGui.Text("Animation");
             ImGui.End();
 
+
             // Timeline side
             ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
             ImGui.Spacing();
-            ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
             ImGui.End();
 
             // Navbar side
@@ -223,11 +465,9 @@ namespace FreeFrame
                 if (picker.Draw())
                 {
                     (_shapes, bool compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
-                    _shapes.ForEach(shape => shape.GenerateObjects());
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;
-                    
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();
@@ -248,6 +488,19 @@ namespace FreeFrame
                 ImGui.EndPopup();
             }
             ImGui.End();
+        }
+
+        static void HelpMarker(string desc)
+        {
+            ImGui.TextDisabled("(?)");
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.BeginTooltip();
+                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35.0f);
+                ImGui.TextUnformatted(desc);
+                ImGui.PopTextWrapPos();
+                ImGui.EndTooltip();
+            }
         }
     }
 }

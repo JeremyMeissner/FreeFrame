@@ -39,6 +39,9 @@ namespace FreeFrame.Components
                             case "circle":
                                 shapes.Add(new SVGCircle(reader));
                                 break;
+                            case "line":
+                                shapes.Add(new SVGLine(reader));
+                                break;
                             default:
                                 compatibilityFlag = true; // If an element is unknow, the flag is trigger
                                 break;

@@ -65,6 +65,7 @@ namespace FreeFrame.Components.Shapes
         {
             foreach (VertexArrayObject vao in _vaos)
                 vao.DeleteObjects();
+            _vaos.Clear();
         }
         public Shape Clone()
         {

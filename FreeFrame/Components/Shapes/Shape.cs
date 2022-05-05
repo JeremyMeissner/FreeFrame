@@ -29,6 +29,7 @@ namespace FreeFrame.Components.Shapes
         public Shape() 
         {
             _vaos = new List<VertexArrayObject>();
+            Color = Color4.Black;
         }
 
         /// <summary>

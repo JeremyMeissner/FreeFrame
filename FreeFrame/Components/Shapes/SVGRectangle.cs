@@ -54,12 +54,12 @@ namespace FreeFrame.Components.Shapes
                 vao.DeleteObjects();
             _vaos.Clear();
 
-            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles));
+            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
         }
         public override void Draw(Vector2i clientSize)
         {
             foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color); // Because that color doesnt depend of the shape TODO: Make it dependend
+                vao.Draw(clientSize, Color, this); // Because that color doesnt depend of the shape TODO: Make it dependend
         }
 
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)

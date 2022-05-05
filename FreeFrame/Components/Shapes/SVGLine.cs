@@ -44,7 +44,7 @@ namespace FreeFrame.Components.Shapes
         public override void Draw(Vector2i clientSize)
         {
             foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color); // Because that color doesnt depend of the shape TODO: Make it dependend
+                vao.Draw(clientSize, Color, this); // Because that color doesnt depend of the shape TODO: Make it dependend
         }
         public override string ToString() => $"x1: {X}, y1: {Y}, x2: {Width + X}, y2: {Height + Y}";
 
@@ -72,7 +72,7 @@ namespace FreeFrame.Components.Shapes
                 vao.DeleteObjects();
             _vaos.Clear();
 
-            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines));
+            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines, this ));
         }
 
         public override void Move(Vector2i position)

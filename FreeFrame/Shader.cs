@@ -49,6 +49,8 @@ namespace FreeFrame
         public int GetUniformLocation(string uniform) => GL.GetUniformLocation(_program, uniform);
 
         public void SetUniformVec4(int uniform, Vector4 vector) => GL.Uniform4(uniform, vector);
+        public void SetUniformVec2(int uniform, Vector2 vector) => GL.Uniform2(uniform, vector);
+        public void SetUniformFloat(int uniform, float value) => GL.Uniform1(uniform, value);
         public void SetUniformMat4(int uniform, Matrix4 matrix) => GL.UniformMatrix4(uniform, false, ref matrix);
 
         public void Use() => GL.UseProgram(_program);

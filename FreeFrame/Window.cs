@@ -28,7 +28,8 @@ namespace FreeFrame
         enum CreateMode
         {
             Line,
-            Rectangle
+            Rectangle,
+            Circle
         }
         int _ioX;
         int _ioY;
@@ -113,6 +114,17 @@ namespace FreeFrame
                     _selectedShape.DeleteObjects();
 
                     ResetSelection();
+                }
+            }
+
+            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D)) // TODO: Fix duplication
+            {
+                if (_selectedShape != null)
+                {
+                    Shape shape = _selectedShape.Clone();
+                    _shapes.Add(shape);
+                    ResetSelection();
+                    _selectedShape = shape;
                 }
             }
 
@@ -294,7 +306,8 @@ namespace FreeFrame
                     _selectedShape = _createMode switch
                     {
                         CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y),
-                        CreateMode.Rectangle => new SVGRectangle((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Rectangle => new SVGRectangle(0, 0, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y),
                         _ => throw new Exception("A create mode need to be selected"),
                     };
                     _shapes.Add(_selectedShape);
@@ -321,7 +334,7 @@ namespace FreeFrame
                                     float width, height;
                                     width = MouseState.X - _selectedShape.X;
                                     height = MouseState.Y - _selectedShape.Y;
-                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift) || _selectedShape.GetType() == typeof(SVGCircle)) // SHIFT
                                     {
                                         if (width > height)
                                             height = width;
@@ -478,7 +491,11 @@ namespace FreeFrame
             {
                 ImGui.Text("Select a shape");
                 ImGui.Separator();
-                if (ImGui.Selectable("Circle")) { /* Do stuff */ }
+                if (ImGui.Selectable("Circle")) 
+                {
+                    _userMode = UserMode.Create;
+                    _createMode = CreateMode.Circle;
+                }
                 if (ImGui.Selectable("Rectangle"))
                 {
                     _userMode = UserMode.Create;

@@ -12,6 +12,7 @@ namespace FreeFrame
 {
     public class VertexArrayObject
     {
+        private ShaderType _shaderType;
         private int _vertexBufferObject;
         private int _vertexArrayObject;
         private int _indexBufferObject;
@@ -32,6 +33,13 @@ namespace FreeFrame
             ImplementObjects(vertices, indexes);
         }
 
+        public VertexArrayObject(float[] vertices, uint[] indexes, PrimitiveType primitiveType, Shape shape) : this(primitiveType)
+        {
+            Type type = shape.GetType();
+            if (type == typeof(SVGCircle))
+                _shader = new Shader("Shaders/shader.vert", "Shaders/circle.frag"); // Shader is different for circle
+            ImplementObjects(vertices, indexes);
+        }
         public void Draw(Vector2i clientSize, Color4 color)
         {
             _shader.Use();
@@ -43,11 +51,47 @@ namespace FreeFrame
 
             // Applied common geometry color
             int uColor = _shader.GetUniformLocation("u_Color");
-            _shader.SetUniformVec4(uColor, (Vector4)color); // (Vector4)Color
+            _shader.SetUniformVec4(uColor, (Vector4)color);
+
+            int uResolution = _shader.GetUniformLocation("u_Resolution");
+            _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
             GL.BindVertexArray(_vertexArrayObject);
 
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
+        }
+        public void Draw(Vector2i clientSize, Color4 color, Shape shape)
+        {
+            _shader.Use();
+            // Applied projection matrix
+            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); // TODO: Don't need to apply projection matrix at each frame I think
+            Matrix4 matrix = Matrix4.CreateOrthographicOffCenter(0, clientSize.X, clientSize.Y, 0, -1.0f, 1.0f);
+            _shader.SetUniformMat4(uModelToNDC, matrix);
+
+            // Applied common geometry color
+            int uColor = _shader.GetUniformLocation("u_Color");
+            _shader.SetUniformVec4(uColor, (Vector4)color);
+
+            int uResolution = _shader.GetUniformLocation("u_Resolution");
+            _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
+
+
+            Type type = shape.GetType();
+            if (type == typeof(SVGCircle))
+            {
+                int uRadius = _shader.GetUniformLocation("u_Radius");
+                int uPosition = _shader.GetUniformLocation("u_Position");
+
+                _shader.SetUniformFloat(uRadius, shape.Width / 2);
+                _shader.SetUniformVec2(uPosition, new Vector2(shape.X + shape.Width / 2, shape.Y + shape.Height / 2));
+            }
+
+            GL.BindVertexArray(_vertexArrayObject);
+
+            GL.Enable(EnableCap.Blend);
+            GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
+            GL.Disable(EnableCap.Blend);
+
         }
         public void ImplementObjects(float[] vertices, uint[] indexes)
         {

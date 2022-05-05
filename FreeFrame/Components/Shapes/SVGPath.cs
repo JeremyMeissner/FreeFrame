@@ -186,7 +186,7 @@ namespace FreeFrame.Components.Shapes
         public override void Draw(Vector2i clientSize)
         {
             foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color);
+                vao.Draw(clientSize, Color, this);
         }
         public override float[] GetVertices()
         {
@@ -334,11 +334,11 @@ namespace FreeFrame.Components.Shapes
                     attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
                     attr.GetType() == typeof(EllipticalArc))
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }
                 else
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
                 }
                 points.AddRange(attr.GetSelectablePoints());
                 //previousAttribute = attr;
@@ -385,11 +385,11 @@ namespace FreeFrame.Components.Shapes
                     attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
                     attr.GetType() == typeof(EllipticalArc))
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }
                 else
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
                 }
                 //previousAttribute = attr;
             }

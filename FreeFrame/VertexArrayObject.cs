@@ -36,8 +36,10 @@ namespace FreeFrame
         public VertexArrayObject(float[] vertices, uint[] indexes, PrimitiveType primitiveType, Shape shape) : this(primitiveType)
         {
             Type type = shape.GetType();
-            if (type == typeof(SVGCircle))
-                _shader = new Shader("Shaders/shader.vert", "Shaders/circle.frag"); // Shader is different for circle
+            if (type == typeof(SVGCircle)) // Shader depend on the shape
+                _shader = new Shader("Shaders/shader.vert", "Shaders/circle.frag"); 
+            else if (type == typeof(SVGRectangle))
+                _shader = new Shader("Shaders/shader.vert", "Shaders/rectangle.frag");
             ImplementObjects(vertices, indexes);
         }
         public void Draw(Vector2i clientSize, Color4 color)
@@ -83,7 +85,17 @@ namespace FreeFrame
                 int uPosition = _shader.GetUniformLocation("u_Position");
 
                 _shader.SetUniformFloat(uRadius, shape.Width / 2);
-                _shader.SetUniformVec2(uPosition, new Vector2(shape.X + shape.Width / 2, shape.Y + shape.Height / 2));
+                _shader.SetUniformVec2(uPosition, new Vector2(shape.X + shape.Width / 2, shape.Y + shape.Height / 2)); 
+            }
+            else if (type == typeof(SVGRectangle))
+            {
+                int uRadius = _shader.GetUniformLocation("u_Radius");
+                int uSize = _shader.GetUniformLocation("u_Size");
+                int uPosition = _shader.GetUniformLocation("u_Position");
+
+                _shader.SetUniformFloat(uRadius, ((SVGRectangle)shape).Radius);
+                _shader.SetUniformVec2(uSize, new Vector2(shape.Width, shape.Height)); 
+                _shader.SetUniformVec2(uPosition, new Vector2(shape.X, shape.Y)); // Invert y axis
             }
 
             GL.BindVertexArray(_vertexArrayObject);

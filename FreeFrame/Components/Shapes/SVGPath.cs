@@ -12,47 +12,6 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPath : Shape
     {
-        private int _x, _y, _width, _height;
-        public override int X
-        {
-            get => _x; // GetSelectablePoints().Min(i => i.X);
-            set
-            {
-                _x = value;
-                //Move(new Vector2i(_x, Y));
-            }
-        }
-        public override int Y
-        {
-            get => _y; // GetSelectablePoints().Min(i => i.Y);
-            set
-            {
-                _y = value;
-                //Move(new Vector2i(X, _y));
-            }
-        }
-        public override int Width
-        {
-            get 
-            {
-                return _width;
-            } 
-            set
-            {
-                _width = value;
-            }
-        }
-        public override int Height
-        {
-            get
-            {
-                return _height;
-            }
-            set
-            {
-                _height = value;
-            }
-        }
 
         readonly Dictionary<char, Regex> _dAttributesRegex = new()
         {
@@ -79,8 +38,6 @@ namespace FreeFrame.Components.Shapes
         };
 
         List<DrawAttribute> _drawAttributes = new();
-
-        List<uint> _indexes = new();
 
         public List<DrawAttribute> DrawAttributes { get => _drawAttributes; set => _drawAttributes = value; }
 
@@ -159,28 +116,6 @@ namespace FreeFrame.Components.Shapes
         public override void ImplementObject()
         {
             Move(new Vector2i(X, Y));
-
-            //foreach (VertexArrayObject vao in _vaos)
-            //    vao.DeleteObjects();
-            //_vaos.Clear();
-
-            ////DrawAttribute previousAttribute = new MoveTo(0, 0);
-            //foreach (DrawAttribute attr in DrawAttributes)
-            //{
-            //    if (attr.GetType() == typeof(CurveTo) ||
-            //        attr.GetType() == typeof(SmoothCurveTo) ||
-            //        attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-            //        attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-            //        attr.GetType() == typeof(EllipticalArc))
-            //    {
-            //        _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
-            //    }
-            //    else
-            //    {
-            //        _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
-            //    }
-            //    //previousAttribute = attr;
-            //}
         }
 
         public override void Draw(Vector2i clientSize)
@@ -188,134 +123,8 @@ namespace FreeFrame.Components.Shapes
             foreach (VertexArrayObject vao in _vaos)
                 vao.Draw(clientSize, Color, this);
         }
-        public override float[] GetVertices()
-        {
-            return new float[] { };
-        }
-        //public override float[] GetVertices()
-        //{
-        //    //  Delaunator polygon = new Delaunator(new IPoint[] { new Point(0.0, 0.0) });
-
-        //    // Edges
-        //    List<float> vertices = new List<float>();
-        //    DrawAttribute? previous = null;
-        //    DrawAttribute.LastX = 0;
-        //    DrawAttribute.LastY = 0;
-        //    DrawAttribute.LastControlPointX = 0;
-        //    DrawAttribute.LastControlPointY = 0;
-
-        //    foreach (DrawAttribute current in DrawAttributes)
-        //    {
-        //        if (current.GetType() == typeof(LineTo) ||
-        //            current.GetType() == typeof(HorizontalLineTo) ||
-        //            current.GetType() == typeof(VerticalLineTo) ||
-        //            current.GetType() == typeof(CurveTo) ||
-        //            current.GetType() == typeof(SmoothCurveTo) ||
-        //            current.GetType() == typeof(QuadraticBezierCurveTo) ||
-        //            current.GetType() == typeof(SmoothQuadraticBezierCurveTo)) // TODO: Add EllipticalArc support
-        //        {
-        //            int previousLength = vertices.Count;
-
-        //            int i = 0;
-        //            int count = 0;
-        //            foreach (float item in current.GetVertices(null))
-        //            {
-        //                vertices.Add(item);
-        //                i++;
-        //            }
-        //            if (_indexes.Count > 0)
-        //                count = (int)_indexes.Last();
-        //            _indexes.AddRange(Enumerable.Range(count, i / 2).Select(i => (uint)i).ToArray());
-
-        //            //i++;
-        //        }
-
-        //        if (current.GetType() == typeof(MoveTo))
-        //        {
-        //            if (previous != null)
-        //            {
-        //                if (previous.GetType() != typeof(MoveTo))
-        //                {
-        //                    _indexes.Add(_indexes.Last());
-        //                }
-        //            }
-        //            if (((MoveTo)current).IsRelative)
-        //            {
-        //                DrawAttribute.LastX += ((MoveTo)current).X; // Update last x and y (for relatives attributes points)
-        //                DrawAttribute.LastY += ((MoveTo)current).Y;
-        //            }
-        //            else
-        //            {
-        //                DrawAttribute.LastX = ((MoveTo)current).X; // Update last x and y (for relatives attributes points)
-        //                DrawAttribute.LastY = ((MoveTo)current).Y;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            DrawAttribute.LastX = (int)vertices[^2]; // Update last x and y (for relatives attributes points)
-        //            DrawAttribute.LastY = (int)vertices[^1];
-        //        }
-
-        //        if (current.GetType() == typeof(CurveTo)) // Cubic Bézier Curves
-        //        {
-        //            if (((CurveTo)current).X > ((CurveTo)current).X2) // Control end point on the left
-        //                DrawAttribute.LastControlPointX = ((CurveTo)current).X + ((CurveTo)current).X2;
-        //            else if (((CurveTo)current).X < ((CurveTo)current).X2) // Control end point on the right
-        //                DrawAttribute.LastControlPointX = ((CurveTo)current).X - ((CurveTo)current).X2;
-        //            else // On the middle
-        //                DrawAttribute.LastControlPointX = ((CurveTo)current).X;
-
-        //            if (((CurveTo)current).Y > ((CurveTo)current).Y2) // Control end point on the top
-        //                DrawAttribute.LastControlPointY = ((CurveTo)current).Y + ((CurveTo)current).Y2;
-        //            else if (((CurveTo)current).Y < ((CurveTo)current).Y2) // Control end point on the bottom
-        //                DrawAttribute.LastControlPointY = ((CurveTo)current).Y - ((CurveTo)current).Y2;
-        //            else // On the middle
-        //                DrawAttribute.LastControlPointY = ((CurveTo)current).Y;
-        //        }
-        //        else if (current.GetType() == typeof(QuadraticBezierCurveTo)) // Quadratic Bézier Curves
-        //        {
-        //            DrawAttribute.LastControlPointX = ((QuadraticBezierCurveTo)current).X1;
-        //            DrawAttribute.LastControlPointY = ((QuadraticBezierCurveTo)current).Y1;
-        //        }
-        //        else if (current.GetType() != typeof(SmoothCurveTo) && current.GetType() != typeof(SmoothQuadraticBezierCurveTo)) // Only reset if we're done with bézier curves
-        //        {
-        //            (DrawAttribute.LastControlPointX, DrawAttribute.LastControlPointY) = (0, 0);
-        //        }
-
-        //        previous = current;
-        //    }
-
-        //    return vertices.ToArray();
-        //}
-
-        public override uint[] GetVerticesIndexes()
-        {
-            /*
-            List<uint> indexes = new List<uint>();
-
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                if (attr.GetType() == typeof(LineTo))
-                {
-                    foreach (uint attrIndexes in ((LineTo)attr).GetVerticesIndexes())
-                    {
-                        indexes.Add(attrIndexes);
-                    }
-                }
-            }
-            return indexes.ToArray();
-            */
-
-            //uint[] indexes = Enumerable.Range(0, GetVertices().Length / 2).Select(i => (uint)i).ToArray();
-
-            //return indexes;
-
-            //_indexes = new List<uint>();
-            //GetVertices();
-            //return _indexes.ToArray();
-
-            return new uint[] { };
-        }
+        public override float[] GetVertices() => new float[] { };
+        public override uint[] GetVerticesIndexes() => new uint[] { };
 
         public override List<Vector2i> GetSelectablePoints()
         {
@@ -345,17 +154,6 @@ namespace FreeFrame.Components.Shapes
             }
             return points;
         }
-
-        public override Hitbox Hitbox()
-        {
-            Hitbox hitbox = new Hitbox();
-
-            hitbox.Areas.Add(new Hitbox.Area(0, 0, 0, 0)); // TODO: please dont hardcode
-
-            return hitbox;
-        }
-
-        
 
         public override void Move(Vector2i position)
         {
@@ -413,20 +211,7 @@ namespace FreeFrame.Components.Shapes
             // ImplementObject();
         }
 
-        public override void Resize(Vector2i size)
-        {
-            //List<Vector2i> points = GetSelectablePoints();
-            //Properties = new DefaultProperties()
-            //{
-            //    x = points.Min(i => i.X),
-            //    y = points.Min(i => i.Y),
-            //    width = points.Max(i => i.X) - points.Min(i => i.X),
-            //    height = points.Max(i => i.Y) - points.Min(i => i.Y),
-            //    color = Properties.color
-            //};
-
-            //ImplementObject();
-        }
+        public override void Resize(Vector2i size) => throw new NotImplementedException("Can't resize a path");
 
         public override string ToString()
         {

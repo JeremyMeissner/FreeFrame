@@ -48,14 +48,6 @@ namespace FreeFrame.Components.Shapes
         }
         public override string ToString() => $"x1: {X}, y1: {Y}, x2: {Width + X}, y2: {Height + Y}";
 
-        public override Hitbox Hitbox()
-        {
-            Hitbox hitbox = new Hitbox();
-
-            //hitbox.Areas.Add(new Hitbox.Area(X, Y, X2, Y2));
-
-            return hitbox;
-        }
 
         public override List<Vector2i> GetSelectablePoints()
         {

@@ -135,10 +135,11 @@ namespace FreeFrame
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == false) // Release left click
                 OnLeftMouseUp();
 
+
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             foreach (Shape shape in _shapes)
             {
-                //shape.ImplementObjects();
+                // shape.ImplementObject();
                 shape.Draw(ClientSize);
             }
 
@@ -248,23 +249,6 @@ namespace FreeFrame
             }
             return nearest.shape;
         }
-
-        /// <summary>
-        /// Convert given vertex position attributes in px to NDC 
-        /// </summary>
-        /// <param name="vertexPositions">vertex position attribute</param>
-        /// <returns>vertex position attribute in NDC</returns>
-        //public float[] ConvertToNDC(params int[] vertexPositions)
-        //{
-        //    float[] result = new float[vertexPositions.Length];
-        //    for (int i = 0; i < vertexPositions.Length; i += 2)
-        //    {
-        //        result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
-        //        result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
-        //    }
-        //    return result;
-        //}
-
         public void OnLeftMouseDown()
         {
             switch (_userMode)
@@ -391,8 +375,18 @@ namespace FreeFrame
             ImGui.Spacing();
             if (_selectedShape == null || _selectedShape.Resizeable == false)
                 ImGui.BeginDisabled();
-            ImGui.InputInt("Width", ref _ioWidth);
-            ImGui.InputInt("Height", ref _ioHeight);
+            if (ImGui.InputInt("Width", ref _ioWidth))
+            {
+                if (_selectedShape != null) // Constraint verification
+                    if (_selectedShape.GetType() == typeof(SVGCircle))
+                        _ioHeight = _ioWidth;
+            }
+            if (ImGui.InputInt("Height", ref _ioHeight))
+            {
+                if (_selectedShape != null) // Constraint verification
+                    if (_selectedShape.GetType() == typeof(SVGCircle))
+                        _ioWidth = _ioHeight;
+            }
             if (_selectedShape == null || _selectedShape.Resizeable == false)
             {
                 ImGui.EndDisabled();

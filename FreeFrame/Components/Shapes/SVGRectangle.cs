@@ -88,17 +88,5 @@ namespace FreeFrame.Components.Shapes
             Height = size.Y;
             ImplementObject();
         }
-
-        public override Hitbox Hitbox()
-        {
-            Hitbox hitbox = new Hitbox();
-
-            hitbox.Areas.Add(new Hitbox.Area(X, Y, Width, Height));
-
-
-            return hitbox;
-        }
-
-        
     }
 }

@@ -90,7 +90,6 @@ namespace FreeFrame.Components.Shapes
         public abstract void ImplementObject();
         public abstract void Move(Vector2i position);
         public abstract void Resize(Vector2i size);
-        public abstract Hitbox Hitbox();
         public abstract override string ToString();
     }
 

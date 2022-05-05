@@ -43,11 +43,6 @@ namespace FreeFrame.Components.Shapes
             throw new NotImplementedException();
         }
 
-        public override Hitbox Hitbox()
-        {
-            throw new NotImplementedException();
-        }
-
         public override void ImplementObject()
         {
             throw new NotImplementedException();

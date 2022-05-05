@@ -36,10 +36,6 @@ namespace FreeFrame.Components.Shapes
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
 
-        public override Hitbox Hitbox()
-        {
-            throw new NotImplementedException();
-        }
 
         public override List<Vector2i> GetSelectablePoints()
         {

@@ -119,11 +119,6 @@ namespace FreeFrame.Components.Shapes
             Move(new Vector2i(X, Y)); // Update the position since the attr doesnt use the X and Y variables directly
         }
 
-        public override void Draw(Vector2i clientSize)
-        {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color, this);
-        }
         public override float[] GetVertices() => new float[] { };
         public override uint[] GetVerticesIndexes() => new uint[] { };
 

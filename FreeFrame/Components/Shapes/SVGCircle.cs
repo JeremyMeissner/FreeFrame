@@ -25,11 +25,6 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
-        public override void Draw(Vector2i clientSize)
-        {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color, this); // Because that color doesnt depend of the shape TODO: Make it dependend
-        }
 
         public override string ToString() => $"cx: {X + Width / 2}, cy: {Y + Height / 2}, r: {Width / 2}";
 

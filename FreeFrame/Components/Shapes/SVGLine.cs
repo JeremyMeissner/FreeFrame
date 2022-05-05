@@ -18,9 +18,6 @@ namespace FreeFrame.Components.Shapes
         const int DefaultY2 = 0;
         #endregion
 
-        #region Geometry properties
-        #endregion
-
         public SVGLine(XmlReader reader) : this(
             Convert.ToInt32(reader["x1"]),
             Convert.ToInt32(reader["y1"]),
@@ -40,15 +37,7 @@ namespace FreeFrame.Components.Shapes
         }
         public override float[] GetVertices() => new float[] { X, Y, Width + X, Height + Y }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: please dont hardcode
-
-        public override void Draw(Vector2i clientSize)
-        {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color, this); // Because that color doesnt depend of the shape TODO: Make it dependend
-        }
         public override string ToString() => $"x1: {X}, y1: {Y}, x2: {Width + X}, y2: {Height + Y}";
-
-
         public override List<Vector2i> GetSelectablePoints()
         {
             List<Vector2i> points = new();
@@ -56,8 +45,6 @@ namespace FreeFrame.Components.Shapes
             points.Add(new Vector2i(Width + X, Height + Y));
             return points;
         }
-
-
         public override void ImplementObject()
         {
             foreach (VertexArrayObject vao in _vaos)
@@ -66,7 +53,6 @@ namespace FreeFrame.Components.Shapes
 
             _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines, this ));
         }
-
         public override void Move(Vector2i position)
         {
             X = position.X;
@@ -74,7 +60,6 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
-
         public override void Resize(Vector2i size)
         {
             Width = size.X;

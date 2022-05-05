@@ -187,6 +187,7 @@ namespace FreeFrame
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
             //ImGui.ShowDemoWindow();
             ShowUI();
+
             _ImGuiController.Render(); // Render ImGui elements
 
             SwapBuffers();
@@ -416,7 +417,7 @@ namespace FreeFrame
             {
                 if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
                 {
-                    _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
+                    _selectedShape = shape;
                     _selector.Select(shape);
                     _userMode = UserMode.Edit;
                     Console.WriteLine("New shape selected through tree view");

@@ -35,33 +35,11 @@ namespace FreeFrame.Components.Shapes
         /// <summary>
         /// Trigge draw element through OpenGL context
         /// </summary>
-        public abstract void Draw(Vector2i clientSize);
-            //if (Window == null)
-            //    throw new Exception("Trying to convert to NDC but no Window is binded");
-
-            // Call me using a child that override me
-
-            //GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //    if (GetType() == typeof(SVGPath))
-            //        GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
-
-            //    // Can't do a switch because a switch need a const and a type is not
-            //    if (GetType() == typeof(SVGLine))
-            //    {
-            //        GL.Enable(EnableCap.LineSmooth);
-            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //        GL.Disable(EnableCap.LineSmooth);
-            //    }
-            //    else if (GetType() == typeof(SVGPath))
-            //    {
-            //        GL.Enable(EnableCap.LineSmooth);
-            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //        GL.Disable(EnableCap.LineSmooth);
-            //    }
-            //    else
-            //        GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
+        public virtual void Draw(Vector2i clientSize)
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.Draw(clientSize, Color, this);
+        }
         public void DeleteObjects()
         {
             foreach (VertexArrayObject vao in _vaos)
@@ -70,7 +48,7 @@ namespace FreeFrame.Components.Shapes
         }
         public Shape Clone()
         {
-            Shape shape = (Shape)this.MemberwiseClone();
+            Shape shape = (Shape)MemberwiseClone();
             return shape;
         }
         /// <summary>

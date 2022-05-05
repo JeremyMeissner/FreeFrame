@@ -78,7 +78,7 @@ namespace FreeFrame
             //    Width = 10,
             //    Height = 10
             //};
-            if (shape.Moveable)
+            if (shape.IsMoveable)
                 _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
 
             // Resize selector (bottom-right)
@@ -96,7 +96,7 @@ namespace FreeFrame
             //    Width = 10,
             //    Height = 10
             //};
-            if (shape.Resizeable)
+            if (shape.IsResizeable)
                 _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
 
         }

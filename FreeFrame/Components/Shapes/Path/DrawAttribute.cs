@@ -33,6 +33,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
         /// 
         public abstract (Vector2i position, Vector2i? controlPosition) Information();
+        public abstract void UpdateLast();
         public abstract float[] GetVertices();
         public abstract uint[] GetVerticesIndexes();
         public abstract void MoveDelta(Vector2i deltaPosition);
@@ -65,25 +66,8 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-        public override float[] GetVertices()
-        {
-            if (IsRelative)
-            {
-                Last.X += X;
-                Last.Y += Y;
-            }
-            else
-            {
-                Last.X = X;
-                Last.Y = Y;
-            }
-
-            return new float[] { }; // Move doesnt have any vertices
-        }
-        public override uint[] GetVerticesIndexes()
-        {
-            return new uint[] { };
-        }
+        public override float[] GetVertices() => Array.Empty<float>(); // Move doesnt have any vertices
+        public override uint[] GetVerticesIndexes() => Array.Empty<uint>();
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
 
@@ -97,6 +81,20 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Y), null);
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                Last.X += X;
+                Last.Y += Y;
+            }
+            else
+            {
+                Last.X = X;
+                Last.Y = Y;
+            }
+        }
     }
     /// <summary>
     /// LineTo, L or l.
@@ -130,17 +128,9 @@ namespace FreeFrame.Components.Shapes.Path
             float[] vertices;
 
             if (IsRelative)
-            {
                 vertices = new float[] { Last.X, Last.Y, Last.X + X, Last.Y + Y };
-                Last.X += X; // Update last position
-                Last.Y += Y; // Update last position
-            }
             else
-            {
                 vertices = new float[] { Last.X, Last.Y, X, Y };
-                Last.X = X; // Update last position
-                Last.Y = Y; // Update last position
-            }
 
             return vertices;
         }
@@ -154,8 +144,8 @@ namespace FreeFrame.Components.Shapes.Path
 
             if (IsRelative)
             {
-                points.Add(new Vector2i(Last.X - X, Last.Y - Y));
                 points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
@@ -171,6 +161,20 @@ namespace FreeFrame.Components.Shapes.Path
             Y += deltaPosition.Y;
         }
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Y), null);
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                Last.X += X; // Update last position
+                Last.Y += Y; // Update last position
+            }
+            else
+            {
+                Last.X = X; // Update last position
+                Last.Y = Y; // Update last position
+            }
+        }
     }
     /// <summary>
     /// HorizontalLineTo, H or h.
@@ -203,12 +207,10 @@ namespace FreeFrame.Components.Shapes.Path
             if (IsRelative)
             {
                 vertices = new float[] { Last.X, Last.Y, Last.X + X, Last.Y };
-                Last.X += X; // Update last position
             }
             else
             {
                 vertices = new float[] { Last.X, Last.Y, X, Last.Y };
-                Last.Y = X; // Update last position
             }
 
             return vertices;
@@ -224,13 +226,13 @@ namespace FreeFrame.Components.Shapes.Path
 
             if (IsRelative)
             {
-                points.Add(new Vector2i(Last.X - X, Last.Y));
                 points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(Last.X + X, Last.Y));
             }
             else
             {
-                points.Add(new Vector2i(Last.X - X, Last.Y));
-                points.Add(new Vector2i(X, Last.Y));
+                points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(X + X, Last.Y));
             }
             return points;
         }
@@ -241,6 +243,18 @@ namespace FreeFrame.Components.Shapes.Path
             //LastY += deltaPosition.Y;
         }
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Last.Y), null);
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                Last.X += X; // Update last position
+            }
+            else
+            {
+                Last.X = X; // Update last position
+            }
+        }
     }
     /// <summary>
     /// VerticalLineTo, V or v.
@@ -273,12 +287,10 @@ namespace FreeFrame.Components.Shapes.Path
             if (IsRelative)
             {
                 vertices = new float[] { Last.X, Last.Y, Last.X, Last.Y + Y };
-                Last.Y += Y; // Update last position
             }
             else
             {
                 vertices = new float[] { Last.X, Last.Y, Last.X, Y };
-                Last.Y = Y; // Update last position
             }
 
             return vertices;
@@ -312,6 +324,18 @@ namespace FreeFrame.Components.Shapes.Path
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
+        }
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                Last.Y += Y; // Update last position
+            }
+            else
+            {
+                Last.Y = Y; // Update last position
+            }
         }
     }
     /// <summary>
@@ -376,14 +400,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > X2)
-                    Last.X1 += X + X2;
-                else if (X < X2)
-                    Last.X1 += X - X2;
-                else
-                    Last.X1 += X;
-                Last.X += X;
-                Last.Y += Y;
             }
             else
             {
@@ -396,14 +412,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > X2)
-                    Last.X1 = X + X2;
-                else if (X < X2)
-                    Last.X1 = X - X2;
-                else
-                    Last.X1 = X;
-                Last.X = X;
-                Last.Y = Y;
             }
 
             return vertices.ToArray();
@@ -418,8 +426,8 @@ namespace FreeFrame.Components.Shapes.Path
             {
                 //points.Add(new Vector2i(Last.X - X1, Last.Y - Y1));
                 //points.Add(new Vector2i(Last.X - X2, Last.Y - Y2));
-                points.Add(new Vector2i(Last.X - X, Last.Y - Y));
                 points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
@@ -447,6 +455,32 @@ namespace FreeFrame.Components.Shapes.Path
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
+        }
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                if (X > X2)
+                    Last.X1 += X + X2;
+                else if (X < X2)
+                    Last.X1 += X - X2;
+                else
+                    Last.X1 += X;
+                Last.X += X;
+                Last.Y += Y;
+            }
+            else
+            {
+                if (X > X2)
+                    Last.X1 = X + X2;
+                else if (X < X2)
+                    Last.X1 = X - X2;
+                else
+                    Last.X1 = X;
+                Last.X = X;
+                Last.Y = Y;
+            }
         }
     }
     /// <summary>
@@ -505,14 +539,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > X2)
-                    Last.X1 += X + X2;
-                else if (X < X2)
-                    Last.X1 += X - X2;
-                else
-                    Last.X1 += X;
-                Last.X += X;
-                Last.Y += Y;
             }
             else
             {
@@ -525,14 +551,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > X2)
-                    Last.X1 = X + X2;
-                else if (X < X2)
-                    Last.X1 = X - X2;
-                else
-                    Last.X1 = X;
-                Last.X = X;
-                Last.Y = Y;
             }
 
             return vertices.ToArray();
@@ -545,10 +563,10 @@ namespace FreeFrame.Components.Shapes.Path
 
             if (IsRelative)
             {
-                points.Add(new Vector2i(Last.X - Last.X1, Last.Y - Last.Y1));
-                points.Add(new Vector2i(Last.X - X2, Last.Y - Y2));
-                points.Add(new Vector2i(Last.X - X, Last.Y - Y));
                 points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(Last.X + Last.X1, Last.Y + Last.Y1));
+                points.Add(new Vector2i(Last.X + X2, Last.Y + Y2));
+                points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
@@ -569,6 +587,32 @@ namespace FreeFrame.Components.Shapes.Path
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
+        }
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                if (X > X2)
+                    Last.X1 += X + X2;
+                else if (X < X2)
+                    Last.X1 += X - X2;
+                else
+                    Last.X1 += X;
+                Last.X += X;
+                Last.Y += Y;
+            }
+            else
+            {
+                if (X > X2)
+                    Last.X1 = X + X2;
+                else if (X < X2)
+                    Last.X1 = X - X2;
+                else
+                    Last.X1 = X;
+                Last.X = X;
+                Last.Y = Y;
+            }
         }
     }
     /// <summary>
@@ -622,14 +666,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > X1)
-                    Last.X1 += X + X1;
-                else if (X < X1)
-                    Last.X1 += X - X1;
-                else
-                    Last.X1 += X;
-                Last.X += X;
-                Last.Y += Y;
             }
             else
             {
@@ -642,14 +678,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > X1)
-                    Last.X1 = X + X1;
-                else if (X < X1)
-                    Last.X1 = X - X1;
-                else
-                    Last.X1 = X;
-                Last.X = X;
-                Last.Y = Y;
             }
 
             return vertices.ToArray();
@@ -662,9 +690,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             if (IsRelative)
             {
-                points.Add(new Vector2i(Last.X - X1, Last.Y - Y1));
-                points.Add(new Vector2i(Last.X - X, Last.Y - Y));
                 points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(Last.X + X1, Last.Y + Y1));
+                points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
@@ -685,6 +713,32 @@ namespace FreeFrame.Components.Shapes.Path
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
+        }
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                if (X > X1)
+                    Last.X1 += X + X1;
+                else if (X < X1)
+                    Last.X1 += X - X1;
+                else
+                    Last.X1 += X;
+                Last.X += X;
+                Last.Y += Y;
+            }
+            else
+            {
+                if (X > X1)
+                    Last.X1 = X + X1;
+                else if (X < X1)
+                    Last.X1 = X - X1;
+                else
+                    Last.X1 = X;
+                Last.X = X;
+                Last.Y = Y;
+            }
         }
     }
     /// <summary>
@@ -732,14 +786,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > Last.X1)
-                    Last.X1 += X + Last.X1;
-                else if (X < Last.X1)
-                    Last.X1 += X - Last.X1;
-                else
-                    Last.X1 += X;
-                Last.X += X;
-                Last.Y += Y;
             }
             else
             {
@@ -752,14 +798,6 @@ namespace FreeFrame.Components.Shapes.Path
 
                     vertices.AddRange(new float[] { x, y });
                 }
-                if (X > Last.X1)
-                    Last.X1 = X + Last.X1;
-                else if (X < Last.X1)
-                    Last.X1 = X - Last.X1;
-                else
-                    Last.X1 = X;
-                Last.X = X;
-                Last.Y = Y;
             }
 
             return vertices.ToArray();
@@ -772,9 +810,9 @@ namespace FreeFrame.Components.Shapes.Path
 
             if (IsRelative)
             {
-                points.Add(new Vector2i(Last.X - Last.X1, Last.Y - Last.Y1));
-                points.Add(new Vector2i(Last.X - X, Last.Y - Y));
                 points.Add(new Vector2i(Last.X, Last.Y));
+                points.Add(new Vector2i(Last.X + Last.X1, Last.Y + Last.Y1));
+                points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
@@ -795,6 +833,32 @@ namespace FreeFrame.Components.Shapes.Path
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
+        }
+
+        public override void UpdateLast()
+        {
+            if (IsRelative)
+            {
+                if (X > Last.X1)
+                    Last.X1 += X + Last.X1;
+                else if (X < Last.X1)
+                    Last.X1 += X - Last.X1;
+                else
+                    Last.X1 += X;
+                Last.X += X;
+                Last.Y += Y;
+            }
+            else
+            {
+                if (X > Last.X1)
+                    Last.X1 = X + Last.X1;
+                else if (X < Last.X1)
+                    Last.X1 = X - Last.X1;
+                else
+                    Last.X1 = X;
+                Last.X = X;
+                Last.Y = Y;
+            }
         }
     }
 
@@ -869,6 +933,11 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", IsRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), X, Y);
+
+        public override void UpdateLast()
+        {
+            throw new NotImplementedException();
+        }
     }
     /// <summary>
     /// ClosePath, Z or z.
@@ -905,5 +974,10 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
         public override string ToString() => "z";
+
+        public override void UpdateLast()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

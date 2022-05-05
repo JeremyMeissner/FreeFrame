@@ -43,7 +43,7 @@ namespace FreeFrame.Components.Shapes
 
         public SVGPath(XmlReader reader) //: this()
         {
-            Resizeable = false;
+            IsResizeable = false;
             string d = reader["d"] ?? throw new Exception("d not here"); // TODO: Error handler if d is note here
             Match match;
             int startIndex = 0;
@@ -105,17 +105,18 @@ namespace FreeFrame.Components.Shapes
                 }
             }
 
-            // Update common properties
+            // Update common properties, use the given attributes
             List<Vector2i> points = GetSelectablePoints();
             X = points.Min(i => i.X);
             Y = points.Min(i => i.Y);
             Width = points.Max(i => i.X) - points.Min(i => i.X);
             Height = points.Max(i => i.Y) - points.Min(i => i.Y);
-            // ImplementObject();
+
+            ImplementObject();
         }
         public override void ImplementObject()
         {
-            Move(new Vector2i(X, Y));
+            Move(new Vector2i(X, Y)); // Update the position since the attr doesnt use the X and Y variables directly
         }
 
         public override void Draw(Vector2i clientSize)
@@ -126,62 +127,39 @@ namespace FreeFrame.Components.Shapes
         public override float[] GetVertices() => new float[] { };
         public override uint[] GetVerticesIndexes() => new uint[] { };
 
-        public override List<Vector2i> GetSelectablePoints()
-        {
-            List<Vector2i> points = new List<Vector2i>();
-
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
-
-            //DrawAttribute previousAttribute = new MoveTo(0, 0);
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                if (attr.GetType() == typeof(CurveTo) ||
-                    attr.GetType() == typeof(SmoothCurveTo) ||
-                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(EllipticalArc))
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
-                }
-                else
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
-                }
-                points.AddRange(attr.GetSelectablePoints());
-                //previousAttribute = attr;
-            }
-            return points;
-        }
-
         public override void Move(Vector2i position)
         {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
-
+            int x = 0, y = 0;
             int? deltaX = null, deltaY = null;
+            List<Vector2i> points = GetSelectablePoints();
 
-            //DrawAttribute previousAttribute = new MoveTo(0, 0);
+            DeleteObjects(); // Clear the vaos
+
+            if (points.Count > 0)
+            {
+                x = points.Min(i => i.X); // Get current min X and Y of the path
+                y = points.Min(i => i.Y);
+            }
+
             foreach (DrawAttribute attr in DrawAttributes)
             {
-                if (attr.GetType() == typeof(MoveTo) && attr.IsRelative == false)
+                Type attrType = attr.GetType();
+                if (attrType == typeof(MoveTo) && attr.IsRelative == false) // Update position of each absolute MoveTo
                 {
                     if (deltaX == null || deltaY == null)
                     {
-                        // Get delta X and Y one time
-                        deltaX = position.X - X;
-                        deltaY = position.Y - Y;
+                        // Get delta X and Y only one time
+                        deltaX = position.X - x;
+                        deltaY = position.Y - y;
                     }
                     attr.X += (int)deltaX;
                     attr.Y += (int)deltaY;
                 }
-                if (attr.GetType() == typeof(CurveTo) ||
-                    attr.GetType() == typeof(SmoothCurveTo) ||
-                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(EllipticalArc))
+                if (attrType == typeof(CurveTo) ||
+                    attrType == typeof(SmoothCurveTo) ||
+                    attrType == typeof(QuadraticBezierCurveTo) ||
+                    attrType == typeof(SmoothQuadraticBezierCurveTo) ||
+                    attrType == typeof(EllipticalArc))
                 {
                     _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }
@@ -189,29 +167,25 @@ namespace FreeFrame.Components.Shapes
                 {
                     _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
                 }
-                //previousAttribute = attr;
+                attr.UpdateLast(); // Update Last's inner variables 
             }
+
             // Update common properties
-            List<Vector2i> points = GetSelectablePoints();
-            X = points.Min(i => i.X);
-            Y = points.Min(i => i.Y);
-            Width = points.Max(i => i.X) - points.Min(i => i.X);
-            Height = points.Max(i => i.Y) - points.Min(i => i.Y);
-
-            //List<Vector2i> points = GetSelectablePoints();
-            //Properties = new DefaultProperties()
-            //{
-            //    x = points.Min(i => i.X),
-            //    y = points.Min(i => i.Y),
-            //    width = points.Max(i => i.X) - points.Min(i => i.X),
-            //    height = points.Max(i => i.Y) - points.Min(i => i.Y),
-            //    color = Properties.color
-            //};
-
-            // ImplementObject();
+            X = position.X;
+            Y = position.Y;
         }
-
         public override void Resize(Vector2i size) => throw new NotImplementedException("Can't resize a path");
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new();
+
+            foreach (DrawAttribute attr in DrawAttributes)
+            {
+                points.AddRange(attr.GetSelectablePoints());
+                attr.UpdateLast(); // Each attr depend on the previous. The previous element is the last element that called GetVertices() 
+            }
+            return points;
+        }
 
         public override string ToString()
         {

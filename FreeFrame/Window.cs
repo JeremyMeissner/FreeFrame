@@ -90,8 +90,8 @@ namespace FreeFrame
         {
             base.OnUpdateFrame(e);
 
-            //if (_selectedShape != null)
-            //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
+            if (_selectedShape != null)
+                Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)
@@ -153,13 +153,13 @@ namespace FreeFrame
                 }
                 else
                 {
-                    //_selectedShape.UpdateProperties(properties);
                     if (_selectedShape.X != _ioX ||
                         _selectedShape.Y != _ioY ||
                         _selectedShape.Width != _ioWidth ||
                         _selectedShape.Height != _ioHeight ||
-                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W))
+                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W)) // If a properties need to be updated
                     {
+                        Console.WriteLine("Update properties");
                         _selectedShape.X = _ioX;
                         _selectedShape.Y = _ioY;
                         _selectedShape.Width = _ioWidth;
@@ -286,7 +286,7 @@ namespace FreeFrame
            // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
             switch (_userMode)
             {
-                case UserMode.Create:
+                case UserMode.Create: // Create mode
                     _selectedShape = _createMode switch
                     {
                         CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y),
@@ -295,17 +295,17 @@ namespace FreeFrame
                         _ => throw new Exception("A create mode need to be selected"),
                     };
                     _shapes.Add(_selectedShape);
-                    _userMode = UserMode.Edit;
                     _selectorType = SelectorType.Resize;
-                    OnLeftMouseEnter();
+                    _userMode = UserMode.Edit;
+                    OnLeftMouseEnter(); // Change user mode and call same function in order to switch to edit mode
                     break;
-                case UserMode.Edit:
+                case UserMode.Edit: // Edit mode
                     if (_selectedShape != null)
                     {
                         switch (_selectorType)
                         {
                             case SelectorType.Move:
-                                if (_selectedShape.Moveable)
+                                if (_selectedShape.IsMoveable)
                                 {
                                     _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
                                     _selector.Select(_selectedShape);
@@ -313,7 +313,7 @@ namespace FreeFrame
                                 }
                                 break;
                             case SelectorType.Resize:
-                                if (_selectedShape.Resizeable)
+                                if (_selectedShape.IsResizeable)
                                 {
                                     float width, height;
                                     width = MouseState.X - _selectedShape.X;
@@ -362,18 +362,18 @@ namespace FreeFrame
 
             ImGui.Text("Parameters");
             ImGui.Spacing();
-            if (_selectedShape == null || _selectedShape.Moveable == false)
+            if (_selectedShape == null || _selectedShape.IsMoveable == false)
                 ImGui.BeginDisabled();
             ImGui.InputInt("X", ref _ioX);
             ImGui.InputInt("Y", ref _ioY);
-            if (_selectedShape == null || _selectedShape.Moveable == false)
+            if (_selectedShape == null || _selectedShape.IsMoveable == false)
             {
                 ImGui.EndDisabled();
                 HelpMarker("This shape is not moveable");
             }
 
             ImGui.Spacing();
-            if (_selectedShape == null || _selectedShape.Resizeable == false)
+            if (_selectedShape == null || _selectedShape.IsResizeable == false)
                 ImGui.BeginDisabled();
             if (ImGui.InputInt("Width", ref _ioWidth))
             {
@@ -387,7 +387,7 @@ namespace FreeFrame
                     if (_selectedShape.GetType() == typeof(SVGCircle))
                         _ioWidth = _ioHeight;
             }
-            if (_selectedShape == null || _selectedShape.Resizeable == false)
+            if (_selectedShape == null || _selectedShape.IsResizeable == false)
             {
                 ImGui.EndDisabled();
                 HelpMarker("This shape is not resizeable");

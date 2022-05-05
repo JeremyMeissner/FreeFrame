@@ -8,8 +8,8 @@ namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape
     {
-        bool _moveable = true;
-        bool _resizeable = true;
+        bool _isMoveable = true;
+        bool _isResizeable = true;
         #region Common Geometry Properties
         private int _x, _y, _width, _height;
         private Color4 _color;
@@ -21,8 +21,8 @@ namespace FreeFrame.Components.Shapes
         public virtual int Width { get => _width; set => _width = value; }
         public virtual int Height { get => _height; set => _height = value; }
         public Color4 Color { get => _color; set => _color = value; }
-        public bool Moveable { get => _moveable; protected set => _moveable = value; }
-        public bool Resizeable { get => _resizeable; protected set => _resizeable = value; }
+        public bool IsMoveable { get => _isMoveable; protected set => _isMoveable = value; }
+        public bool IsResizeable { get => _isResizeable; protected set => _isResizeable = value; }
 
         List<Shape>[] _timeline;
 

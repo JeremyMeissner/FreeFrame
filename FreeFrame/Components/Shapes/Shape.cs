@@ -15,9 +15,10 @@ namespace FreeFrame.Components.Shapes
         #region Common Geometry Properties
         private int _x, _y, _width, _height, _angle, _cornerRadius;
         private Color4 _color;
+        Guid _id;
         #endregion
 
-        protected List<VertexArrayObject> _vaos;
+        private List<VertexArrayObject> vaos;
         public virtual int X { get => _x; set => _x = value; }
         public virtual int Y { get => _y; set => _y = value; }
         public virtual int Width { get => _width; set => _width = value; }
@@ -29,13 +30,14 @@ namespace FreeFrame.Components.Shapes
         public bool IsAngleChangeable { get => _isAngleChangeable; set => _isAngleChangeable = value; }
         public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
         public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
-
-        List<Shape>[] _timeline;
+        public Guid Id { get => _id; private  set => _id = value; }
+        public List<VertexArrayObject> Vaos { get => vaos; protected set => vaos = value; }
 
         public Shape() 
         {
-            _vaos = new List<VertexArrayObject>();
+            Vaos = new List<VertexArrayObject>();
             Color = Color4.Black;
+            Id = Guid.NewGuid();
         }
 
         /// <summary>
@@ -43,20 +45,19 @@ namespace FreeFrame.Components.Shapes
         /// </summary>
         public virtual void Draw(Vector2i clientSize)
         {
-            foreach (VertexArrayObject vao in _vaos)
+            Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
+            foreach (VertexArrayObject vao in Vaos)
                 vao.Draw(clientSize, Color, this);
         }
         public void DeleteObjects()
         {
-            foreach (VertexArrayObject vao in _vaos)
+            foreach (VertexArrayObject vao in Vaos)
                 vao.DeleteObjects();
-            _vaos.Clear();
+            Vaos.Clear();
         }
-        public Shape Clone()
-        {
-            Shape shape = (Shape)MemberwiseClone();
-            return shape;
-        }
+        public Shape Clone() => (Shape)MemberwiseClone();
+
+
         /// <summary>
         /// Should return the vertices position in NDC format
         /// </summary>

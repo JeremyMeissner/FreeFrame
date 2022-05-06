@@ -12,20 +12,23 @@ namespace FreeFrame
 {
     public class VertexArrayObject
     {
-        private ShaderType _shaderType;
-        private int _vertexBufferObject;
-        private int _vertexArrayObject;
-        private int _indexBufferObject;
+        private int _vertexBufferObjectID;
+        private int _vertexArrayObjectID;
+        private int _indexBufferObjectID;
         private int _indexCount;
         private PrimitiveType _primitiveType;
         private Shader _shader;
 
+        public int VertexBufferObjectID { get => _vertexBufferObjectID; private set => _vertexBufferObjectID = value; }
+        public int VertexArrayObjectID { get => _vertexArrayObjectID; private set => _vertexArrayObjectID = value; }
+        public int IndexBufferObjectID { get => _indexBufferObjectID; private set => _indexBufferObjectID = value; }
+
         public VertexArrayObject(PrimitiveType primitiveType)
         {
             _primitiveType = primitiveType;
-            _vertexArrayObject = GL.GenVertexArray();
-            _vertexBufferObject = GL.GenBuffer();
-            _indexBufferObject = GL.GenBuffer();
+            VertexArrayObjectID = GL.GenVertexArray();
+            VertexBufferObjectID = GL.GenBuffer();
+            IndexBufferObjectID = GL.GenBuffer();
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
         }
         public VertexArrayObject(float[] vertices, uint[] indexes, PrimitiveType primitiveType) : this(primitiveType)
@@ -62,7 +65,7 @@ namespace FreeFrame
             Matrix4 transform = Matrix4.Identity;
             _shader.SetUniformMat4(uTransformation, transform);
 
-            GL.BindVertexArray(_vertexArrayObject);
+            GL.BindVertexArray(VertexArrayObjectID);
 
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
@@ -106,7 +109,7 @@ namespace FreeFrame
                 _shader.SetUniformVec2(uPosition, new Vector2(shape.X, shape.Y)); // Invert y axis
             }
 
-            GL.BindVertexArray(_vertexArrayObject);
+            GL.BindVertexArray(VertexArrayObjectID);
 
             GL.Enable(EnableCap.Blend);
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
@@ -116,24 +119,24 @@ namespace FreeFrame
         public void ImplementObjects(float[] vertices, uint[] indexes)
         {
             // VAO
-            GL.BindVertexArray(_vertexArrayObject);
+            GL.BindVertexArray(VertexArrayObjectID);
 
             string label = $"VAO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.VertexArray, _vertexArrayObject, label.Length, label);
+            GL.ObjectLabel(ObjectLabelIdentifier.VertexArray, VertexArrayObjectID, label.Length, label);
 
             // VBO
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObjectID);
             GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
 
             label = $"VBO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _vertexBufferObject, label.Length, label);
+            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, VertexBufferObjectID, label.Length, label);
 
             // IBO
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBufferObject);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndexBufferObjectID);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexes.Length * sizeof(uint), indexes, BufferUsageHint.StaticDraw);
 
             label = $"IBO {GetType().Name}:";
-            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, _indexBufferObject, label.Length, label);
+            GL.ObjectLabel(ObjectLabelIdentifier.Buffer, IndexBufferObjectID, label.Length, label);
 
             // Link Attributes
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0); // x, y;
@@ -143,9 +146,9 @@ namespace FreeFrame
         }
         public void DeleteObjects()
         {
-            GL.DeleteBuffer(_vertexBufferObject);
-            GL.DeleteBuffer(_indexBufferObject);
-            GL.DeleteVertexArray(_vertexArrayObject);
+            GL.DeleteBuffer(VertexBufferObjectID);
+            GL.DeleteBuffer(IndexBufferObjectID);
+            GL.DeleteVertexArray(VertexArrayObjectID);
             _shader.Delete();
         }
     }

@@ -43,7 +43,9 @@ namespace FreeFrame
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
-        Vector2i MouseOriginalState;
+        Vector2i _mouseOriginalState;
+
+        SortedDictionary<int, List<Shape>> _timeline;
 
         SelectorType _selectorType = SelectorType.None;
 
@@ -76,7 +78,9 @@ namespace FreeFrame
 
             _selector = new Selector();
 
-            MouseOriginalState = new Vector2i(0, 0);
+            _mouseOriginalState = new Vector2i(0, 0);
+
+            _timeline = new SortedDictionary<int, List<Shape>>();
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
@@ -116,6 +120,20 @@ namespace FreeFrame
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
+            if (KeyboardState.IsKeyDown(Keys.Q))
+            {
+                //Console.WriteLine("Draw me please");
+                foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                {
+                    foreach (Shape shape in shapes.Value)
+                    {
+                        shape.ImplementObject();
+                        shape.Draw(ClientSize);
+                    }
+                }
+                if (_selectedShape != null)
+                    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
+            }
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
                 ResetSelection();
@@ -124,6 +142,8 @@ namespace FreeFrame
             {
                 if (_selectedShape != null)
                 {
+                    RemoveInTimeline(_selectedShape);
+
                     _shapes.Remove(_selectedShape);
                     _selectedShape.DeleteObjects();
 
@@ -153,7 +173,7 @@ namespace FreeFrame
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             foreach (Shape shape in _shapes)
             {
-                // shape.ImplementObject();
+                //shape.ImplementObject(); // Reset VAOs
                 shape.Draw(ClientSize);
             }
 
@@ -192,7 +212,7 @@ namespace FreeFrame
             switch (_userMode)
             {
                 case UserMode.Edit:
-                    _selector.Draw(ClientSize);
+                    _selector.Draw(ClientSize); // Only draw selector on edit mode
                     break;
                 case UserMode.Create:
                     break;
@@ -203,14 +223,47 @@ namespace FreeFrame
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
-            ImGui.ShowDemoWindow();
+            //ImGui.ShowDemoWindow();
             ShowUI();
+            ShowUIDebug();
 
             _ImGuiController.Render(); // Render ImGui elements
 
             SwapBuffers();
         }
-
+        public void RemoveInTimeline(Shape shapeToRemove)
+        {
+            List<int> shapesToDelete = new();
+            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline) // Remove element in the timeline
+            {
+                foreach (Shape shape in shapes.Value)
+                {
+                    if (shape.Id == shapeToRemove.Id)
+                    {
+                        shape.DeleteObjects();
+                        shapes.Value.Remove(shape);
+                        break; // Because we know that there is no more of this shape in the current list
+                    }
+                }
+                if (shapes.Value.Count == 0) // Remove shapes in timeline
+                    shapesToDelete.Add(shapes.Key);
+            }
+            foreach (int id in shapesToDelete)
+                _timeline.Remove(id);
+        }
+        public void ResetTimeline()
+        {
+            List<int> shapesToDelete = new();
+            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline) // Remove element in the timeline
+            {
+                foreach (Shape shape in shapes.Value)
+                {
+                        shape.DeleteObjects();
+                }
+                shapes.Value.Clear();
+            }
+            _timeline.Clear();
+        }
         protected override void OnUnload()
         {
             base.OnUnload();
@@ -280,8 +333,8 @@ namespace FreeFrame
                 case UserMode.Edit:
                     if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
                     {
-                        MouseOriginalState.X = (int)MouseState.X;
-                        MouseOriginalState.Y = (int)MouseState.Y;
+                        _mouseOriginalState.X = (int)MouseState.X;
+                        _mouseOriginalState.Y = (int)MouseState.Y;
 
                         (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
                         if (click)
@@ -336,10 +389,10 @@ namespace FreeFrame
                                     float x = MouseState.X, y = MouseState.Y;
                                     if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
                                     {
-                                        if (Math.Abs(MouseOriginalState.X - x) > Math.Abs(MouseOriginalState.Y - y))
-                                            y = MouseOriginalState.Y;
+                                        if (Math.Abs(_mouseOriginalState.X - x) > Math.Abs(_mouseOriginalState.Y - y))
+                                            y = _mouseOriginalState.Y;
                                         else
-                                            x = MouseOriginalState.X;
+                                            x = _mouseOriginalState.X;
                                     }
                                     _selectedShape.Move(new Vector2i((int)x, (int)y));
                                     _selector.Select(_selectedShape);
@@ -381,6 +434,93 @@ namespace FreeFrame
         {
             _selectorType = SelectorType.None;
         }
+
+        public void ShowUIDebug()
+        {
+            ImGui.Begin("Debug");
+            ImGui.Text("Selected shape:");
+            if (_selectedShape != null)
+            {
+                ImGui.Text(string.Format("Name: {0}", _selectedShape.GetType().Name));
+                ImGui.Text(string.Format("UID: {0}", _selectedShape.Id));
+                ImGui.Text(string.Format("Hash: {0}", _selectedShape.GetHashCode()));
+            }
+            else
+                ImGui.Text("none");
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (_selectedShape != null)
+            {
+                foreach (VertexArrayObject vao in _selectedShape.Vaos)
+                {
+                    ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
+                    ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));
+                    ImGui.Text(String.Format("IBO: {0}", vao.IndexBufferObjectID));
+                }
+            }
+            else
+                ImGui.Text("none");
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.Text("Context:");
+            ImGui.Text(String.Format("User mode: {0}", _userMode.ToString()));
+            ImGui.Text(String.Format("Create mode: {0}", _createMode.ToString()));
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Text("Timeline");
+            int numberColumns = 0, numberRows = 0;
+
+            numberColumns = _timeline.Count;
+            if (_timeline.Count > 0)
+                numberRows = _timeline.Max(i => i.Value != null ? i.Value.Count : 0);
+
+            if (numberColumns > 0)
+            {
+                if (ImGui.BeginTable("elements", numberColumns, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
+                {
+                    foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                        if (shapes.Value != null)
+                            ImGui.TableSetupColumn(shapes.Key.ToString());
+                    ImGui.TableHeadersRow();
+
+                    for (int row = 0; row < numberRows; row++)
+                    {
+                        int columnIndex = 0;
+                        ImGui.TableNextRow();
+                        foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                        {
+                            if (shapes.Value != null)
+                            {
+                                if (shapes.Value.Count > row)
+                                {
+                                    ImGui.TableSetColumnIndex(columnIndex);
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].GetType().Name));
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].Id));
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].GetHashCode()));
+                                    foreach (VertexArrayObject vao in shapes.Value[row].Vaos)
+                                    {
+                                        ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
+                                        ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));
+                                        ImGui.Text(String.Format("IBO: {0}", vao.IndexBufferObjectID));
+                                    }
+                                }
+                                columnIndex++;
+                            }
+                        }
+                    }
+                    ImGui.EndTable();
+                }
+            }
+            ImGui.End();
+        }
         public void ShowUI()
         {
             // ImGui settings
@@ -409,7 +549,7 @@ namespace FreeFrame
                 if (_selectedShape == null || _selectedShape.IsMoveable == false)
                 {
                     ImGui.EndDisabled();
-                    HelpMarker("This shape is not moveable");
+                    //HelpMarker("This shape is not moveable");
                     ImGui.BeginDisabled();
                 }
                 ImGui.TableSetColumnIndex(1);
@@ -441,7 +581,7 @@ namespace FreeFrame
                 if (_selectedShape == null || _selectedShape.IsResizeable == false)
                 {
                     ImGui.EndDisabled();
-                    HelpMarker("This shape is not resizeable");
+                    //HelpMarker("This shape is not resizeable");
                     ImGui.BeginDisabled();
                 }
                 ImGui.TableSetColumnIndex(1);
@@ -505,7 +645,8 @@ namespace FreeFrame
                 ImGui.PushItemWidth(82);
                 if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
                     ImGui.BeginDisabled();
-                ImGui.InputInt("##Radius", ref _ioCornerRadius);
+                if (ImGui.InputInt("##Radius", ref _ioCornerRadius))
+                    _ioCornerRadius = Math.Max(_ioCornerRadius, 0);
                 if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
                     ImGui.EndDisabled();
 
@@ -558,7 +699,27 @@ namespace FreeFrame
             ImGui.Text("Timeline");
             ImGui.Spacing();
             ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
+            if (_selectedShape != null)
+            {
+                if (ImGui.Button(String.Format("Create keyframe for {0}", _selectedShape.GetType().Name)))
+                {
+                    if (_timeline.ContainsKey(_ioTimeline) == false || _timeline[_ioTimeline] == null)
+                        _timeline[_ioTimeline] = new List<Shape>();
+
+                    foreach (Shape shape in _timeline[_ioTimeline])
+                    {
+                        if (shape.Id == _selectedShape.Id)
+                        {
+                            Console.WriteLine("Already exist");
+                            _timeline[_ioTimeline].Remove(shape);
+                            break;
+                        }
+                    }
+                    _timeline[_ioTimeline].Add(_selectedShape.Clone());
+                }
+            }
             ImGui.End();
+
 
             // Navbar side
             ImGui.Begin("NavBar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.MenuBar);
@@ -626,6 +787,8 @@ namespace FreeFrame
                 var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), ".svg");
                 if (picker.Draw())
                 {
+                    ResetSelection();
+                    ResetTimeline();
                     (_shapes, bool compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)

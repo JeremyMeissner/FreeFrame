@@ -45,11 +45,11 @@ namespace FreeFrame.Components.Shapes
 
         public override void ImplementObject()
         {
-            foreach (VertexArrayObject vao in _vaos)
+            foreach (VertexArrayObject vao in Vaos)
                 vao.DeleteObjects();
-            _vaos.Clear();
+            Vaos.Clear();
 
-            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
+            Vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
         }
 
         public override void Move(Vector2i position)

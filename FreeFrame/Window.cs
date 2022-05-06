@@ -142,7 +142,7 @@ namespace FreeFrame
             {
                 if (_selectedShape != null)
                 {
-                    RemoveInTimeline(_selectedShape);
+                    RemoveElementInTimeline(_selectedShape);
 
                     _shapes.Remove(_selectedShape);
                     _selectedShape.DeleteObjects();
@@ -223,7 +223,7 @@ namespace FreeFrame
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
-            //ImGui.ShowDemoWindow();
+            ImGui.ShowDemoWindow();
             ShowUI();
             ShowUIDebug();
 
@@ -231,7 +231,7 @@ namespace FreeFrame
 
             SwapBuffers();
         }
-        public void RemoveInTimeline(Shape shapeToRemove)
+        public void RemoveElementInTimeline(Shape shapeToRemove)
         {
             List<int> shapesToDelete = new();
             foreach (KeyValuePair<int, List<Shape>> shapes in _timeline) // Remove element in the timeline
@@ -253,13 +253,10 @@ namespace FreeFrame
         }
         public void ResetTimeline()
         {
-            List<int> shapesToDelete = new();
             foreach (KeyValuePair<int, List<Shape>> shapes in _timeline) // Remove element in the timeline
             {
                 foreach (Shape shape in shapes.Value)
-                {
-                        shape.DeleteObjects();
-                }
+                    shape.DeleteObjects();
                 shapes.Value.Clear();
             }
             _timeline.Clear();
@@ -689,6 +686,26 @@ namespace FreeFrame
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(0, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Animation");
+            ImGui.Spacing();
+
+
+            if (_timeline.Count > 0 && _timeline.ContainsKey(_ioTimeline))
+            {
+                foreach (Shape shape in _timeline[_ioTimeline])
+                {
+                    // TODO: Only show the edited fields
+                    ImGui.Text(shape.GetType().Name);
+                    ImGui.Indent();
+                    ImGui.Text(string.Format("X: {0}", shape.X));
+                    ImGui.Text(string.Format("Y: {0}", shape.Y));
+                    ImGui.Text(string.Format("Width: {0}", shape.Width));
+                    ImGui.Text(string.Format("Height: {0}", shape.Height));
+                    ImGui.Text(string.Format("Color: {0}", shape.Color.ToString()));
+                    ImGui.Unindent();
+                }
+            }
+
+
             ImGui.End();
 
 

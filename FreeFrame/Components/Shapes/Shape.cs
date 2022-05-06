@@ -10,8 +10,10 @@ namespace FreeFrame.Components.Shapes
     {
         bool _isMoveable = true;
         bool _isResizeable = true;
+        bool _isAngleChangeable = true;
+        bool _isCornerRadiusChangeable = true;
         #region Common Geometry Properties
-        private int _x, _y, _width, _height;
+        private int _x, _y, _width, _height, _angle, _cornerRadius;
         private Color4 _color;
         #endregion
 
@@ -23,6 +25,10 @@ namespace FreeFrame.Components.Shapes
         public Color4 Color { get => _color; set => _color = value; }
         public bool IsMoveable { get => _isMoveable; protected set => _isMoveable = value; }
         public bool IsResizeable { get => _isResizeable; protected set => _isResizeable = value; }
+        public int Angle { get => _angle; set => _angle = value; }
+        public bool IsAngleChangeable { get => _isAngleChangeable; set => _isAngleChangeable = value; }
+        public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
+        public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
 
         List<Shape>[] _timeline;
 

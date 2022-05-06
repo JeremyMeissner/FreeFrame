@@ -14,6 +14,7 @@ using FreeFrame.Lib.FilePicker;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using static FreeFrame.Selector;
+using System.Reflection;
 
 namespace FreeFrame
 {
@@ -31,6 +32,8 @@ namespace FreeFrame
             Rectangle,
             Circle
         }
+        int _ioAngle;
+        int _ioCornerRadius;
         int _ioX;
         int _ioY;
         int _ioWidth;
@@ -39,6 +42,8 @@ namespace FreeFrame
         int _ioTimeline;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+
+        Vector2i MouseOriginalState;
 
         SelectorType _selectorType = SelectorType.None;
 
@@ -71,6 +76,8 @@ namespace FreeFrame
 
             _selector = new Selector();
 
+            MouseOriginalState = new Vector2i(0, 0);
+
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
         protected override void OnResize(ResizeEventArgs e)
@@ -90,8 +97,15 @@ namespace FreeFrame
         {
             base.OnUpdateFrame(e);
 
-            if (_selectedShape != null)
-                Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
+            Title = String.Format("FreeFrame - x: {0} y: {1}", MouseState.X, MouseState.Y);
+            // Update title based on current context
+            //if (_selectedShape != null)
+            //    Title = String.Format("FreeFrame - Selected: {0} Mode: {1}", _selectedShape.GetType().Name, _userMode.ToString());
+            //else
+            //    Title = "FreeFrame";
+
+            //if (_selectedShape != null)
+            //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)
@@ -117,7 +131,7 @@ namespace FreeFrame
                 }
             }
 
-            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D)) // TODO: Fix duplication
+            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false)) // TODO: Fix duplication
             {
                 if (_selectedShape != null)
                 {
@@ -157,7 +171,9 @@ namespace FreeFrame
                         _selectedShape.Y != _ioY ||
                         _selectedShape.Width != _ioWidth ||
                         _selectedShape.Height != _ioHeight ||
-                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W)) // If a properties need to be updated
+                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W) ||
+                        _selectedShape.Angle != _ioAngle ||
+                        _selectedShape.CornerRadius != _ioCornerRadius) // If a properties need to be updated
                     {
                         Console.WriteLine("Update properties");
                         _selectedShape.X = _ioX;
@@ -165,6 +181,8 @@ namespace FreeFrame
                         _selectedShape.Width = _ioWidth;
                         _selectedShape.Height = _ioHeight;
                         _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
+                        _selectedShape.Angle = _ioAngle;
+                        _selectedShape.CornerRadius = _ioCornerRadius;
 
                         _selectedShape.ImplementObject();
                         _selector.Select(_selectedShape);
@@ -185,7 +203,7 @@ namespace FreeFrame
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
-            //ImGui.ShowDemoWindow();
+            ImGui.ShowDemoWindow();
             ShowUI();
 
             _ImGuiController.Render(); // Render ImGui elements
@@ -217,6 +235,8 @@ namespace FreeFrame
                 _ioWidth = _selectedShape.Width;
                 _ioHeight = _selectedShape.Height;
                 _ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
+                _ioAngle = _selectedShape.Angle;
+                _ioCornerRadius = _selectedShape.CornerRadius;
             }
         }
         public void ResetSelection()
@@ -231,6 +251,8 @@ namespace FreeFrame
             _ioWidth = 0;
             _ioHeight = 0;
             _ioColor = new System.Numerics.Vector4(0);
+            _ioAngle = 0;
+            _ioCornerRadius = 0;
         }
         public Shape? GetNearestShape(Vector2i currentLocation)
         {
@@ -258,6 +280,9 @@ namespace FreeFrame
                 case UserMode.Edit:
                     if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
                     {
+                        MouseOriginalState.X = (int)MouseState.X;
+                        MouseOriginalState.Y = (int)MouseState.Y;
+
                         (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
                         if (click)
                         {
@@ -284,7 +309,7 @@ namespace FreeFrame
         }
         public void OnLeftMouseEnter() // TODO: Rename this
         {
-           // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
+            // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
             switch (_userMode)
             {
                 case UserMode.Create: // Create mode
@@ -308,7 +333,15 @@ namespace FreeFrame
                             case SelectorType.Move:
                                 if (_selectedShape.IsMoveable)
                                 {
-                                    _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                                    float x = MouseState.X, y = MouseState.Y;
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    {
+                                        if (Math.Abs(MouseOriginalState.X - x) > Math.Abs(MouseOriginalState.Y - y))
+                                            y = MouseOriginalState.Y;
+                                        else
+                                            x = MouseOriginalState.X;
+                                    }
+                                    _selectedShape.Move(new Vector2i((int)x, (int)y));
                                     _selector.Select(_selectedShape);
                                     UpdateIO_UI();
                                 }
@@ -365,33 +398,118 @@ namespace FreeFrame
             ImGui.Spacing();
             if (_selectedShape == null || _selectedShape.IsMoveable == false)
                 ImGui.BeginDisabled();
-            ImGui.InputInt("X", ref _ioX);
-            ImGui.InputInt("Y", ref _ioY);
-            if (_selectedShape == null || _selectedShape.IsMoveable == false)
+
+            // Position parameters
+            if (ImGui.BeginTable("Position", 2))
             {
-                ImGui.EndDisabled();
-                HelpMarker("This shape is not moveable");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text("X");
+                ImGui.SameLine();
+                if (_selectedShape == null || _selectedShape.IsMoveable == false)
+                {
+                    ImGui.EndDisabled();
+                    HelpMarker("This shape is not moveable");
+                    ImGui.BeginDisabled();
+                }
+                ImGui.TableSetColumnIndex(1);
+                ImGui.Text("Y");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushItemWidth(82);
+                ImGui.InputInt("##X", ref _ioX);
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushItemWidth(82);
+                ImGui.InputInt("##Y", ref _ioY);
+
+                ImGui.EndTable();
             }
+            if (_selectedShape == null || _selectedShape.IsMoveable == false)
+                ImGui.EndDisabled();
 
             ImGui.Spacing();
             if (_selectedShape == null || _selectedShape.IsResizeable == false)
                 ImGui.BeginDisabled();
-            if (ImGui.InputInt("Width", ref _ioWidth))
+
+            // Size parameters
+            if (ImGui.BeginTable("Size", 2))
             {
-                if (_selectedShape != null) // Constraint verification
-                    if (_selectedShape.GetType() == typeof(SVGCircle))
-                        _ioHeight = _ioWidth;
-            }
-            if (ImGui.InputInt("Height", ref _ioHeight))
-            {
-                if (_selectedShape != null) // Constraint verification
-                    if (_selectedShape.GetType() == typeof(SVGCircle))
-                        _ioWidth = _ioHeight;
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text("Width");
+                ImGui.SameLine();
+                if (_selectedShape == null || _selectedShape.IsResizeable == false)
+                {
+                    ImGui.EndDisabled();
+                    HelpMarker("This shape is not resizeable");
+                    ImGui.BeginDisabled();
+                }
+                ImGui.TableSetColumnIndex(1);
+                ImGui.Text("Height");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushItemWidth(82);
+                if (ImGui.InputInt("##Width", ref _ioWidth))
+                {
+                    if (_selectedShape != null) // Constraint verification
+                        if (_selectedShape.GetType() == typeof(SVGCircle))
+                            _ioHeight = _ioWidth;
+                }
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushItemWidth(82);
+                if (ImGui.InputInt("##Height", ref _ioHeight))
+                {
+                    if (_selectedShape != null) // Constraint verification
+                        if (_selectedShape.GetType() == typeof(SVGCircle))
+                            _ioWidth = _ioHeight;
+                }
+
+                ImGui.EndTable();
             }
             if (_selectedShape == null || _selectedShape.IsResizeable == false)
-            {
                 ImGui.EndDisabled();
-                HelpMarker("This shape is not resizeable");
+
+            // Other parameters
+            if (ImGui.BeginTable("Other", 2))
+            {
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.Text("Angle");
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.EndDisabled();
+
+
+                ImGui.TableSetColumnIndex(1);
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.Text("Radius");
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.EndDisabled();
+
+
+                ImGui.TableNextRow();
+
+
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushItemWidth(82);
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.InputInt("##Angle", ref _ioAngle);
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.EndDisabled();
+
+
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushItemWidth(82);
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.InputInt("##Radius", ref _ioCornerRadius);
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.EndDisabled();
+
+                ImGui.EndTable();
             }
 
             ImGui.Spacing();
@@ -486,7 +604,7 @@ namespace FreeFrame
             {
                 ImGui.Text("Select a shape");
                 ImGui.Separator();
-                if (ImGui.Selectable("Circle")) 
+                if (ImGui.Selectable("Circle"))
                 {
                     _userMode = UserMode.Create;
                     _createMode = CreateMode.Circle;

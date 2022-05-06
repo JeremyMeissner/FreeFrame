@@ -18,11 +18,6 @@ namespace FreeFrame.Components.Shapes
         const int DefaultRY = 0;
         #endregion
 
-        #region Geometry properties
-        private int _radius; // Rounded radius
-        public int Radius { get => _radius; set => _radius = value; }
-        #endregion
-
         public SVGRectangle(XmlReader reader) : this(
             Convert.ToInt32(reader["width"]),
             Convert.ToInt32(reader["height"]),
@@ -41,7 +36,7 @@ namespace FreeFrame.Components.Shapes
             Y = y;
             Width = width;
             Height = height;
-            Radius = Math.Max(rx, ry);
+            CornerRadius = Math.Max(rx, ry);
 
             ImplementObject();
         }
@@ -56,7 +51,7 @@ namespace FreeFrame.Components.Shapes
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
 
-        public override string ToString() => $"x: {X}, y: {Y}, width: {Width}, height: {Height}, rx: {Radius}, ry: {Radius}";
+        public override string ToString() => $"x: {X}, y: {Y}, width: {Width}, height: {Height}, rx: {CornerRadius}, ry: {CornerRadius}";
 
         public override List<Vector2i> GetSelectablePoints()
         {

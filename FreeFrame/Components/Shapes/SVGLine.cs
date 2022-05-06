@@ -28,6 +28,8 @@ namespace FreeFrame.Components.Shapes
         public SVGLine() : this(DefaultX1, DefaultY1, DefaultX2, DefaultY2) { }
         public SVGLine(int x1, int y1, int x2, int y2)
         {
+            IsCornerRadiusChangeable = false;
+
             X = x1;
             Y = y1;
             Width = x2 - X;

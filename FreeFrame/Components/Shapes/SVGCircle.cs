@@ -18,6 +18,7 @@ namespace FreeFrame.Components.Shapes
         public SVGCircle() : this(0, 0, 0) { }
         public SVGCircle(int r, int cx, int cy)
         {
+            IsCornerRadiusChangeable = false;
             X = cx - r;
             Y = cy - r;
             Height = r*2;

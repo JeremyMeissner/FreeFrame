@@ -44,6 +44,8 @@ namespace FreeFrame.Components.Shapes
         public SVGPath(XmlReader reader) //: this()
         {
             IsResizeable = false;
+            IsCornerRadiusChangeable = false;
+
             string d = reader["d"] ?? throw new Exception("d not here"); // TODO: Error handler if d is note here
             Match match;
             int startIndex = 0;

@@ -58,6 +58,10 @@ namespace FreeFrame
             int uResolution = _shader.GetUniformLocation("u_Resolution");
             _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
+            int uTransformation = _shader.GetUniformLocation("u_Transformation");
+            Matrix4 transform = Matrix4.Identity;
+            _shader.SetUniformMat4(uTransformation, transform);
+
             GL.BindVertexArray(_vertexArrayObject);
 
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
@@ -77,6 +81,10 @@ namespace FreeFrame
             int uResolution = _shader.GetUniformLocation("u_Resolution");
             _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
+            int uTransformation = _shader.GetUniformLocation("u_Transformation");
+            Matrix4 rotation = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(shape.Angle));
+            _shader.SetUniformMat4(uTransformation, rotation);
+
 
             Type type = shape.GetType();
             if (type == typeof(SVGCircle))
@@ -93,7 +101,7 @@ namespace FreeFrame
                 int uSize = _shader.GetUniformLocation("u_Size");
                 int uPosition = _shader.GetUniformLocation("u_Position");
 
-                _shader.SetUniformFloat(uRadius, ((SVGRectangle)shape).Radius);
+                _shader.SetUniformFloat(uRadius, ((SVGRectangle)shape).CornerRadius);
                 _shader.SetUniformVec2(uSize, new Vector2(shape.Width, shape.Height)); 
                 _shader.SetUniformVec2(uPosition, new Vector2(shape.X, shape.Y)); // Invert y axis
             }

@@ -14,6 +14,7 @@ using FreeFrame.Lib.FilePicker;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using static FreeFrame.Selector;
+using System.Reflection;
 
 namespace FreeFrame
 {
@@ -28,8 +29,11 @@ namespace FreeFrame
         enum CreateMode
         {
             Line,
-            Rectangle
+            Rectangle,
+            Circle
         }
+        int _ioAngle;
+        int _ioCornerRadius;
         int _ioX;
         int _ioY;
         int _ioWidth;
@@ -38,6 +42,8 @@ namespace FreeFrame
         int _ioTimeline;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+
+        Vector2i MouseOriginalState;
 
         SelectorType _selectorType = SelectorType.None;
 
@@ -61,6 +67,7 @@ namespace FreeFrame
             Helper.EnableDebugMode();
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
+            GL.Enable(EnableCap.Multisample);
 
             _userMode = UserMode.Idle;
             _createMode = CreateMode.Rectangle;
@@ -68,6 +75,8 @@ namespace FreeFrame
             _shapes = new List<Shape>();
 
             _selector = new Selector();
+
+            MouseOriginalState = new Vector2i(0, 0);
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
         }
@@ -88,6 +97,13 @@ namespace FreeFrame
         {
             base.OnUpdateFrame(e);
 
+            Title = String.Format("FreeFrame - x: {0} y: {1}", MouseState.X, MouseState.Y);
+            // Update title based on current context
+            //if (_selectedShape != null)
+            //    Title = String.Format("FreeFrame - Selected: {0} Mode: {1}", _selectedShape.GetType().Name, _userMode.ToString());
+            //else
+            //    Title = "FreeFrame";
+
             //if (_selectedShape != null)
             //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
@@ -102,19 +118,30 @@ namespace FreeFrame
 
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
-            {
-                _userMode = UserMode.Idle;
-                _selectorType = SelectorType.None;
-                _selectedShape = null;
-                _selectedShapeBefore = null;
+                ResetSelection();
 
-                _ioX = 0;
-                _ioY = 0;
-                _ioWidth = 0;
-                _ioHeight = 0;
-                _ioColor = new System.Numerics.Vector4(0);
-                // TODO: Disable the inputs
+            if (KeyboardState.IsKeyDown(Keys.Delete))
+            {
+                if (_selectedShape != null)
+                {
+                    _shapes.Remove(_selectedShape);
+                    _selectedShape.DeleteObjects();
+
+                    ResetSelection();
+                }
             }
+
+            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false)) // TODO: Fix duplication
+            {
+                if (_selectedShape != null)
+                {
+                    Shape shape = _selectedShape.Clone();
+                    _shapes.Add(shape);
+                    ResetSelection();
+                    _selectedShape = shape;
+                }
+            }
+
             if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
                 OnLeftMouseDown();
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == true) // Long left click
@@ -122,10 +149,11 @@ namespace FreeFrame
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == false) // Release left click
                 OnLeftMouseUp();
 
+
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             foreach (Shape shape in _shapes)
             {
-                //shape.ImplementObjects();
+                // shape.ImplementObject();
                 shape.Draw(ClientSize);
             }
 
@@ -139,18 +167,22 @@ namespace FreeFrame
                 }
                 else
                 {
-                    //_selectedShape.UpdateProperties(properties);
                     if (_selectedShape.X != _ioX ||
                         _selectedShape.Y != _ioY ||
                         _selectedShape.Width != _ioWidth ||
                         _selectedShape.Height != _ioHeight ||
-                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W))
+                        _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W) ||
+                        _selectedShape.Angle != _ioAngle ||
+                        _selectedShape.CornerRadius != _ioCornerRadius) // If a properties need to be updated
                     {
+                        Console.WriteLine("Update properties");
                         _selectedShape.X = _ioX;
                         _selectedShape.Y = _ioY;
                         _selectedShape.Width = _ioWidth;
                         _selectedShape.Height = _ioHeight;
                         _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
+                        _selectedShape.Angle = _ioAngle;
+                        _selectedShape.CornerRadius = _ioCornerRadius;
 
                         _selectedShape.ImplementObject();
                         _selector.Select(_selectedShape);
@@ -171,8 +203,9 @@ namespace FreeFrame
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
-            //ImGui.ShowDemoWindow();
+            ImGui.ShowDemoWindow();
             ShowUI();
+
             _ImGuiController.Render(); // Render ImGui elements
 
             SwapBuffers();
@@ -202,7 +235,24 @@ namespace FreeFrame
                 _ioWidth = _selectedShape.Width;
                 _ioHeight = _selectedShape.Height;
                 _ioColor = new System.Numerics.Vector4(_selectedShape.Color.R, _selectedShape.Color.G, _selectedShape.Color.B, _selectedShape.Color.A);
+                _ioAngle = _selectedShape.Angle;
+                _ioCornerRadius = _selectedShape.CornerRadius;
             }
+        }
+        public void ResetSelection()
+        {
+            _userMode = UserMode.Idle;
+            _selectorType = SelectorType.None;
+            _selectedShape = null;
+            _selectedShapeBefore = null;
+
+            _ioX = 0;
+            _ioY = 0;
+            _ioWidth = 0;
+            _ioHeight = 0;
+            _ioColor = new System.Numerics.Vector4(0);
+            _ioAngle = 0;
+            _ioCornerRadius = 0;
         }
         public Shape? GetNearestShape(Vector2i currentLocation)
         {
@@ -222,89 +272,87 @@ namespace FreeFrame
             }
             return nearest.shape;
         }
-
-        /// <summary>
-        /// Convert given vertex position attributes in px to NDC 
-        /// </summary>
-        /// <param name="vertexPositions">vertex position attribute</param>
-        /// <returns>vertex position attribute in NDC</returns>
-        //public float[] ConvertToNDC(params int[] vertexPositions)
-        //{
-        //    float[] result = new float[vertexPositions.Length];
-        //    for (int i = 0; i < vertexPositions.Length; i += 2)
-        //    {
-        //        result[i] = (float)vertexPositions[i] / ClientSize.X / 2; // TODO: maybe a better code?
-        //        result[i + 1] = (float)vertexPositions[i + 1] / ClientSize.Y / 2;
-        //    }
-        //    return result;
-        //}
-        //public void OnKeyDown()
-        //{
-
-        //}
         public void OnLeftMouseDown()
         {
-            if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
+            switch (_userMode)
             {
-                (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                if (click)
-                {
-                    Console.WriteLine("Click on selector");
-                    _selectorType = type ?? SelectorType.None;
-                }
-                Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                if (nearestShape != null)
-                {
-                    if (nearestShape != _selectedShape)
+                case UserMode.Idle:
+                case UserMode.Edit:
+                    if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
                     {
-                        Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
-                        _userMode = UserMode.Edit;
-                        _selector.Select(nearestShape);
-                        _selectedShape = nearestShape;
+                        MouseOriginalState.X = (int)MouseState.X;
+                        MouseOriginalState.Y = (int)MouseState.Y;
+
+                        (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                        if (click)
+                        {
+                            Console.WriteLine("Click on selector");
+                            _selectorType = type ?? SelectorType.None;
+                        }
+                        Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                        if (nearestShape != null)
+                        {
+                            if (nearestShape != _selectedShape)
+                            {
+                                Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
+                                _userMode = UserMode.Edit;
+                                _selector.Select(nearestShape);
+                                _selectedShape = nearestShape;
+                            }
+                        }
                     }
-                }
+                    break;
+                case UserMode.Create:
+                default:
+                    break;
             }
         }
         public void OnLeftMouseEnter() // TODO: Rename this
         {
+            // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
             switch (_userMode)
             {
-                case UserMode.Create:
-                    switch (_createMode)
+                case UserMode.Create: // Create mode
+                    _selectedShape = _createMode switch
                     {
-                        case CreateMode.Line:
-                            _selectedShape = new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
-                            break;
-                        case CreateMode.Rectangle:
-                        default:
-                            _selectedShape = new SVGRectangle((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y);
-                            break;
-                    }
+                        CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Rectangle => new SVGRectangle(0, 0, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y),
+                        _ => throw new Exception("A create mode need to be selected"),
+                    };
                     _shapes.Add(_selectedShape);
-                    _userMode = UserMode.Edit;
                     _selectorType = SelectorType.Resize;
-                    OnLeftMouseEnter();
+                    _userMode = UserMode.Edit;
+                    OnLeftMouseEnter(); // Change user mode and call same function in order to switch to edit mode
                     break;
-                case UserMode.Edit:
+                case UserMode.Edit: // Edit mode
                     if (_selectedShape != null)
                     {
                         switch (_selectorType)
                         {
                             case SelectorType.Move:
-                                if (_selectedShape.Moveable)
+                                if (_selectedShape.IsMoveable)
                                 {
-                                    _selectedShape.Move(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                                    float x = MouseState.X, y = MouseState.Y;
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    {
+                                        if (Math.Abs(MouseOriginalState.X - x) > Math.Abs(MouseOriginalState.Y - y))
+                                            y = MouseOriginalState.Y;
+                                        else
+                                            x = MouseOriginalState.X;
+                                    }
+                                    _selectedShape.Move(new Vector2i((int)x, (int)y));
                                     _selector.Select(_selectedShape);
                                     UpdateIO_UI();
                                 }
                                 break;
                             case SelectorType.Resize:
-                                if (_selectedShape.Resizeable)
+                                if (_selectedShape.IsResizeable)
                                 {
                                     float width, height;
                                     width = MouseState.X - _selectedShape.X;
                                     height = MouseState.Y - _selectedShape.Y;
-                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift) || _selectedShape.GetType() == typeof(SVGCircle)) // SHIFT
                                     {
                                         if (width > height)
                                             height = width;
@@ -348,25 +396,120 @@ namespace FreeFrame
 
             ImGui.Text("Parameters");
             ImGui.Spacing();
-            if (_selectedShape == null || _selectedShape.Moveable == false)
+            if (_selectedShape == null || _selectedShape.IsMoveable == false)
                 ImGui.BeginDisabled();
-            ImGui.InputInt("X", ref _ioX);
-            ImGui.InputInt("Y", ref _ioY);
-            if (_selectedShape == null || _selectedShape.Moveable == false)
+
+            // Position parameters
+            if (ImGui.BeginTable("Position", 2))
             {
-                ImGui.EndDisabled();
-                HelpMarker("This shape is not moveable");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text("X");
+                ImGui.SameLine();
+                if (_selectedShape == null || _selectedShape.IsMoveable == false)
+                {
+                    ImGui.EndDisabled();
+                    HelpMarker("This shape is not moveable");
+                    ImGui.BeginDisabled();
+                }
+                ImGui.TableSetColumnIndex(1);
+                ImGui.Text("Y");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushItemWidth(82);
+                ImGui.InputInt("##X", ref _ioX);
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushItemWidth(82);
+                ImGui.InputInt("##Y", ref _ioY);
+
+                ImGui.EndTable();
             }
+            if (_selectedShape == null || _selectedShape.IsMoveable == false)
+                ImGui.EndDisabled();
 
             ImGui.Spacing();
-            if (_selectedShape == null || _selectedShape.Resizeable == false)
+            if (_selectedShape == null || _selectedShape.IsResizeable == false)
                 ImGui.BeginDisabled();
-            ImGui.InputInt("Width", ref _ioWidth);
-            ImGui.InputInt("Height", ref _ioHeight);
-            if (_selectedShape == null || _selectedShape.Resizeable == false)
+
+            // Size parameters
+            if (ImGui.BeginTable("Size", 2))
             {
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.Text("Width");
+                ImGui.SameLine();
+                if (_selectedShape == null || _selectedShape.IsResizeable == false)
+                {
+                    ImGui.EndDisabled();
+                    HelpMarker("This shape is not resizeable");
+                    ImGui.BeginDisabled();
+                }
+                ImGui.TableSetColumnIndex(1);
+                ImGui.Text("Height");
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushItemWidth(82);
+                if (ImGui.InputInt("##Width", ref _ioWidth))
+                {
+                    if (_selectedShape != null) // Constraint verification
+                        if (_selectedShape.GetType() == typeof(SVGCircle))
+                            _ioHeight = _ioWidth;
+                }
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushItemWidth(82);
+                if (ImGui.InputInt("##Height", ref _ioHeight))
+                {
+                    if (_selectedShape != null) // Constraint verification
+                        if (_selectedShape.GetType() == typeof(SVGCircle))
+                            _ioWidth = _ioHeight;
+                }
+
+                ImGui.EndTable();
+            }
+            if (_selectedShape == null || _selectedShape.IsResizeable == false)
                 ImGui.EndDisabled();
-                HelpMarker("This shape is not resizeable");
+
+            // Other parameters
+            if (ImGui.BeginTable("Other", 2))
+            {
+                ImGui.TableNextRow();
+                ImGui.TableSetColumnIndex(0);
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.Text("Angle");
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.EndDisabled();
+
+
+                ImGui.TableSetColumnIndex(1);
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.Text("Radius");
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.EndDisabled();
+
+
+                ImGui.TableNextRow();
+
+
+                ImGui.TableSetColumnIndex(0);
+                ImGui.PushItemWidth(82);
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.InputInt("##Angle", ref _ioAngle);
+                if (_selectedShape == null || _selectedShape.IsAngleChangeable == false)
+                    ImGui.EndDisabled();
+
+
+                ImGui.TableSetColumnIndex(1);
+                ImGui.PushItemWidth(82);
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.BeginDisabled();
+                ImGui.InputInt("##Radius", ref _ioCornerRadius);
+                if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
+                    ImGui.EndDisabled();
+
+                ImGui.EndTable();
             }
 
             ImGui.Spacing();
@@ -392,7 +535,7 @@ namespace FreeFrame
             {
                 if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
                 {
-                    _selectedShape = shape; // TODO: Impossible to select an element from the Tree View
+                    _selectedShape = shape;
                     _selector.Select(shape);
                     _userMode = UserMode.Edit;
                     Console.WriteLine("New shape selected through tree view");
@@ -414,6 +557,7 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
             ImGui.Spacing();
+            ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
             ImGui.End();
 
             // Navbar side
@@ -425,8 +569,14 @@ namespace FreeFrame
             {
                 if (ImGui.BeginMenu("File"))
                 {
-                    if (ImGui.MenuItem("Open..", "Ctrl+O"))
-                        _dialogFilePicker = true;
+                    if (ImGui.BeginMenu("Open"))
+                    {
+                        if (ImGui.MenuItem("New project", "Ctrl+O"))
+                            _dialogFilePicker = true;
+                        if (ImGui.MenuItem("Import a file", "Ctrl+I"))
+                        { }
+                        ImGui.EndMenu();
+                    }
                     if (ImGui.BeginMenu("Save"))
                     {
                         if (ImGui.MenuItem("Save as PNG", "Ctrl+S"))
@@ -440,7 +590,11 @@ namespace FreeFrame
                 }
                 ImGui.EndMenuBar();
             }
-            if (ImGui.Button("Line")) { /* Do stuff */ }
+            if (ImGui.Button("Line"))
+            {
+                _userMode = UserMode.Create;
+                _createMode = CreateMode.Line;
+            }
             ImGui.SameLine();
 
             if (ImGui.Button("Primitive Shape"))
@@ -450,8 +604,16 @@ namespace FreeFrame
             {
                 ImGui.Text("Select a shape");
                 ImGui.Separator();
-                if (ImGui.Selectable("Circle")) { /* Do stuff */ }
-                if (ImGui.Selectable("Rectangle")) { /* Do stuff */ }
+                if (ImGui.Selectable("Circle"))
+                {
+                    _userMode = UserMode.Create;
+                    _createMode = CreateMode.Circle;
+                }
+                if (ImGui.Selectable("Rectangle"))
+                {
+                    _userMode = UserMode.Create;
+                    _createMode = CreateMode.Rectangle;
+                }
                 if (ImGui.Selectable("Triangle")) { /* Do stuff */ }
                 ImGui.EndPopup();
             }
@@ -468,6 +630,7 @@ namespace FreeFrame
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;
+
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();

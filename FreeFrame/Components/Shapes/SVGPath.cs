@@ -12,47 +12,6 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPath : Shape
     {
-        private int _x, _y, _width, _height;
-        public override int X
-        {
-            get => _x; // GetSelectablePoints().Min(i => i.X);
-            set
-            {
-                _x = value;
-                //Move(new Vector2i(_x, Y));
-            }
-        }
-        public override int Y
-        {
-            get => _y; // GetSelectablePoints().Min(i => i.Y);
-            set
-            {
-                _y = value;
-                //Move(new Vector2i(X, _y));
-            }
-        }
-        public override int Width
-        {
-            get 
-            {
-                return _width;
-            } 
-            set
-            {
-                _width = value;
-            }
-        }
-        public override int Height
-        {
-            get
-            {
-                return _height;
-            }
-            set
-            {
-                _height = value;
-            }
-        }
 
         readonly Dictionary<char, Regex> _dAttributesRegex = new()
         {
@@ -80,13 +39,13 @@ namespace FreeFrame.Components.Shapes
 
         List<DrawAttribute> _drawAttributes = new();
 
-        List<uint> _indexes = new();
-
         public List<DrawAttribute> DrawAttributes { get => _drawAttributes; set => _drawAttributes = value; }
 
         public SVGPath(XmlReader reader) //: this()
         {
-            Resizeable = false;
+            IsResizeable = false;
+            IsCornerRadiusChangeable = false;
+
             string d = reader["d"] ?? throw new Exception("d not here"); // TODO: Error handler if d is note here
             Match match;
             int startIndex = 0;
@@ -148,284 +107,81 @@ namespace FreeFrame.Components.Shapes
                 }
             }
 
-            // Update common properties
+            // Update common properties, use the given attributes
             List<Vector2i> points = GetSelectablePoints();
             X = points.Min(i => i.X);
             Y = points.Min(i => i.Y);
             Width = points.Max(i => i.X) - points.Min(i => i.X);
             Height = points.Max(i => i.Y) - points.Min(i => i.Y);
-            // ImplementObject();
+
+            ImplementObject();
         }
         public override void ImplementObject()
         {
-            Move(new Vector2i(X, Y));
-
-            //foreach (VertexArrayObject vao in _vaos)
-            //    vao.DeleteObjects();
-            //_vaos.Clear();
-
-            ////DrawAttribute previousAttribute = new MoveTo(0, 0);
-            //foreach (DrawAttribute attr in DrawAttributes)
-            //{
-            //    if (attr.GetType() == typeof(CurveTo) ||
-            //        attr.GetType() == typeof(SmoothCurveTo) ||
-            //        attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-            //        attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-            //        attr.GetType() == typeof(EllipticalArc))
-            //    {
-            //        _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
-            //    }
-            //    else
-            //    {
-            //        _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
-            //    }
-            //    //previousAttribute = attr;
-            //}
+            Move(new Vector2i(X, Y)); // Update the position since the attr doesnt use the X and Y variables directly
         }
 
-        public override void Draw(Vector2i clientSize)
-        {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.Draw(clientSize, Color);
-        }
-        public override float[] GetVertices()
-        {
-            return new float[] { };
-        }
-        //public override float[] GetVertices()
-        //{
-        //    //  Delaunator polygon = new Delaunator(new IPoint[] { new Point(0.0, 0.0) });
-
-        //    // Edges
-        //    List<float> vertices = new List<float>();
-        //    DrawAttribute? previous = null;
-        //    DrawAttribute.LastX = 0;
-        //    DrawAttribute.LastY = 0;
-        //    DrawAttribute.LastControlPointX = 0;
-        //    DrawAttribute.LastControlPointY = 0;
-
-        //    foreach (DrawAttribute current in DrawAttributes)
-        //    {
-        //        if (current.GetType() == typeof(LineTo) ||
-        //            current.GetType() == typeof(HorizontalLineTo) ||
-        //            current.GetType() == typeof(VerticalLineTo) ||
-        //            current.GetType() == typeof(CurveTo) ||
-        //            current.GetType() == typeof(SmoothCurveTo) ||
-        //            current.GetType() == typeof(QuadraticBezierCurveTo) ||
-        //            current.GetType() == typeof(SmoothQuadraticBezierCurveTo)) // TODO: Add EllipticalArc support
-        //        {
-        //            int previousLength = vertices.Count;
-
-        //            int i = 0;
-        //            int count = 0;
-        //            foreach (float item in current.GetVertices(null))
-        //            {
-        //                vertices.Add(item);
-        //                i++;
-        //            }
-        //            if (_indexes.Count > 0)
-        //                count = (int)_indexes.Last();
-        //            _indexes.AddRange(Enumerable.Range(count, i / 2).Select(i => (uint)i).ToArray());
-
-        //            //i++;
-        //        }
-
-        //        if (current.GetType() == typeof(MoveTo))
-        //        {
-        //            if (previous != null)
-        //            {
-        //                if (previous.GetType() != typeof(MoveTo))
-        //                {
-        //                    _indexes.Add(_indexes.Last());
-        //                }
-        //            }
-        //            if (((MoveTo)current).IsRelative)
-        //            {
-        //                DrawAttribute.LastX += ((MoveTo)current).X; // Update last x and y (for relatives attributes points)
-        //                DrawAttribute.LastY += ((MoveTo)current).Y;
-        //            }
-        //            else
-        //            {
-        //                DrawAttribute.LastX = ((MoveTo)current).X; // Update last x and y (for relatives attributes points)
-        //                DrawAttribute.LastY = ((MoveTo)current).Y;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            DrawAttribute.LastX = (int)vertices[^2]; // Update last x and y (for relatives attributes points)
-        //            DrawAttribute.LastY = (int)vertices[^1];
-        //        }
-
-        //        if (current.GetType() == typeof(CurveTo)) // Cubic Bézier Curves
-        //        {
-        //            if (((CurveTo)current).X > ((CurveTo)current).X2) // Control end point on the left
-        //                DrawAttribute.LastControlPointX = ((CurveTo)current).X + ((CurveTo)current).X2;
-        //            else if (((CurveTo)current).X < ((CurveTo)current).X2) // Control end point on the right
-        //                DrawAttribute.LastControlPointX = ((CurveTo)current).X - ((CurveTo)current).X2;
-        //            else // On the middle
-        //                DrawAttribute.LastControlPointX = ((CurveTo)current).X;
-
-        //            if (((CurveTo)current).Y > ((CurveTo)current).Y2) // Control end point on the top
-        //                DrawAttribute.LastControlPointY = ((CurveTo)current).Y + ((CurveTo)current).Y2;
-        //            else if (((CurveTo)current).Y < ((CurveTo)current).Y2) // Control end point on the bottom
-        //                DrawAttribute.LastControlPointY = ((CurveTo)current).Y - ((CurveTo)current).Y2;
-        //            else // On the middle
-        //                DrawAttribute.LastControlPointY = ((CurveTo)current).Y;
-        //        }
-        //        else if (current.GetType() == typeof(QuadraticBezierCurveTo)) // Quadratic Bézier Curves
-        //        {
-        //            DrawAttribute.LastControlPointX = ((QuadraticBezierCurveTo)current).X1;
-        //            DrawAttribute.LastControlPointY = ((QuadraticBezierCurveTo)current).Y1;
-        //        }
-        //        else if (current.GetType() != typeof(SmoothCurveTo) && current.GetType() != typeof(SmoothQuadraticBezierCurveTo)) // Only reset if we're done with bézier curves
-        //        {
-        //            (DrawAttribute.LastControlPointX, DrawAttribute.LastControlPointY) = (0, 0);
-        //        }
-
-        //        previous = current;
-        //    }
-
-        //    return vertices.ToArray();
-        //}
-
-        public override uint[] GetVerticesIndexes()
-        {
-            /*
-            List<uint> indexes = new List<uint>();
-
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                if (attr.GetType() == typeof(LineTo))
-                {
-                    foreach (uint attrIndexes in ((LineTo)attr).GetVerticesIndexes())
-                    {
-                        indexes.Add(attrIndexes);
-                    }
-                }
-            }
-            return indexes.ToArray();
-            */
-
-            //uint[] indexes = Enumerable.Range(0, GetVertices().Length / 2).Select(i => (uint)i).ToArray();
-
-            //return indexes;
-
-            //_indexes = new List<uint>();
-            //GetVertices();
-            //return _indexes.ToArray();
-
-            return new uint[] { };
-        }
-
-        public override List<Vector2i> GetSelectablePoints()
-        {
-            List<Vector2i> points = new List<Vector2i>();
-
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
-
-            //DrawAttribute previousAttribute = new MoveTo(0, 0);
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                if (attr.GetType() == typeof(CurveTo) ||
-                    attr.GetType() == typeof(SmoothCurveTo) ||
-                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(EllipticalArc))
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
-                }
-                else
-                {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
-                }
-                points.AddRange(attr.GetSelectablePoints());
-                //previousAttribute = attr;
-            }
-            return points;
-        }
-
-        public override Hitbox Hitbox()
-        {
-            Hitbox hitbox = new Hitbox();
-
-            hitbox.Areas.Add(new Hitbox.Area(0, 0, 0, 0)); // TODO: please dont hardcode
-
-            return hitbox;
-        }
-
-        
+        public override float[] GetVertices() => new float[] { };
+        public override uint[] GetVerticesIndexes() => new uint[] { };
 
         public override void Move(Vector2i position)
         {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
-
+            int x = 0, y = 0;
             int? deltaX = null, deltaY = null;
+            List<Vector2i> points = GetSelectablePoints();
 
-            //DrawAttribute previousAttribute = new MoveTo(0, 0);
+            DeleteObjects(); // Clear the vaos
+
+            if (points.Count > 0)
+            {
+                x = points.Min(i => i.X); // Get current min X and Y of the path
+                y = points.Min(i => i.Y);
+            }
+
             foreach (DrawAttribute attr in DrawAttributes)
             {
-                if (attr.GetType() == typeof(MoveTo) && attr.IsRelative == false)
+                Type attrType = attr.GetType();
+                if (attrType == typeof(MoveTo) && attr.IsRelative == false) // Update position of each absolute MoveTo
                 {
                     if (deltaX == null || deltaY == null)
                     {
-                        // Get delta X and Y one time
-                        deltaX = position.X - X;
-                        deltaY = position.Y - Y;
+                        // Get delta X and Y only one time
+                        deltaX = position.X - x;
+                        deltaY = position.Y - y;
                     }
                     attr.X += (int)deltaX;
                     attr.Y += (int)deltaY;
                 }
-                if (attr.GetType() == typeof(CurveTo) ||
-                    attr.GetType() == typeof(SmoothCurveTo) ||
-                    attr.GetType() == typeof(QuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attr.GetType() == typeof(EllipticalArc))
+                if (attrType == typeof(CurveTo) ||
+                    attrType == typeof(SmoothCurveTo) ||
+                    attrType == typeof(QuadraticBezierCurveTo) ||
+                    attrType == typeof(SmoothQuadraticBezierCurveTo) ||
+                    attrType == typeof(EllipticalArc))
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }
                 else
                 {
-                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines));
+                    _vaos.Add(new VertexArrayObject(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
                 }
-                //previousAttribute = attr;
+                attr.UpdateLast(); // Update Last's inner variables 
             }
+
             // Update common properties
-            List<Vector2i> points = GetSelectablePoints();
-            X = points.Min(i => i.X);
-            Y = points.Min(i => i.Y);
-            Width = points.Max(i => i.X) - points.Min(i => i.X);
-            Height = points.Max(i => i.Y) - points.Min(i => i.Y);
-
-            //List<Vector2i> points = GetSelectablePoints();
-            //Properties = new DefaultProperties()
-            //{
-            //    x = points.Min(i => i.X),
-            //    y = points.Min(i => i.Y),
-            //    width = points.Max(i => i.X) - points.Min(i => i.X),
-            //    height = points.Max(i => i.Y) - points.Min(i => i.Y),
-            //    color = Properties.color
-            //};
-
-            // ImplementObject();
+            X = position.X;
+            Y = position.Y;
         }
-
-        public override void Resize(Vector2i size)
+        public override void Resize(Vector2i size) => throw new NotImplementedException("Can't resize a path");
+        public override List<Vector2i> GetSelectablePoints()
         {
-            //List<Vector2i> points = GetSelectablePoints();
-            //Properties = new DefaultProperties()
-            //{
-            //    x = points.Min(i => i.X),
-            //    y = points.Min(i => i.Y),
-            //    width = points.Max(i => i.X) - points.Min(i => i.X),
-            //    height = points.Max(i => i.Y) - points.Min(i => i.Y),
-            //    color = Properties.color
-            //};
+            List<Vector2i> points = new();
 
-            //ImplementObject();
+            foreach (DrawAttribute attr in DrawAttributes)
+            {
+                points.AddRange(attr.GetSelectablePoints());
+                attr.UpdateLast(); // Each attr depend on the previous. The previous element is the last element that called GetVertices() 
+            }
+            return points;
         }
 
         public override string ToString()

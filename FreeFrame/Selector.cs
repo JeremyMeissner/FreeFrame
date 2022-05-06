@@ -33,8 +33,8 @@ namespace FreeFrame
             None
         }
 
-        // I'm actually implementing selection for selector
-        protected List<(VertexArrayObject vao, Area hitbox, SelectorType type)> _vaos;
+        private List<(VertexArrayObject vao, Area hitbox, SelectorType type)> _vaos;
+
         public Selector()
         {
             _vaos = new List<(VertexArrayObject vao, Area hitbox, SelectorType type)>();
@@ -44,7 +44,6 @@ namespace FreeFrame
             _vaos.ForEach(i => i.vao.DeleteObjects());
             _vaos.Clear();
 
-            //List<Vector2i> points = shape.GetSelectablePoints();
 
             // Edge
             Area hitbox = new Area
@@ -54,13 +53,6 @@ namespace FreeFrame
                 Width = shape.Width,
                 Height = shape.Height
             };
-            //Area hitbox = new Area
-            //{
-            //    X = points.Min(i => i.X),
-            //    Y = points.Min(i => i.Y),
-            //    Width = points.Max(i => i.X) - points.Min(i => i.X),
-            //    Height = points.Max(i => i.Y) - points.Min(i => i.Y)
-            //};
             _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
 
             // Move selector (top-left)
@@ -71,14 +63,7 @@ namespace FreeFrame
                 Width = 10,
                 Height = 10
             };
-            //hitbox = new Area
-            //{
-            //    X = points.Min(i => i.X) - 5,
-            //    Y = points.Min(i => i.Y) - 5,
-            //    Width = 10,
-            //    Height = 10
-            //};
-            if (shape.Moveable)
+            if (shape.IsMoveable)
                 _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
 
             // Resize selector (bottom-right)
@@ -89,16 +74,8 @@ namespace FreeFrame
                 Width = 10,
                 Height = 10
             };
-            //hitbox = new Area
-            //{
-            //    X = points.Max(i => i.X) - 5,
-            //    Y = points.Max(i => i.Y) - 5,
-            //    Width = 10,
-            //    Height = 10
-            //};
-            if (shape.Resizeable)
+            if (shape.IsResizeable)
                 _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
-
         }
         public static float[] AreaToFloatArray(Area area)
         {

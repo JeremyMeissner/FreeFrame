@@ -1,119 +1,119 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1" GroupingSetting="Access" MembersFormat="FullSignature">
   <Class Name="FreeFrame.Components.Shapes.Path.DrawAttribute" Collapsed="true">
-    <Position X="11.25" Y="6.75" Width="1.5" />
+    <Position X="11.5" Y="6" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAIAEAEIAAQAAIAECAAAAAAAAIABAIAAAAACAAAAcAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.MoveTo" Collapsed="true">
     <Position X="2.75" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAIAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.LineTo" Collapsed="true">
     <Position X="7.75" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAEIAAQAAAAEAAAAAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.HorizontalLineTo" Collapsed="true">
     <Position X="13.25" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAIAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.VerticalLineTo" Collapsed="true">
     <Position X="17.75" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.CurveTo" Collapsed="true">
     <Position X="22.25" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAIAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEIAAQAAAAECAADAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.SmoothCurveTo" Collapsed="true">
     <Position X="0.5" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAIAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEIAAQAAAAECAADAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.QuadraticBezierCurveTo" Collapsed="true">
     <Position X="5" Y="8" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAIAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.SmoothQuadraticBezierCurveTo" Collapsed="true">
     <Position X="10" Y="8" Width="2.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAAAIAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.EllipticalArc" Collapsed="true">
     <Position X="15.5" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAIAAKAIAAQAAAAEAAAAAAAAAAAAAAAAACEAAAAAAAA=</HashCode>
+      <HashCode>AAAAEKEAAAAAAAAECAAAAAAAAAAAAIAAACEAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Path.ClosePath" Collapsed="true">
     <Position X="20" Y="8" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAEAEAAAAAAAAECAAAAAAAAAAAAIAAAAAAAAAAEAA=</HashCode>
       <FileName>Components\Shapes\Path\DrawAttribute.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.Shape" Collapsed="true">
     <Position X="8.25" Y="3.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAMBAgAMAgAEQAAAAEAAAACAAKAAAAAIgEAAAAA=</HashCode>
+      <HashCode>AAAAAAEIBISMAgAEgAgAAEEABBAAAIgAAAAAgIEAcBA=</HashCode>
       <FileName>Components\Shapes\Shape.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.SVGCircle" Collapsed="true">
     <Position X="5" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAEAAAAEAAAEAAAAAAAAAAAAAIAAACAAAAABAAA=</HashCode>
+      <HashCode>AAAAAAEAAIAEAgAEgAAAAAAAAAAAAIAAACAAAAEBEAA=</HashCode>
       <FileName>Components\Shapes\SVGCircle.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.SVGPath" Collapsed="true">
     <Position X="7.25" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAEEAIAAEAAAEAAACAAAAAAAAAIAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAEIJISEAgAkgAACAEAAABAAAIAAAAAAAAGAcAA=</HashCode>
       <FileName>Components\Shapes\SVGPath.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.SVGPolygon" Collapsed="true">
     <Position X="9.5" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAEAAAAEAAAEgAAAAAAAAAAAAIAAAAAAAAAAACA=</HashCode>
+      <HashCode>AAAAAAEAAIAEAgAEgAAAAAAAAAAAAIAAAAAAAAEAECA=</HashCode>
       <FileName>Components\Shapes\SVGPolygon.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Shapes.SVGRectangle" Collapsed="true">
     <Position X="11.75" Y="4.75" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAELJWSEAAAEAAAAAEAAABAAAIAAACAAAAAIYAA=</HashCode>
+      <HashCode>AAAAAAEDIeAEAgAEgAAAAAAAAAAAAIAAACAAAAEIEAA=</HashCode>
       <FileName>Components\Shapes\SVGRectangle.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="FreeFrame.Components.Importer">
-    <Position X="26" Y="4.25" Width="3.5" />
+    <Position X="17" Y="2.75" Width="3.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAACAgAAAAAAAAAACAAAAAAAA=</HashCode>
       <FileName>Components\Importer.cs</FileName>
@@ -166,7 +166,7 @@
   <Class Name="FreeFrame.Window" Collapsed="true">
     <Position X="33.5" Y="2.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAiFAEAAAABAAACBUAAAQEACAAAAACAIAAAAwgAQAAA=</HashCode>
+      <HashCode>AEqFAEAAAABAAAGBUAAQQGACABBgACQAAAAEwgAQAAA=</HashCode>
       <FileName>Window.cs</FileName>
     </TypeIdentifier>
   </Class>

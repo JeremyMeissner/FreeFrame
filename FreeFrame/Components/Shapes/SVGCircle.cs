@@ -1,4 +1,5 @@
-﻿using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,11 +10,6 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGCircle : Shape
     {
-        #region Geometry properties
-        private int _cx;
-        private int _cy;
-        private int _r;
-        #endregion
         public SVGCircle(XmlReader reader) : this(
             Convert.ToInt32(reader["r"]),
             Convert.ToInt32(reader["cx"]),
@@ -22,41 +18,52 @@ namespace FreeFrame.Components.Shapes
         public SVGCircle() : this(0, 0, 0) { }
         public SVGCircle(int r, int cx, int cy)
         {
-            _cx = cx;
-            _cy = cy;
-            _r = r;
+            IsCornerRadiusChangeable = false;
+            X = cx - r;
+            Y = cy - r;
+            Height = r*2;
+            Width = Height;
+
+            ImplementObject();
         }
-        public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
 
-        public override string ToString() => $"cx: {_cx}, cy: {_cy}, r: {_r}";
+        public override string ToString() => $"cx: {X + Width / 2}, cy: {Y + Height / 2}, r: {Width / 2}";
 
-        public override float[] GetVertices() => new float[] { _cx - _r, _cy - _r, _cx + _r, _cy - _r, _cx + _r, _cy + _r, _cx - _r, _cy + _r }; // x, y, x, y, x, y, ... (clockwise)
-
+        public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
 
-        public override Hitbox Hitbox()
-        {
-            throw new NotImplementedException();
-        }
 
         public override List<Vector2i> GetSelectablePoints()
         {
-            throw new NotImplementedException();
+            List<Vector2i> points = new();
+            points.Add(new Vector2i(X, Y));
+            points.Add(new Vector2i(X + Width, Y));
+            points.Add(new Vector2i(X + Width, Y + Height));
+            points.Add(new Vector2i(X, Y + Height));
+            return points;
         }
 
         public override void ImplementObject()
         {
-            throw new NotImplementedException();
+            foreach (VertexArrayObject vao in _vaos)
+                vao.DeleteObjects();
+            _vaos.Clear();
+
+            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
         }
 
         public override void Move(Vector2i position)
         {
-            throw new NotImplementedException();
+            X = position.X;
+            Y = position.Y;
+            ImplementObject();
         }
 
         public override void Resize(Vector2i size)
         {
-            throw new NotImplementedException();
+            Width = size.X;
+            Height = size.Y;
+            ImplementObject();
         }
     }
 }

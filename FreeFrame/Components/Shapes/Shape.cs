@@ -8,10 +8,12 @@ namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape
     {
-        bool _moveable = true;
-        bool _resizeable = true;
+        bool _isMoveable = true;
+        bool _isResizeable = true;
+        bool _isAngleChangeable = true;
+        bool _isCornerRadiusChangeable = true;
         #region Common Geometry Properties
-        private int _x, _y, _width, _height;
+        private int _x, _y, _width, _height, _angle, _cornerRadius;
         private Color4 _color;
         #endregion
 
@@ -21,54 +23,38 @@ namespace FreeFrame.Components.Shapes
         public virtual int Width { get => _width; set => _width = value; }
         public virtual int Height { get => _height; set => _height = value; }
         public Color4 Color { get => _color; set => _color = value; }
-        public bool Moveable { get => _moveable; protected set => _moveable = value; }
-        public bool Resizeable { get => _resizeable; protected set => _resizeable = value; }
+        public bool IsMoveable { get => _isMoveable; protected set => _isMoveable = value; }
+        public bool IsResizeable { get => _isResizeable; protected set => _isResizeable = value; }
+        public int Angle { get => _angle; set => _angle = value; }
+        public bool IsAngleChangeable { get => _isAngleChangeable; set => _isAngleChangeable = value; }
+        public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
+        public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
 
         List<Shape>[] _timeline;
 
         public Shape() 
         {
             _vaos = new List<VertexArrayObject>();
+            Color = Color4.Black;
         }
 
         /// <summary>
         /// Trigge draw element through OpenGL context
         /// </summary>
-        public abstract void Draw(Vector2i clientSize);
-            //if (Window == null)
-            //    throw new Exception("Trying to convert to NDC but no Window is binded");
-
-            // Call me using a child that override me
-
-            //GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //    if (GetType() == typeof(SVGPath))
-            //        GL.DrawElements(PrimitiveType.LineStrip, _indexCount, DrawElementsType.UnsignedInt, 0);
-
-            //    // Can't do a switch because a switch need a const and a type is not
-            //    if (GetType() == typeof(SVGLine))
-            //    {
-            //        GL.Enable(EnableCap.LineSmooth);
-            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //        GL.Disable(EnableCap.LineSmooth);
-            //    }
-            //    else if (GetType() == typeof(SVGPath))
-            //    {
-            //        GL.Enable(EnableCap.LineSmooth);
-            //        GL.LineWidth(1.0f); // TODO: Lines are not really great (needed anti aliasing)
-            //        GL.DrawElements(PrimitiveType.Lines, _indexCount, DrawElementsType.UnsignedInt, 0);
-            //        GL.Disable(EnableCap.LineSmooth);
-            //    }
-            //    else
-            //        GL.DrawElements(PrimitiveType.Triangles, _indexCount, DrawElementsType.UnsignedInt, 0);
+        public virtual void Draw(Vector2i clientSize)
+        {
+            foreach (VertexArrayObject vao in _vaos)
+                vao.Draw(clientSize, Color, this);
+        }
         public void DeleteObjects()
         {
             foreach (VertexArrayObject vao in _vaos)
                 vao.DeleteObjects();
+            _vaos.Clear();
         }
         public Shape Clone()
         {
-            Shape shape = (Shape)this.MemberwiseClone();
+            Shape shape = (Shape)MemberwiseClone();
             return shape;
         }
         /// <summary>
@@ -88,7 +74,6 @@ namespace FreeFrame.Components.Shapes
         public abstract void ImplementObject();
         public abstract void Move(Vector2i position);
         public abstract void Resize(Vector2i size);
-        public abstract Hitbox Hitbox();
         public abstract override string ToString();
     }
 

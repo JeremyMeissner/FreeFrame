@@ -101,7 +101,7 @@ namespace FreeFrame
         {
             base.OnUpdateFrame(e);
 
-            Title = String.Format("FreeFrame - x: {0} y: {1}", MouseState.X, MouseState.Y);
+            Title = String.Format("FreeFrame - (height: {0} width: {1}) (x: {2} y: {3})", ClientSize.X, ClientSize.Y, MouseState.X, MouseState.Y);
             // Update title based on current context
             //if (_selectedShape != null)
             //    Title = String.Format("FreeFrame - Selected: {0} Mode: {1}", _selectedShape.GetType().Name, _userMode.ToString());

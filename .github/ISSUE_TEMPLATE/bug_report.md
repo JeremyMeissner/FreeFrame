@@ -1,0 +1,33 @@
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: JeremyMeissner
+
+---
+
+## FreeFrame version
+
+The release number or commit hash of the version you're using.
+
+## Operating system & version
+
+Ex: Windows 11, Ubuntu 18.04, macOS Monterey.
+
+## What you did
+
+The steps you took to uncover this bug. Please list full reproduction steps if
+feasible.
+
+## What you expected to happen
+
+What you think should've happened if everything was working properly.
+
+## What actually happened
+
+The actual result of the actions you described.
+
+## Additional information
+
+Any additional information you would like to add such as screenshots, videos, logs, etc.

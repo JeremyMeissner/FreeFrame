@@ -688,23 +688,154 @@ namespace FreeFrame
             ImGui.Text("Animation");
             ImGui.Spacing();
 
-
-            if (_timeline.Count > 0 && _timeline.ContainsKey(_ioTimeline))
+            int numberColumns = _timeline.Count;
+            if (numberColumns > 0)
             {
-                foreach (Shape shape in _timeline[_ioTimeline])
+                foreach (Shape shape in _shapes)
                 {
-                    // TODO: Only show the edited fields
-                    ImGui.Text(shape.GetType().Name);
-                    ImGui.Indent();
-                    ImGui.Text(string.Format("X: {0}", shape.X));
-                    ImGui.Text(string.Format("Y: {0}", shape.Y));
-                    ImGui.Text(string.Format("Width: {0}", shape.Width));
-                    ImGui.Text(string.Format("Height: {0}", shape.Height));
-                    ImGui.Text(string.Format("Color: {0}", shape.Color.ToString()));
-                    ImGui.Unindent();
+                    if (ImGui.BeginTable("shape", 2, ImGuiTableFlags.Resizable))
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text(shape.GetType().Name);
+                        ImGui.TableSetColumnIndex(1);
+                        if (ImGui.BeginTable(String.Format("elements##{0}", shape.Id), numberColumns + 1, ImGuiTableFlags.Borders))
+                        {
+                            ImGui.TableSetupColumn("Properties");
+                            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                                ImGui.TableSetupColumn(shapes.Key.ToString());
+                            ImGui.TableHeadersRow();
+
+
+                            int i = 0;
+
+                            if (shape.IsMoveable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("X");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.X.ToString());
+                                    }
+                                }
+
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Y");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Y.ToString());
+                                    }
+                                }
+                            }
+
+                            if (shape.IsResizeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Width");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Width.ToString());
+                                    }
+                                }
+
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Height");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Height.ToString());
+                                    }
+                                }
+                            }
+
+
+
+                            i = 0;
+                            ImGui.TableNextRow();
+                            ImGui.TableSetColumnIndex(i);
+                            ImGui.Text("Color");
+                            foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                            {
+                                i++;
+                                Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                if (sibling != null)
+                                {
+                                    ImGui.TableSetColumnIndex(i);
+                                    ImGui.Text(String.Format("RGBA({0}, {1}, {2}, {3})", sibling.Color.R, sibling.Color.G, sibling.Color.B, sibling.Color.A));
+                                }
+                            }
+
+                            if (shape.IsAngleChangeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Angle");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(String.Format("{0}°", sibling.Angle));
+                                    }
+                                }
+                            }
+
+                            if (shape.IsCornerRadiusChangeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Corner Radius");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.CornerRadius.ToString());
+                                    }
+                                }
+                            }
+
+
+                            ImGui.EndTable();
+                        }
+                        ImGui.EndTable();
+                        ImGui.Spacing();
+                    }
                 }
             }
-
 
             ImGui.End();
 

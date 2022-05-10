@@ -45,7 +45,7 @@ namespace FreeFrame.Components.Shapes
         /// </summary>
         public virtual void Draw(Vector2i clientSize)
         {
-            Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
+            //Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
             foreach (VertexArrayObject vao in Vaos)
                 vao.Draw(clientSize, Color, this);
         }

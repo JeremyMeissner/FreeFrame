@@ -66,7 +66,7 @@ namespace FreeFrame
         {
             base.OnLoad();
 
-            Helper.EnableDebugMode();
+            //Helper.EnableDebugMode();
 
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
             GL.Enable(EnableCap.Multisample);
@@ -122,17 +122,17 @@ namespace FreeFrame
 
             if (KeyboardState.IsKeyDown(Keys.Q))
             {
-                //Console.WriteLine("Draw me please");
-                foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
-                {
-                    foreach (Shape shape in shapes.Value)
-                    {
-                        shape.ImplementObject();
-                        shape.Draw(ClientSize);
-                    }
-                }
-                if (_selectedShape != null)
-                    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
+                ////Console.WriteLine("Draw me please");
+                //foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                //{
+                //    foreach (Shape shape in shapes.Value)
+                //    {
+                //        shape.ImplementObject();
+                //        shape.Draw(ClientSize);
+                //    }
+                //}
+                //if (_selectedShape != null)
+                //    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
             }
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
@@ -173,7 +173,12 @@ namespace FreeFrame
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             foreach (Shape shape in _shapes)
             {
+
+                //if (_selectedShape != null)
+                //    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
+
                 //shape.ImplementObject(); // Reset VAOs
+                //shape.ImplementObject();
                 shape.Draw(ClientSize);
             }
 
@@ -203,6 +208,22 @@ namespace FreeFrame
                         _selectedShape.Color = new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W);
                         _selectedShape.Angle = _ioAngle;
                         _selectedShape.CornerRadius = _ioCornerRadius;
+
+                        if (_timeline.ContainsKey(_ioTimeline) == true && _timeline[_ioTimeline] != null)
+                        {
+                            Shape? shape = _timeline[_ioTimeline].Find(x => x.Id == _selectedShape.Id);
+                            if (shape != null)
+                            {
+                                Console.WriteLine("There is a shape like meee");
+                                shape.X = _selectedShape.X;
+                                shape.Y = _selectedShape.Y;
+                                shape.Width = _selectedShape.Width;
+                                shape.Height = _selectedShape.Height;
+                                shape.Angle = _selectedShape.Angle;
+                                shape.CornerRadius = _selectedShape.CornerRadius;
+                                shape.Color = _selectedShape.Color;
+                            }
+                        }
 
                         _selectedShape.ImplementObject();
                         _selector.Select(_selectedShape);
@@ -392,6 +413,13 @@ namespace FreeFrame
                                             x = _mouseOriginalState.X;
                                     }
                                     _selectedShape.Move(new Vector2i((int)x, (int)y));
+
+                                    if (_timeline.ContainsKey(_ioTimeline) == true && _timeline[_ioTimeline] != null)
+                                    {
+                                        Shape? shape = _timeline[_ioTimeline].Find(x => x.Id == _selectedShape.Id);
+                                        if (shape != null)
+                                            shape.Move(new Vector2i((int)x, (int)y));
+                                    }
                                     _selector.Select(_selectedShape);
                                     UpdateIO_UI();
                                 }
@@ -410,6 +438,14 @@ namespace FreeFrame
                                             width = height;
                                     }
                                     _selectedShape.Resize(new Vector2i((int)width, (int)height));
+
+                                    if (_timeline.ContainsKey(_ioTimeline) == true && _timeline[_ioTimeline] != null)
+                                    {
+                                        Shape? shape = _timeline[_ioTimeline].Find(x => x.Id == _selectedShape.Id);
+                                        if (shape != null)
+                                            shape.Resize(new Vector2i((int)width, (int)height));
+                                    }
+
                                     _selector.Select(_selectedShape);
                                     UpdateIO_UI();
                                 }
@@ -517,6 +553,45 @@ namespace FreeFrame
                 }
             }
             ImGui.End();
+        }
+        public int Interpolate(int x, int x1, int x2, int y1, int y2)
+        {
+            float y;
+            if (x1 < x2)
+            {
+                if (y1 < y2)
+                    y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1));
+                else
+                    y = y2 + (x - x1) * ((y1 - y2) / (x2 - x1));
+            }
+            else
+            {
+                if (y1 < y2)
+                    y = y1 + (x - x2) * ((y2 - y1) / (x1 - x2));
+                else
+                    y = y2 + (x - x2) * ((y1 - y2) / (x1 - x2));
+            }
+
+
+            if (y1 < y2)
+            {
+                Console.WriteLine("input({0}) min({1}) max({2}) === {3}", y, y1, y2, Math.Clamp(y, y1, y2));
+                return (int)Math.Clamp(y, y1, y2);
+
+            }
+            else
+            {
+                Console.WriteLine("input({0}) min({1}) max({2}) === {3}", y, y2, y1, Math.Clamp(y, y2, y1));
+                return (int)Math.Clamp(y, y2, y1);
+            }
+        }
+        public Color4 InterpolateColor(int x, int x1, int x2, Color4 y1, Color4 y2)
+        {
+            int r = Interpolate(x, x1, x2, (int)(y1.R * 255), (int)(y2.R * 255));
+            int g = Interpolate(x, x1, x2, (int)(y1.G * 255), (int)(y2.G * 255));
+            int b = Interpolate(x, x1, x2, (int)(y1.B * 255), (int)(y2.B * 255));
+            int a = Interpolate(x, x1, x2, (int)(y1.A * 255), (int)(y2.A * 255));
+            return new Color4(r / 255f, g / 255f, b / 255f, a / 255f);
         }
         public void ShowUI()
         {
@@ -775,23 +850,6 @@ namespace FreeFrame
                                 }
                             }
 
-
-
-                            i = 0;
-                            ImGui.TableNextRow();
-                            ImGui.TableSetColumnIndex(i);
-                            ImGui.Text("Color");
-                            foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
-                            {
-                                i++;
-                                Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
-                                if (sibling != null)
-                                {
-                                    ImGui.TableSetColumnIndex(i);
-                                    ImGui.Text(String.Format("RGBA({0}, {1}, {2}, {3})", sibling.Color.R, sibling.Color.G, sibling.Color.B, sibling.Color.A));
-                                }
-                            }
-
                             if (shape.IsAngleChangeable)
                             {
                                 i = 0;
@@ -828,6 +886,20 @@ namespace FreeFrame
                                 }
                             }
 
+                            i = 0;
+                            ImGui.TableNextRow();
+                            ImGui.TableSetColumnIndex(i);
+                            ImGui.Text("Color");
+                            foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                            {
+                                i++;
+                                Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                if (sibling != null)
+                                {
+                                    ImGui.TableSetColumnIndex(i);
+                                    ImGui.Text(String.Format("RGBA({0}, {1}, {2}, {3})", sibling.Color.R, sibling.Color.G, sibling.Color.B, sibling.Color.A));
+                                }
+                            }
 
                             ImGui.EndTable();
                         }
@@ -846,7 +918,92 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
             ImGui.Spacing();
-            ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
+            if (ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60))
+            {
+                foreach (Shape shape in _shapes)
+                {
+                    if (_timeline.ContainsKey(_ioTimeline) == true && _timeline[_ioTimeline] != null && _timeline[_ioTimeline].Any(x => x.Id == shape.Id))
+                    {
+                        // Draw the current one in this list
+                        Shape sibling = _timeline[_ioTimeline].Find(x => x.Id == shape.Id)!;
+
+                        shape.X = sibling.X;
+                        shape.Y = sibling.Y;
+                        shape.Width = sibling.Width;
+                        shape.Height = sibling.Height;
+                        shape.Angle = sibling.Angle;
+                        shape.CornerRadius = sibling.CornerRadius;
+                        shape.Color = sibling.Color;
+                        shape.ImplementObject();
+                    }
+                    else // Doesn't exist in the list
+                    {
+                        if (_timeline.Any(i => i.Value.Any(j => j.Id == shape.Id))) // If exist somewhere else but not here
+                        {
+                            List<int> keys = _timeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToList(); // Key key everywhere it exist
+
+                            // Find two nearest
+                            (int first, int second) nearest = (int.MaxValue, int.MaxValue);
+                            foreach (int key in keys)
+                            {
+                                int delta = Math.Abs(key - _ioTimeline);
+                                if (delta < nearest.first) // First nearest
+                                    nearest.first = key;
+                                else if (delta < nearest.second) // Second nearest
+                                    nearest.second = key;
+                            }
+                            if (nearest.second != int.MaxValue && nearest.first < _ioTimeline && _ioTimeline < nearest.second) // If need to interpolate
+                            {
+                                Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+                                Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null
+                                
+                                Console.WriteLine("X vv");
+                                // Interpolate every properties
+                                shape.X = Interpolate(_ioTimeline, nearest.first, nearest.second, first.X, second.X);
+                                Console.WriteLine(Environment.NewLine);
+                                Console.WriteLine("Y vv");
+                                shape.Y = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Y, second.Y);
+                                Console.WriteLine(Environment.NewLine);
+                                Console.WriteLine("Width vv");
+                                shape.Width = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Width, second.Width);
+                                Console.WriteLine(Environment.NewLine);
+                                Console.WriteLine("Height vv");
+                                shape.Height = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Height, second.Height);
+                                Console.WriteLine(Environment.NewLine);
+                                Console.WriteLine("Angle vv");
+                                shape.Angle = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Angle, second.Angle);
+                                Console.WriteLine(Environment.NewLine);
+                                Console.WriteLine("CornerRadius vv");
+                                shape.CornerRadius = Interpolate(_ioTimeline, nearest.first, nearest.second, first.CornerRadius, second.CornerRadius);
+                                Console.WriteLine(Environment.NewLine);
+                                Console.WriteLine("Color vv");
+                                shape.Color = InterpolateColor(_ioTimeline, nearest.first, nearest.second, first.Color, second.Color);
+
+                                shape.ImplementObject();
+                            }
+                            else // Just draw the first nearest
+                            {
+                                Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+
+                                shape.X = first.X;
+                                shape.Y = first.Y;
+                                shape.Width = first.Width;
+                                shape.Height = first.Height;
+                                shape.Angle = first.Angle;
+                                shape.CornerRadius = first.CornerRadius;
+                                shape.Color = first.Color;
+                                shape.ImplementObject();
+                            }
+                        }
+                        else
+                        {
+                            // doesnt exist somewhere else, so just draw the one on the screen.
+                            shape.ImplementObject();
+                        }
+                    }
+                }
+                ResetSelection();
+            }
             if (_selectedShape != null)
             {
                 if (ImGui.Button(String.Format("Create keyframe for {0}", _selectedShape.GetType().Name)))

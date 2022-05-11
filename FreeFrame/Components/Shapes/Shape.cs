@@ -18,7 +18,7 @@ namespace FreeFrame.Components.Shapes
         Guid _id;
         #endregion
 
-        private List<VertexArrayObject> vaos;
+        private List<Renderer> vaos;
         public virtual int X { get => _x; set => _x = value; }
         public virtual int Y { get => _y; set => _y = value; }
         public virtual int Width { get => _width; set => _width = value; }
@@ -31,11 +31,11 @@ namespace FreeFrame.Components.Shapes
         public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
         public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
         public Guid Id { get => _id; private  set => _id = value; }
-        public List<VertexArrayObject> Vaos { get => vaos; protected set => vaos = value; }
+        public List<Renderer> Vaos { get => vaos; protected set => vaos = value; }
 
         public Shape() 
         {
-            Vaos = new List<VertexArrayObject>();
+            Vaos = new List<Renderer>();
             Color = Color4.Black;
             Id = Guid.NewGuid();
         }
@@ -46,12 +46,12 @@ namespace FreeFrame.Components.Shapes
         public virtual void Draw(Vector2i clientSize)
         {
             //Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
-            foreach (VertexArrayObject vao in Vaos)
+            foreach (Renderer vao in Vaos)
                 vao.Draw(clientSize, Color, this);
         }
         public void DeleteObjects()
         {
-            foreach (VertexArrayObject vao in Vaos)
+            foreach (Renderer vao in Vaos)
                 vao.DeleteObjects();
             Vaos.Clear();
         }

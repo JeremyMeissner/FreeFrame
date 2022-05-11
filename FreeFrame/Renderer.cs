@@ -10,7 +10,7 @@ using FreeFrame.Components.Shapes;
 
 namespace FreeFrame
 {
-    public class VertexArrayObject
+    public class Renderer
     {
         private int _vertexBufferObjectID;
         private int _vertexArrayObjectID;
@@ -23,7 +23,7 @@ namespace FreeFrame
         public int VertexArrayObjectID { get => _vertexArrayObjectID; private set => _vertexArrayObjectID = value; }
         public int IndexBufferObjectID { get => _indexBufferObjectID; private set => _indexBufferObjectID = value; }
 
-        public VertexArrayObject(PrimitiveType primitiveType)
+        public Renderer(PrimitiveType primitiveType)
         {
             _primitiveType = primitiveType;
             VertexArrayObjectID = GL.GenVertexArray();
@@ -31,12 +31,14 @@ namespace FreeFrame
             IndexBufferObjectID = GL.GenBuffer();
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
         }
-        public VertexArrayObject(float[] vertices, uint[] indexes, PrimitiveType primitiveType) : this(primitiveType)
+
+        // TODO: rename this renderer?
+        public Renderer(float[] vertices, uint[] indexes, PrimitiveType primitiveType) : this(primitiveType)
         {
             ImplementObjects(vertices, indexes);
         }
 
-        public VertexArrayObject(float[] vertices, uint[] indexes, PrimitiveType primitiveType, Shape shape) : this(primitiveType)
+        public Renderer(float[] vertices, uint[] indexes, PrimitiveType primitiveType, Shape shape) : this(primitiveType)
         {
             Type type = shape.GetType();
             if (type == typeof(SVGCircle)) // Shader depend on the shape

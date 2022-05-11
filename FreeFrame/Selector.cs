@@ -33,11 +33,11 @@ namespace FreeFrame
             None
         }
 
-        private List<(VertexArrayObject vao, Area hitbox, SelectorType type)> _vaos;
+        private List<(Renderer vao, Area hitbox, SelectorType type)> _vaos;
 
         public Selector()
         {
-            _vaos = new List<(VertexArrayObject vao, Area hitbox, SelectorType type)>();
+            _vaos = new List<(Renderer vao, Area hitbox, SelectorType type)>();
         }
         public void Select(Shape shape)
         {
@@ -53,7 +53,7 @@ namespace FreeFrame
                 Width = shape.Width,
                 Height = shape.Height
             };
-            _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
+            _vaos.Add((new Renderer(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
 
             // Move selector (top-left)
             hitbox = new Area
@@ -64,7 +64,7 @@ namespace FreeFrame
                 Height = 10
             };
             if (shape.IsMoveable)
-                _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
+                _vaos.Add((new Renderer(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
 
             // Resize selector (bottom-right)
             hitbox = new Area
@@ -75,7 +75,7 @@ namespace FreeFrame
                 Height = 10
             };
             if (shape.IsResizeable)
-                _vaos.Add((new VertexArrayObject(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
+                _vaos.Add((new Renderer(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
         }
         public static float[] AreaToFloatArray(Area area)
         {
@@ -88,7 +88,7 @@ namespace FreeFrame
         {
             GL.Enable(EnableCap.LineSmooth);
             GL.LineWidth(3.0f);
-            foreach ((VertexArrayObject vao, Area _, SelectorType type) part in _vaos)
+            foreach ((Renderer vao, Area _, SelectorType type) part in _vaos)
             {
                 if (part.type == SelectorType.Edge)
                     part.vao.Draw(clientSize, new Color4(0, 125, 200, 255));
@@ -101,7 +101,7 @@ namespace FreeFrame
         public (bool, SelectorType?) HitBox(Vector2i mousePosition)
         {
             if (_vaos.Count > 0)
-                foreach ((VertexArrayObject _, Area hitbox, SelectorType type) part in _vaos)
+                foreach ((Renderer _, Area hitbox, SelectorType type) part in _vaos)
                     if (part.hitbox.X < mousePosition.X && part.hitbox.X + part.hitbox.Width > mousePosition.X && part.hitbox.Y < mousePosition.Y && part.hitbox.Y + part.hitbox.Height > mousePosition.Y)
                         return (true, part.type);
             return (false, null);

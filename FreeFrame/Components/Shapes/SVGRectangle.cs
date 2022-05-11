@@ -42,11 +42,11 @@ namespace FreeFrame.Components.Shapes
         }
         public override void ImplementObject()
         {
-            foreach (VertexArrayObject vao in Vaos)
+            foreach (Renderer vao in Vaos)
                 vao.DeleteObjects();
             Vaos.Clear();
 
-            Vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
+            Vaos.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
         }
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode

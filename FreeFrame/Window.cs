@@ -494,7 +494,7 @@ namespace FreeFrame
 
             if (_selectedShape != null)
             {
-                foreach (VertexArrayObject vao in _selectedShape.Vaos)
+                foreach (Renderer vao in _selectedShape.Vaos)
                 {
                     ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
                     ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));
@@ -545,7 +545,7 @@ namespace FreeFrame
                                     ImGui.Text(string.Format("{0}", shapes.Value[row].GetType().Name));
                                     ImGui.Text(string.Format("{0}", shapes.Value[row].Id));
                                     ImGui.Text(string.Format("{0}", shapes.Value[row].GetHashCode()));
-                                    foreach (VertexArrayObject vao in shapes.Value[row].Vaos)
+                                    foreach (Renderer vao in shapes.Value[row].Vaos)
                                     {
                                         ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
                                         ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));

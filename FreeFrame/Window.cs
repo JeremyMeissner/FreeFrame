@@ -40,6 +40,8 @@ namespace FreeFrame
         int _ioHeight;
         System.Numerics.Vector4 _ioColor;
         int _ioTimeline;
+        bool _ioIsLoop;
+        bool _ioIsReverse;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
@@ -83,6 +85,11 @@ namespace FreeFrame
             _timeline = new SortedDictionary<int, List<Shape>>();
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
+
+            _ioIsLoop = false;
+            _ioIsReverse = false;
+
+            // TODO: default values for io 
         }
         protected override void OnResize(ResizeEventArgs e)
         {
@@ -554,43 +561,36 @@ namespace FreeFrame
             }
             ImGui.End();
         }
-        public int Interpolate(int x, int x1, int x2, int y1, int y2)
+        public int LinearInterpolate(int x, int x1, int x2, int y1, int y2)
         {
             float y;
-            if (x1 < x2)
-            {
-                if (y1 < y2)
-                    y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1));
-                else
-                    y = y2 + (x - x1) * ((y1 - y2) / (x2 - x1));
-            }
-            else
-            {
-                if (y1 < y2)
-                    y = y1 + (x - x2) * ((y2 - y1) / (x1 - x2));
-                else
-                    y = y2 + (x - x2) * ((y1 - y2) / (x1 - x2));
-            }
+            y = y1 + (x - x1) * ((y2 - y1) / ((x2 - x1) == 0 ? 1 : (x2 - x1)));
+            //if (y1 < y2)
+            //    y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1));
+            //else
+            //    y = y2 + (x - x1) * ((y1 - y2) / (x2 - x1));
 
 
-            if (y1 < y2)
+            if (y1 <= y2)
             {
-                Console.WriteLine("input({0}) min({1}) max({2}) === {3}", y, y1, y2, Math.Clamp(y, y1, y2));
+                //Console.Write("Logicc");
+                //Console.WriteLine("input({0}) min({1}) max({2}) === {3}", y, y1, y2, Math.Clamp(y, y1, y2));
                 return (int)Math.Clamp(y, y1, y2);
 
             }
             else
             {
-                Console.WriteLine("input({0}) min({1}) max({2}) === {3}", y, y2, y1, Math.Clamp(y, y2, y1));
+                //Console.Write("Not loooooooooooooooogic");
+                //Console.WriteLine("input({0}) min({1}) max({2}) === {3}", y, y2, y1, Math.Clamp(y, y2, y1));
                 return (int)Math.Clamp(y, y2, y1);
             }
         }
-        public Color4 InterpolateColor(int x, int x1, int x2, Color4 y1, Color4 y2)
+        public Color4 LinearInterpolate(int x, int x1, int x2, Color4 y1, Color4 y2)
         {
-            int r = Interpolate(x, x1, x2, (int)(y1.R * 255), (int)(y2.R * 255));
-            int g = Interpolate(x, x1, x2, (int)(y1.G * 255), (int)(y2.G * 255));
-            int b = Interpolate(x, x1, x2, (int)(y1.B * 255), (int)(y2.B * 255));
-            int a = Interpolate(x, x1, x2, (int)(y1.A * 255), (int)(y2.A * 255));
+            int r = LinearInterpolate(x, x1, x2, (int)(y1.R * 255), (int)(y2.R * 255));
+            int g = LinearInterpolate(x, x1, x2, (int)(y1.G * 255), (int)(y2.G * 255));
+            int b = LinearInterpolate(x, x1, x2, (int)(y1.B * 255), (int)(y2.B * 255));
+            int a = LinearInterpolate(x, x1, x2, (int)(y1.A * 255), (int)(y2.A * 255));
             return new Color4(r / 255f, g / 255f, b / 255f, a / 255f);
         }
         public void ShowUI()
@@ -940,60 +940,133 @@ namespace FreeFrame
                     {
                         if (_timeline.Any(i => i.Value.Any(j => j.Id == shape.Id))) // If exist somewhere else but not here
                         {
-                            List<int> keys = _timeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToList(); // Key key everywhere it exist
+                            int[] keys = _timeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToArray(); // Key key everywhere it exist
 
                             // Find two nearest
                             (int first, int second) nearest = (int.MaxValue, int.MaxValue);
-                            foreach (int key in keys)
+                            //(int first, int second) deltas = (int.MaxValue, int.MaxValue);
+                            nearest.first = 0;
+                            nearest.second = 0; //Math.Min(keys[keys.Length - 1], _ioTimeline);
+
+                            int timelineIndex = _ioTimeline;
+
+                            if (_ioIsLoop)
                             {
-                                int delta = Math.Abs(key - _ioTimeline);
-                                if (delta < nearest.first) // First nearest
-                                    nearest.first = key;
-                                else if (delta < nearest.second) // Second nearest
-                                    nearest.second = key;
+                                int delta = keys[keys.Length - 1] - keys[0];
+                                timelineIndex = timelineIndex - (delta * (int)Math.Floor((double)timelineIndex / delta));
                             }
-                            if (nearest.second != int.MaxValue && nearest.first < _ioTimeline && _ioTimeline < nearest.second) // If need to interpolate
+
+                            if (timelineIndex >= keys[keys.Length - 1])
+                            {
+                                nearest.first = keys[keys.Length - 1];
+                                nearest.second = keys[keys.Length - 1];
+                                //if (_ioIsLoop)
+                                //    nearest.first = keys[0];
+                            }
+                            else if (timelineIndex <= keys[0])
+                            {
+                                nearest.first = keys[0];
+                                nearest.second = keys[0];
+                                //if (_ioIsLoop)
+                                //    nearest.second = keys[keys.Length - 1];
+                            }
+                            else
+                            {
+                                for (int i = 0; i < keys.Length; i++)
+                                {
+                                    Console.WriteLine("key[{0}] = {1}", i, keys[i]);
+                                    if (keys[i] >= timelineIndex)
+                                    {
+                                        nearest.second = keys[i];
+                                        if (i - 1 >= 0) // If second possible
+                                            nearest.first = keys[i - 1];
+                                        break;
+                                    }
+                                }
+                            }
+
+
+
+                            Console.WriteLine("HHHHHHHHHHHHHHHHHHHHHHHHHHHHH first: {0}   second: {1}", nearest.first, nearest.second);
+                            //foreach (int key in keys)
+                            //{
+                            //    int delta = Math.Abs(key - _ioTimeline);
+                            //    if (delta < deltas.first) // First nearest
+                            //    {
+                            //        nearest.second = nearest.first;
+                            //        deltas.second = deltas.first;
+                            //        deltas.first = delta;
+                            //        nearest.first = key;
+                            //    }
+                            //    else if (delta < deltas.second) // Second nearest
+                            //    {
+                            //        deltas.second = delta;
+                            //        nearest.second = key;
+                            //    }
+                            //}
+                            //if (nearest.second != int.MaxValue && ((nearest.second <= _ioTimeline && _ioTimeline <= nearest.first) || (nearest.first <= _ioTimeline && _ioTimeline <= nearest.second))) // If need to interpolate
+                            // if (nearest.first != nearest.second)
                             {
                                 Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
-                                Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null
-                                
-                                Console.WriteLine("X vv");
-                                // Interpolate every properties
-                                shape.X = Interpolate(_ioTimeline, nearest.first, nearest.second, first.X, second.X);
-                                Console.WriteLine(Environment.NewLine);
-                                Console.WriteLine("Y vv");
-                                shape.Y = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Y, second.Y);
-                                Console.WriteLine(Environment.NewLine);
-                                Console.WriteLine("Width vv");
-                                shape.Width = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Width, second.Width);
-                                Console.WriteLine(Environment.NewLine);
-                                Console.WriteLine("Height vv");
-                                shape.Height = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Height, second.Height);
-                                Console.WriteLine(Environment.NewLine);
-                                Console.WriteLine("Angle vv");
-                                shape.Angle = Interpolate(_ioTimeline, nearest.first, nearest.second, first.Angle, second.Angle);
-                                Console.WriteLine(Environment.NewLine);
-                                Console.WriteLine("CornerRadius vv");
-                                shape.CornerRadius = Interpolate(_ioTimeline, nearest.first, nearest.second, first.CornerRadius, second.CornerRadius);
-                                Console.WriteLine(Environment.NewLine);
-                                Console.WriteLine("Color vv");
-                                shape.Color = InterpolateColor(_ioTimeline, nearest.first, nearest.second, first.Color, second.Color);
+                                Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
+                                // If reverse and loop invert the two shape every odd
+                                if (_ioIsLoop && _ioIsReverse)
+                                {
+                                    if (keys.Length > 1)
+                                    {
+                                        int delta = keys[keys.Length - 1] - keys[0];
+                                        Console.WriteLine("(timelineIndex:{0} / delta:{1}) {2} % 2 == 1 =>>>> {3}", _ioTimeline, delta, _ioTimeline / delta, (int)Math.Floor((double)_ioTimeline / delta) % 2 == 1);
+                                        if ((int)Math.Floor((double)_ioTimeline / delta) % 2 == 1) // if odd
+                                        {
+                                            Console.WriteLine("Invertttttttttttttt");
+                                            second = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+                                            first = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null
+                                        }
+                                    }
+                                }
 
-                                shape.ImplementObject();
-                            }
-                            else // Just draw the first nearest
-                            {
-                                Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+                                //if (first != null && second != null)
+                                {
+                                    //Console.WriteLine("X vv");
+                                    // Interpolate every properties
+                                    shape.X = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.X, second.X);
+                                    //Console.WriteLine(Environment.NewLine);
+                                    //Console.WriteLine("Y vv");
+                                    shape.Y = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Y, second.Y);
+                                    //Console.WriteLine(Environment.NewLine);
+                                    //Console.WriteLine("Width vv");
+                                    shape.Width = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Width, second.Width);
+                                    //Console.WriteLine(Environment.NewLine);
+                                    //Console.WriteLine("Height vv");
+                                    shape.Height = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Height, second.Height);
+                                    //Console.WriteLine(Environment.NewLine);
+                                    //Console.WriteLine("Angle vv");
+                                    shape.Angle = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Angle, second.Angle);
+                                    //Console.WriteLine(Environment.NewLine);
+                                    //Console.WriteLine("CornerRadius vv");
+                                    shape.CornerRadius = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.CornerRadius, second.CornerRadius);
+                                    //Console.WriteLine(Environment.NewLine);
+                                    //Console.WriteLine("Color vv");
+                                    shape.Color = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Color, second.Color);
 
-                                shape.X = first.X;
-                                shape.Y = first.Y;
-                                shape.Width = first.Width;
-                                shape.Height = first.Height;
-                                shape.Angle = first.Angle;
-                                shape.CornerRadius = first.CornerRadius;
-                                shape.Color = first.Color;
-                                shape.ImplementObject();
+                                    shape.ImplementObject();
+
+                                }
+
                             }
+                            //else // Just draw the first nearest
+                            //{
+                            //    Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+
+                            //    shape.X = first.X;
+                            //    shape.Y = first.Y;
+                            //    shape.Width = first.Width;
+                            //    shape.Height = first.Height;
+                            //    shape.Angle = first.Angle;
+                            //    shape.CornerRadius = first.CornerRadius;
+                            //    shape.Color = first.Color;
+                            //    shape.ImplementObject();
+                            //}
                         }
                         else
                         {
@@ -1004,23 +1077,44 @@ namespace FreeFrame
                 }
                 ResetSelection();
             }
+            if (ImGui.Checkbox("Loop", ref _ioIsLoop))
+                _ioIsReverse = _ioIsLoop;
+            ImGui.Indent();
+            if (ImGui.Checkbox("Reverse", ref _ioIsReverse))
+                if (_ioIsLoop == false)
+                    _ioIsLoop = _ioIsReverse;
+            ImGui.Unindent();
+
             if (_selectedShape != null)
             {
-                if (ImGui.Button(String.Format("Create keyframe for {0}", _selectedShape.GetType().Name)))
+                if (_timeline.ContainsKey(_ioTimeline) && _timeline[_ioTimeline] != null && _timeline[_ioTimeline].Any(x => x.Id == _selectedShape.Id))
                 {
-                    if (_timeline.ContainsKey(_ioTimeline) == false || _timeline[_ioTimeline] == null)
-                        _timeline[_ioTimeline] = new List<Shape>();
-
-                    foreach (Shape shape in _timeline[_ioTimeline])
+                    if (ImGui.Button(String.Format("Remove keyframe {0} for {1}", _ioTimeline, _selectedShape.GetType().Name)))
                     {
-                        if (shape.Id == _selectedShape.Id)
-                        {
-                            Console.WriteLine("Already exist");
-                            _timeline[_ioTimeline].Remove(shape);
-                            break;
-                        }
+                        _timeline[_ioTimeline].Remove(_timeline[_ioTimeline].Find(x => x.Id == _selectedShape.Id)!); // Can't be null
+                        if (_timeline[_ioTimeline].Count == 0)
+                            _timeline.Remove(_ioTimeline);
+                        // If list _timeline[_ioTimeline] empty then null it
                     }
-                    _timeline[_ioTimeline].Add(_selectedShape.Clone());
+                }
+                else
+                {
+                    if (ImGui.Button(String.Format("Create keyframe for {0}", _selectedShape.GetType().Name)))
+                    {
+                        if (_timeline.ContainsKey(_ioTimeline) == false || _timeline[_ioTimeline] == null)
+                            _timeline[_ioTimeline] = new List<Shape>();
+
+                        foreach (Shape shape in _timeline[_ioTimeline])
+                        {
+                            if (shape.Id == _selectedShape.Id)
+                            {
+                                Console.WriteLine("Already exist");
+                                _timeline[_ioTimeline].Remove(shape);
+                                break;
+                            }
+                        }
+                        _timeline[_ioTimeline].Add(_selectedShape.Clone());
+                    }
                 }
             }
             ImGui.End();

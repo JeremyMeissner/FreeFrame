@@ -47,7 +47,7 @@ namespace FreeFrame
                 _shader = new Shader("Shaders/shader.vert", "Shaders/rectangle.frag");
             ImplementObjects(vertices, indexes);
         }
-        public void Draw(Vector2i clientSize, Color4 color)
+        public void Draw(Vector2i clientSize, Camera camera, Color4 color)
         {
             _shader.Use();
 
@@ -67,11 +67,17 @@ namespace FreeFrame
             Matrix4 transform = Matrix4.Identity;
             _shader.SetUniformMat4(uTransformation, transform);
 
+            int uView = _shader.GetUniformLocation("u_View");
+            _shader.SetUniformMat4(uView, camera.GetViewMatrix());
+
+            int uProjection = _shader.GetUniformLocation("u_Projection");
+            _shader.SetUniformMat4(uProjection, camera.GetViewMatrix());
+
             GL.BindVertexArray(VertexArrayObjectID);
 
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
-        public void Draw(Vector2i clientSize, Color4 color, Shape shape)
+        public void Draw(Vector2i clientSize, Camera camera, Color4 color, Shape shape)
         {
             _shader.Use();
             // Applied projection matrix
@@ -89,6 +95,12 @@ namespace FreeFrame
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
             Matrix4 rotation = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(shape.Angle));
             _shader.SetUniformMat4(uTransformation, rotation);
+
+            int uView = _shader.GetUniformLocation("u_View");
+            _shader.SetUniformMat4(uView, camera.GetViewMatrix());
+
+            int uProjection = _shader.GetUniformLocation("u_Projection");
+            _shader.SetUniformMat4(uProjection, camera.GetViewMatrix());
 
 
             Type type = shape.GetType();

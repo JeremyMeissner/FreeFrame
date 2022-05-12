@@ -26,8 +26,6 @@ namespace FreeFrame.Components.Shapes
                 _points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
         }
 
-        public override void Draw(Vector2i clientSize) => throw new NotImplementedException();
-
         public override List<Vector2i> GetSelectablePoints()
         {
             throw new NotImplementedException();

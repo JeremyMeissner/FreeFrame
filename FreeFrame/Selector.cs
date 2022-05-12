@@ -84,16 +84,16 @@ namespace FreeFrame
                 area.X, area.Y, area.X + area.Width, area.Y, area.X + area.Width, area.Y + area.Height, area.X, area.Y + area.Height // Clockwise
             };
         }
-        public void Draw(Vector2i clientSize)
+        public void Draw(Vector2i clientSize, Camera camera)
         {
             GL.Enable(EnableCap.LineSmooth);
             GL.LineWidth(3.0f);
             foreach ((Renderer vao, Area _, SelectorType type) part in _vaos)
             {
                 if (part.type == SelectorType.Edge)
-                    part.vao.Draw(clientSize, new Color4(0, 125, 200, 255));
+                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 200, 255));
                 else
-                    part.vao.Draw(clientSize, new Color4(0, 125, 255, 255));
+                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 255, 255));
             }
             GL.Disable(EnableCap.LineSmooth);
 

@@ -24,7 +24,8 @@ namespace FreeFrame
         {
             Idle,
             Edit,
-            Create
+            Create,
+            Move
         }
         enum CreateMode
         {
@@ -42,10 +43,12 @@ namespace FreeFrame
         int _ioTimeline;
         bool _ioIsLoop;
         bool _ioIsReverse;
+        private Camera _camera;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
         Vector2i _mouseOriginalState;
+        Vector3i _cameraOriginalState;
 
         SortedDictionary<int, List<Shape>> _timeline;
 
@@ -81,10 +84,13 @@ namespace FreeFrame
             _selector = new Selector();
 
             _mouseOriginalState = new Vector2i(0, 0);
+            _cameraOriginalState = new Vector3i(0, 0, 0);
 
             _timeline = new SortedDictionary<int, List<Shape>>();
 
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
+
+            _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
 
             _ioIsLoop = false;
             _ioIsReverse = false;
@@ -99,6 +105,8 @@ namespace FreeFrame
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
 
             _ImGuiController.WindowResized(ClientSize.X, ClientSize.Y);
+
+            _camera.AspectRatio = Size.X / (float)Size.Y; // TODO: Why not ClientSize
         }
         /// <summary>
         /// Triggered at a fixed interval. (Logic, etc.)
@@ -142,6 +150,16 @@ namespace FreeFrame
                 //    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
             }
 
+            if (KeyboardState.IsKeyPressed(Keys.Right))
+            {
+                _camera.Position += Vector3.Normalize(Vector3.Cross(_camera.Front, _camera.Up)) * 2;
+            }
+
+            //if (KeyboardState.IsKeyDown(Keys.Space))
+            //    _userMode = UserMode.Move;
+            //else if (KeyboardState.WasKeyDown(Keys.Space) && KeyboardState.IsKeyDown(Keys.Space) == false)
+            //    _userMode = UserMode.Idle;
+
             if (KeyboardState.IsKeyDown(Keys.Escape))
                 ResetSelection();
 
@@ -168,14 +186,13 @@ namespace FreeFrame
                     _selectedShape = shape;
                 }
             }
-
+            // Change to ButtonPressed instead of was and is
             if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
                 OnLeftMouseDown();
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == true) // Long left click
                 OnLeftMouseEnter();
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == false) // Release left click
                 OnLeftMouseUp();
-
 
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             foreach (Shape shape in _shapes)
@@ -186,7 +203,7 @@ namespace FreeFrame
 
                 //shape.ImplementObject(); // Reset VAOs
                 //shape.ImplementObject();
-                shape.Draw(ClientSize);
+                shape.Draw(ClientSize, _camera);
             }
 
             if (_selectedShape != null)
@@ -240,10 +257,11 @@ namespace FreeFrame
             switch (_userMode)
             {
                 case UserMode.Edit:
-                    _selector.Draw(ClientSize); // Only draw selector on edit mode
+                    _selector.Draw(ClientSize, _camera); // Only draw selector on edit mode
                     break;
                 case UserMode.Create:
                     break;
+                case UserMode.Move:
                 case UserMode.Idle:
                 default:
                     break;
@@ -381,6 +399,18 @@ namespace FreeFrame
                     }
                     break;
                 case UserMode.Create:
+                case UserMode.Move:
+                    //if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
+                    //{
+                    //    _mouseOriginalState.X = (int)MouseState.X;
+                    //    _mouseOriginalState.Y = (int)MouseState.Y;
+
+                    //    _cameraOriginalState.X = (int)_camera.Position.X;
+                    //    _cameraOriginalState.Y = (int)_camera.Position.Y;
+                    //    _cameraOriginalState.Z = (int)_camera.Position.Z;
+
+                    //}
+                    //break;
                 default:
                     break;
             }
@@ -463,6 +493,9 @@ namespace FreeFrame
                                 break;
                         }
                     }
+                    break;
+                case UserMode.Move:
+                    //_camera.Position = new Vector3(_cameraOriginalState.X + (-MouseState.X / Size.X) - (-_mouseOriginalState.X / Size.X), _cameraOriginalState.Y + (MouseState.Y / Size.Y) - (_mouseOriginalState.Y / Size.Y), _camera.Position.Z);
                     break;
                 case UserMode.Idle:
                 default:
@@ -560,6 +593,13 @@ namespace FreeFrame
                 }
             }
             ImGui.End();
+        }
+
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            //Console.WriteLine(_camera.Position.Z);
+            _camera.Position = new Vector3(_camera.Position.X, _camera.Position.Y, _camera.Position.Z + (1f * -e.OffsetY)); // TODO: Smooth the scroll when close
         }
         public int LinearInterpolate(int x, int x1, int x2, int y1, int y2)
         {

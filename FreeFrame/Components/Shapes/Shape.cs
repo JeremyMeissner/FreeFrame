@@ -43,11 +43,11 @@ namespace FreeFrame.Components.Shapes
         /// <summary>
         /// Trigge draw element through OpenGL context
         /// </summary>
-        public virtual void Draw(Vector2i clientSize)
+        public virtual void Draw(Vector2i clientSize, Camera camera)
         {
             //Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
             foreach (Renderer vao in Vaos)
-                vao.Draw(clientSize, Color, this);
+                vao.Draw(clientSize, camera, Color, this);
         }
         public void DeleteObjects()
         {

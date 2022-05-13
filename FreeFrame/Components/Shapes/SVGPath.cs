@@ -186,9 +186,9 @@ namespace FreeFrame.Components.Shapes
 
         public override string ToString()
         {
-            string output = "d: ";
+            string output = "<path d=\"";
             DrawAttributes.ForEach(d => output += d.ToString() + " ");
-            return output.Trim();
+            return output.Trim() + $"\" fill=\"{ColorToHexadecimal(Color)}\"/>";
         }
     }
 }

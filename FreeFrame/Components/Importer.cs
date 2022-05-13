@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using FreeFrame.Components.Shapes;
+using OpenTK.Mathematics;
 
 namespace FreeFrame.Components
 {
@@ -65,6 +66,29 @@ namespace FreeFrame.Components
             byte[] byteArray = Encoding.UTF8.GetBytes(pString);
 
             return ImportFromStream(new MemoryStream(byteArray));
+        }
+
+        static public void ExportToFile(List<Shape> shapes, Vector2i clientSize)
+        {
+
+            using (FileStream fs = new FileStream("output.svg", FileMode.Create))
+            {
+                byte[] bytes = Encoding.ASCII.GetBytes($@"<?xml version=""1.0"" encoding=""utf-8"" ?>
+<svg xmlns=""http://www.w3.org/2000/svg"" version=""1.1"" width=""{clientSize.X}"" height=""{clientSize.Y}"" >" + Environment.NewLine);
+
+                for (int i = 0; i < bytes.Length; i++)
+                    fs.WriteByte(bytes[i]);
+
+                foreach (Shape shape in shapes)
+                {
+                    bytes = Encoding.ASCII.GetBytes(shape.ToString() + Environment.NewLine);
+                    for (int i = 0; i < bytes.Length; i++)
+                        fs.WriteByte(bytes[i]);
+                }
+                bytes = Encoding.ASCII.GetBytes("</svg>");
+                for (int i = 0; i < bytes.Length; i++)
+                    fs.WriteByte(bytes[i]);
+            }
         }
     }
 }

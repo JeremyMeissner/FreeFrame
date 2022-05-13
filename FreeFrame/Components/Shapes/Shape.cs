@@ -76,6 +76,16 @@ namespace FreeFrame.Components.Shapes
         public abstract void Move(Vector2i position);
         public abstract void Resize(Vector2i size);
         public abstract override string ToString();
+
+        public static string ColorToHexadecimal(Color4 color)
+        {
+            int r, g, b, a;
+            r = (int)(color.R * 255);
+            g = (int)(color.G * 255);
+            b = (int)(color.B * 255);
+            a = (int)(color.A * 255);
+            return '#' + r.ToString("X2") + g.ToString("X2") + b.ToString("X2") + a.ToString("X2");
+        }
     }
 
 }

@@ -15,6 +15,17 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using static FreeFrame.Selector;
 using System.Reflection;
+using Emgu.CV;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.Versioning;
+using Emgu.CV.Util;
+using Emgu.CV.Structure;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using AnimatedGif;
+using System.Drawing.Drawing2D;
 
 namespace FreeFrame
 {
@@ -37,6 +48,7 @@ namespace FreeFrame
         int _ioCornerRadius;
         int _ioX;
         int _ioY;
+        int _ioFps;
         int _ioWidth;
         int _ioHeight;
         System.Numerics.Vector4 _ioColor;
@@ -46,6 +58,10 @@ namespace FreeFrame
         private Camera _camera;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+        bool _ioIsPlaying;
+
+
+        double _secondsEllapsed;
 
         Vector2i _mouseOriginalState;
         Vector3i _cameraOriginalState;
@@ -94,9 +110,14 @@ namespace FreeFrame
 
             _ioIsLoop = false;
             _ioIsReverse = false;
+            _ioIsPlaying = false;
+
+            _ioFps = 24;
+            _secondsEllapsed = 0;
 
             // TODO: default values for io 
         }
+
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
@@ -135,6 +156,25 @@ namespace FreeFrame
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
+
+            if (_ioIsPlaying)
+            {
+                double frameDuration = 1.0 / _ioFps;
+                _secondsEllapsed += e.Time;
+                if (_secondsEllapsed >= frameDuration)
+                {
+                    while (_secondsEllapsed >= frameDuration)
+                    {
+                        _secondsEllapsed -= frameDuration;
+                        _ioTimeline++;
+                    }
+                    if (_ioTimeline > 100) // TODO: please dont hardcode this
+                        _ioTimeline -= 100; // Avoid missing seconds
+                }
+
+                RenderInterpolation();
+            }
+
             if (KeyboardState.IsKeyDown(Keys.Q))
             {
                 ////Console.WriteLine("Draw me please");
@@ -149,6 +189,8 @@ namespace FreeFrame
                 //if (_selectedShape != null)
                 //    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
             }
+
+
 
             if (KeyboardState.IsKeyPressed(Keys.Right))
             {
@@ -400,17 +442,17 @@ namespace FreeFrame
                     break;
                 case UserMode.Create:
                 case UserMode.Move:
-                    //if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
-                    //{
-                    //    _mouseOriginalState.X = (int)MouseState.X;
-                    //    _mouseOriginalState.Y = (int)MouseState.Y;
+                //if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
+                //{
+                //    _mouseOriginalState.X = (int)MouseState.X;
+                //    _mouseOriginalState.Y = (int)MouseState.Y;
 
-                    //    _cameraOriginalState.X = (int)_camera.Position.X;
-                    //    _cameraOriginalState.Y = (int)_camera.Position.Y;
-                    //    _cameraOriginalState.Z = (int)_camera.Position.Z;
+                //    _cameraOriginalState.X = (int)_camera.Position.X;
+                //    _cameraOriginalState.Y = (int)_camera.Position.Y;
+                //    _cameraOriginalState.Z = (int)_camera.Position.Z;
 
-                    //}
-                    //break;
+                //}
+                //break;
                 default:
                     break;
             }
@@ -958,165 +1000,18 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Timeline");
             ImGui.Spacing();
-            if (ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60))
+
+
+            if (ImGui.SliderInt("frame", ref _ioTimeline, 1, 100)) // TODO: please dont hardcode this
             {
-                foreach (Shape shape in _shapes)
-                {
-                    if (_timeline.ContainsKey(_ioTimeline) == true && _timeline[_ioTimeline] != null && _timeline[_ioTimeline].Any(x => x.Id == shape.Id))
-                    {
-                        // Draw the current one in this list
-                        Shape sibling = _timeline[_ioTimeline].Find(x => x.Id == shape.Id)!;
-
-                        shape.X = sibling.X;
-                        shape.Y = sibling.Y;
-                        shape.Width = sibling.Width;
-                        shape.Height = sibling.Height;
-                        shape.Angle = sibling.Angle;
-                        shape.CornerRadius = sibling.CornerRadius;
-                        shape.Color = sibling.Color;
-                        shape.ImplementObject();
-                    }
-                    else // Doesn't exist in the list
-                    {
-                        if (_timeline.Any(i => i.Value.Any(j => j.Id == shape.Id))) // If exist somewhere else but not here
-                        {
-                            int[] keys = _timeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToArray(); // Key key everywhere it exist
-
-                            // Find two nearest
-                            (int first, int second) nearest = (int.MaxValue, int.MaxValue);
-                            //(int first, int second) deltas = (int.MaxValue, int.MaxValue);
-                            nearest.first = 0;
-                            nearest.second = 0; //Math.Min(keys[keys.Length - 1], _ioTimeline);
-
-                            int timelineIndex = _ioTimeline;
-
-                            if (_ioIsLoop)
-                            {
-                                int delta = keys[keys.Length - 1] - keys[0];
-                                timelineIndex = timelineIndex - (delta * (int)Math.Floor((double)timelineIndex / delta));
-                            }
-
-                            if (timelineIndex >= keys[keys.Length - 1])
-                            {
-                                nearest.first = keys[keys.Length - 1];
-                                nearest.second = keys[keys.Length - 1];
-                                //if (_ioIsLoop)
-                                //    nearest.first = keys[0];
-                            }
-                            else if (timelineIndex <= keys[0])
-                            {
-                                nearest.first = keys[0];
-                                nearest.second = keys[0];
-                                //if (_ioIsLoop)
-                                //    nearest.second = keys[keys.Length - 1];
-                            }
-                            else
-                            {
-                                for (int i = 0; i < keys.Length; i++)
-                                {
-                                    Console.WriteLine("key[{0}] = {1}", i, keys[i]);
-                                    if (keys[i] >= timelineIndex)
-                                    {
-                                        nearest.second = keys[i];
-                                        if (i - 1 >= 0) // If second possible
-                                            nearest.first = keys[i - 1];
-                                        break;
-                                    }
-                                }
-                            }
-
-
-
-                            Console.WriteLine("HHHHHHHHHHHHHHHHHHHHHHHHHHHHH first: {0}   second: {1}", nearest.first, nearest.second);
-                            //foreach (int key in keys)
-                            //{
-                            //    int delta = Math.Abs(key - _ioTimeline);
-                            //    if (delta < deltas.first) // First nearest
-                            //    {
-                            //        nearest.second = nearest.first;
-                            //        deltas.second = deltas.first;
-                            //        deltas.first = delta;
-                            //        nearest.first = key;
-                            //    }
-                            //    else if (delta < deltas.second) // Second nearest
-                            //    {
-                            //        deltas.second = delta;
-                            //        nearest.second = key;
-                            //    }
-                            //}
-                            //if (nearest.second != int.MaxValue && ((nearest.second <= _ioTimeline && _ioTimeline <= nearest.first) || (nearest.first <= _ioTimeline && _ioTimeline <= nearest.second))) // If need to interpolate
-                            // if (nearest.first != nearest.second)
-                            {
-                                Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
-                                Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
-                                // If reverse and loop invert the two shape every odd
-                                if (_ioIsLoop && _ioIsReverse)
-                                {
-                                    if (keys.Length > 1)
-                                    {
-                                        int delta = keys[keys.Length - 1] - keys[0];
-                                        Console.WriteLine("(timelineIndex:{0} / delta:{1}) {2} % 2 == 1 =>>>> {3}", _ioTimeline, delta, _ioTimeline / delta, (int)Math.Floor((double)_ioTimeline / delta) % 2 == 1);
-                                        if ((int)Math.Floor((double)_ioTimeline / delta) % 2 == 1) // if odd
-                                        {
-                                            Console.WriteLine("Invertttttttttttttt");
-                                            second = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
-                                            first = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null
-                                        }
-                                    }
-                                }
-
-                                //if (first != null && second != null)
-                                {
-                                    //Console.WriteLine("X vv");
-                                    // Interpolate every properties
-                                    shape.X = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.X, second.X);
-                                    //Console.WriteLine(Environment.NewLine);
-                                    //Console.WriteLine("Y vv");
-                                    shape.Y = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Y, second.Y);
-                                    //Console.WriteLine(Environment.NewLine);
-                                    //Console.WriteLine("Width vv");
-                                    shape.Width = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Width, second.Width);
-                                    //Console.WriteLine(Environment.NewLine);
-                                    //Console.WriteLine("Height vv");
-                                    shape.Height = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Height, second.Height);
-                                    //Console.WriteLine(Environment.NewLine);
-                                    //Console.WriteLine("Angle vv");
-                                    shape.Angle = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Angle, second.Angle);
-                                    //Console.WriteLine(Environment.NewLine);
-                                    //Console.WriteLine("CornerRadius vv");
-                                    shape.CornerRadius = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.CornerRadius, second.CornerRadius);
-                                    //Console.WriteLine(Environment.NewLine);
-                                    //Console.WriteLine("Color vv");
-                                    shape.Color = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Color, second.Color);
-
-                                    shape.ImplementObject();
-
-                                }
-
-                            }
-                            //else // Just draw the first nearest
-                            //{
-                            //    Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
-
-                            //    shape.X = first.X;
-                            //    shape.Y = first.Y;
-                            //    shape.Width = first.Width;
-                            //    shape.Height = first.Height;
-                            //    shape.Angle = first.Angle;
-                            //    shape.CornerRadius = first.CornerRadius;
-                            //    shape.Color = first.Color;
-                            //    shape.ImplementObject();
-                            //}
-                        }
-                        else
-                        {
-                            // doesnt exist somewhere else, so just draw the one on the screen.
-                            shape.ImplementObject();
-                        }
-                    }
-                }
-                ResetSelection();
+                RenderInterpolation();
             }
+            ImGui.SameLine();
+            ImGui.PushItemWidth(80f);
+            if (ImGui.InputInt("fps", ref _ioFps))
+                _ioFps = Math.Clamp(_ioFps, 1, 120); // TODO: please dont hardcode this
+            ImGui.PopItemWidth();
+
             if (ImGui.Checkbox("Loop", ref _ioIsLoop))
                 _ioIsReverse = _ioIsLoop;
             ImGui.Indent();
@@ -1124,6 +1019,11 @@ namespace FreeFrame
                 if (_ioIsLoop == false)
                     _ioIsLoop = _ioIsReverse;
             ImGui.Unindent();
+
+            if (ImGui.Button(_ioIsPlaying == false ? "Play" : "Pause"))
+                _ioIsPlaying = !_ioIsPlaying;
+
+            ImGui.SameLine();
 
             if (_selectedShape != null)
             {
@@ -1179,10 +1079,14 @@ namespace FreeFrame
                     }
                     if (ImGui.BeginMenu("Save"))
                     {
-                        if (ImGui.MenuItem("Save as PNG", "Ctrl+S"))
-                        {
-                            // Save the current screen
-                        }
+                        if (ImGui.MenuItem("Save as SVG", "Ctrl+S"))
+                            SaveCurrentScreenToSVG();
+                        if (ImGui.MenuItem("Save as MP4"))
+                            SaveCurrentScreenToMP4();
+                        if (ImGui.MenuItem("Save as GIF"))
+                            SaveCurrentScreenToGIF();
+                        if (ImGui.MenuItem("Save as PNG"))
+                            SaveCurrentScreenToPNG();
                         ImGui.EndMenu();
                     }
                     if (ImGui.MenuItem("Close", "Ctrl+W")) { /* Do stuff */ }
@@ -1266,6 +1170,228 @@ namespace FreeFrame
                 ImGui.PopTextWrapPos();
                 ImGui.EndTooltip();
             }
+        }
+        public void RenderInterpolation()
+        {
+            foreach (Shape shape in _shapes)
+            {
+                if (_timeline.ContainsKey(_ioTimeline) == true && _timeline[_ioTimeline] != null && _timeline[_ioTimeline].Any(x => x.Id == shape.Id))
+                {
+                    // Draw the current one in this list
+                    Shape sibling = _timeline[_ioTimeline].Find(x => x.Id == shape.Id)!;
+
+                    shape.X = sibling.X;
+                    shape.Y = sibling.Y;
+                    shape.Width = sibling.Width;
+                    shape.Height = sibling.Height;
+                    shape.Angle = sibling.Angle;
+                    shape.CornerRadius = sibling.CornerRadius;
+                    shape.Color = sibling.Color;
+                    shape.ImplementObject();
+                }
+                else // Doesn't exist in the list
+                {
+                    if (_timeline.Any(i => i.Value.Any(j => j.Id == shape.Id))) // If exist somewhere else but not here
+                    {
+                        int[] keys = _timeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToArray(); // Key key everywhere it exist
+
+                        // Find two nearest
+                        (int first, int second) nearest = (int.MaxValue, int.MaxValue);
+                        //(int first, int second) deltas = (int.MaxValue, int.MaxValue);
+                        nearest.first = 0;
+                        nearest.second = 0; //Math.Min(keys[keys.Length - 1], _ioTimeline);
+
+                        int timelineIndex = _ioTimeline;
+
+                        if (_ioIsLoop)
+                        {
+                            int delta = keys[keys.Length - 1] - keys[0];
+                            timelineIndex = timelineIndex - (delta * (int)Math.Floor((double)timelineIndex / delta));
+                        }
+
+                        if (timelineIndex >= keys[keys.Length - 1])
+                        {
+                            nearest.first = keys[keys.Length - 1];
+                            nearest.second = keys[keys.Length - 1];
+                            //if (_ioIsLoop)
+                            //    nearest.first = keys[0];
+                        }
+                        else if (timelineIndex <= keys[0])
+                        {
+                            nearest.first = keys[0];
+                            nearest.second = keys[0];
+                            //if (_ioIsLoop)
+                            //    nearest.second = keys[keys.Length - 1];
+                        }
+                        else
+                        {
+                            for (int i = 0; i < keys.Length; i++)
+                            {
+                                Console.WriteLine("key[{0}] = {1}", i, keys[i]);
+                                if (keys[i] >= timelineIndex)
+                                {
+                                    nearest.second = keys[i];
+                                    if (i - 1 >= 0) // If second possible
+                                        nearest.first = keys[i - 1];
+                                    break;
+                                }
+                            }
+                        }
+
+
+
+                        Console.WriteLine("HHHHHHHHHHHHHHHHHHHHHHHHHHHHH first: {0}   second: {1}", nearest.first, nearest.second);
+                        //foreach (int key in keys)
+                        //{
+                        //    int delta = Math.Abs(key - _ioTimeline);
+                        //    if (delta < deltas.first) // First nearest
+                        //    {
+                        //        nearest.second = nearest.first;
+                        //        deltas.second = deltas.first;
+                        //        deltas.first = delta;
+                        //        nearest.first = key;
+                        //    }
+                        //    else if (delta < deltas.second) // Second nearest
+                        //    {
+                        //        deltas.second = delta;
+                        //        nearest.second = key;
+                        //    }
+                        //}
+                        //if (nearest.second != int.MaxValue && ((nearest.second <= _ioTimeline && _ioTimeline <= nearest.first) || (nearest.first <= _ioTimeline && _ioTimeline <= nearest.second))) // If need to interpolate
+                        // if (nearest.first != nearest.second)
+                        {
+                            Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+                            Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
+                                                                                                   // If reverse and loop invert the two shape every odd
+                            if (_ioIsLoop && _ioIsReverse)
+                            {
+                                if (keys.Length > 1)
+                                {
+                                    int delta = keys[keys.Length - 1] - keys[0];
+                                    Console.WriteLine("(timelineIndex:{0} / delta:{1}) {2} % 2 == 1 =>>>> {3}", _ioTimeline, delta, _ioTimeline / delta, (int)Math.Floor((double)_ioTimeline / delta) % 2 == 1);
+                                    if ((int)Math.Floor((double)_ioTimeline / delta) % 2 == 1) // if odd
+                                    {
+                                        Console.WriteLine("Invertttttttttttttt");
+                                        second = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+                                        first = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null
+                                    }
+                                }
+                            }
+
+                            //if (first != null && second != null)
+                            {
+                                //Console.WriteLine("X vv");
+                                // Interpolate every properties
+                                shape.X = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.X, second.X);
+                                //Console.WriteLine(Environment.NewLine);
+                                //Console.WriteLine("Y vv");
+                                shape.Y = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Y, second.Y);
+                                //Console.WriteLine(Environment.NewLine);
+                                //Console.WriteLine("Width vv");
+                                shape.Width = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Width, second.Width);
+                                //Console.WriteLine(Environment.NewLine);
+                                //Console.WriteLine("Height vv");
+                                shape.Height = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Height, second.Height);
+                                //Console.WriteLine(Environment.NewLine);
+                                //Console.WriteLine("Angle vv");
+                                shape.Angle = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Angle, second.Angle);
+                                //Console.WriteLine(Environment.NewLine);
+                                //Console.WriteLine("CornerRadius vv");
+                                shape.CornerRadius = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.CornerRadius, second.CornerRadius);
+                                //Console.WriteLine(Environment.NewLine);
+                                //Console.WriteLine("Color vv");
+                                shape.Color = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.Color, second.Color);
+
+                                shape.ImplementObject();
+
+                            }
+
+                        }
+                        //else // Just draw the first nearest
+                        //{
+                        //    Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+
+                        //    shape.X = first.X;
+                        //    shape.Y = first.Y;
+                        //    shape.Width = first.Width;
+                        //    shape.Height = first.Height;
+                        //    shape.Angle = first.Angle;
+                        //    shape.CornerRadius = first.CornerRadius;
+                        //    shape.Color = first.Color;
+                        //    shape.ImplementObject();
+                        //}
+                    }
+                    else
+                    {
+                        // doesnt exist somewhere else, so just draw the one on the screen.
+                        shape.ImplementObject();
+                    }
+                }
+            }
+            ResetSelection();
+        }
+        public void SaveCurrentScreenToMP4()
+        {
+            using VideoWriter w = new VideoWriter("output.mp4", 12, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
+            for (int i = 0; i <= 100; i++) // TODO: please dont hardcode this
+            {
+                RenderFrameBySecondIndex(i);
+                w.Write(TakeSnap().ToMat());
+            }
+        }
+        public void SaveCurrentScreenToGIF()
+        {
+            using (var gif = AnimatedGif.AnimatedGif.Create("output.gif", 1000 / _ioFps))
+            {
+                for (int i = 0; i < 100; i++) // TODO: please dont hardcode this
+                {
+                    RenderFrameBySecondIndex(i);
+                    gif.AddFrame(TakeSnap(), delay: -1, quality: GifQuality.Bit8);
+                }
+            }
+        }
+        public void SaveCurrentScreenToSVG()
+        {
+            Importer.ExportToFile(_shapes, ClientSize);
+        }
+        public void SaveCurrentScreenToPNG()
+        {
+            RenderFrameBySecondIndex(_ioTimeline);
+            TakeSnap().Save("output.png", ImageFormat.Png);
+        }
+
+        // [SupportedOSPlatform("windows")]
+        public void RenderFrameBySecondIndex(int second)
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the colorV
+            ResetSelection();
+            _ioTimeline = second;
+            RenderInterpolation();
+            foreach (Shape shape in _shapes)
+                shape.Draw(ClientSize, _camera);
+        }
+        public Bitmap TakeSnap()
+        {
+            //Matrix matrix = new Matrix();
+
+            //matrix.Scale(1, -1);
+
+            //return Bitmap
+
+            Console.WriteLine("Snap time");
+
+            Bitmap bmp = new Bitmap(ClientSize.X, ClientSize.Y);
+
+            // Lock the bits
+            BitmapData bmpData = bmp.LockBits(new System.Drawing.Rectangle(0, 0, ClientSize.X, ClientSize.Y), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+
+            // Fill with current window
+            GL.ReadPixels(0, 0, ClientSize.X, ClientSize.Y, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, bmpData.Scan0);
+
+            bmp.UnlockBits(bmpData);
+
+            return bmp;
         }
     }
 }

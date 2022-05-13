@@ -27,7 +27,7 @@ namespace FreeFrame.Components.Shapes
             ImplementObject();
         }
 
-        public override string ToString() => $"cx: {X + Width / 2}, cy: {Y + Height / 2}, r: {Width / 2}";
+        public override string ToString() => $"<circle cx=\"{X + Width / 2}\" cy=\"{Y + Height / 2}\" r=\"{Width / 2}\" fill=\"{ColorToHexadecimal(Color)}\"/>";
 
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode

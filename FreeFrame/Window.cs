@@ -53,8 +53,6 @@ namespace FreeFrame
         int _ioHeight;
         System.Numerics.Vector4 _ioColor;
         int _ioTimeline;
-        bool _ioIsLoop;
-        bool _ioIsReverse;
         private Camera _camera;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
@@ -108,12 +106,11 @@ namespace FreeFrame
 
             _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
 
-            _ioIsLoop = false;
-            _ioIsReverse = false;
             _ioIsPlaying = false;
 
             _ioFps = 24;
             _secondsEllapsed = 0;
+            _ioTimeline = 1;
 
             // TODO: default values for io 
         }
@@ -646,7 +643,7 @@ namespace FreeFrame
         public int LinearInterpolate(int x, int x1, int x2, int y1, int y2)
         {
             float y;
-            y = y1 + (x - x1) * ((y2 - y1) / ((x2 - x1) == 0 ? 1 : (x2 - x1)));
+            y = y1 + (x - x1) * ((y2 - y1) / ((x2 - x1) == 0 ? 1 : (float)(x2 - x1)));
             //if (y1 < y2)
             //    y = y1 + (x - x1) * ((y2 - y1) / (x2 - x1));
             //else
@@ -1012,14 +1009,6 @@ namespace FreeFrame
                 _ioFps = Math.Clamp(_ioFps, 1, 120); // TODO: please dont hardcode this
             ImGui.PopItemWidth();
 
-            if (ImGui.Checkbox("Loop", ref _ioIsLoop))
-                _ioIsReverse = _ioIsLoop;
-            ImGui.Indent();
-            if (ImGui.Checkbox("Reverse", ref _ioIsReverse))
-                if (_ioIsLoop == false)
-                    _ioIsLoop = _ioIsReverse;
-            ImGui.Unindent();
-
             if (ImGui.Button(_ioIsPlaying == false ? "Play" : "Pause"))
                 _ioIsPlaying = !_ioIsPlaying;
 
@@ -1179,6 +1168,7 @@ namespace FreeFrame
                 {
                     // Draw the current one in this list
                     Shape sibling = _timeline[_ioTimeline].Find(x => x.Id == shape.Id)!;
+                    Console.WriteLine("One already exist");
 
                     shape.X = sibling.X;
                     shape.Y = sibling.Y;
@@ -1203,31 +1193,25 @@ namespace FreeFrame
 
                         int timelineIndex = _ioTimeline;
 
-                        if (_ioIsLoop)
-                        {
-                            int delta = keys[keys.Length - 1] - keys[0];
-                            timelineIndex = timelineIndex - (delta * (int)Math.Floor((double)timelineIndex / delta));
-                        }
+                       
 
                         if (timelineIndex >= keys[keys.Length - 1])
                         {
+                            Console.WriteLine("ihhhh ioTimeline == {0}", timelineIndex);
                             nearest.first = keys[keys.Length - 1];
                             nearest.second = keys[keys.Length - 1];
-                            //if (_ioIsLoop)
-                            //    nearest.first = keys[0];
                         }
                         else if (timelineIndex <= keys[0])
                         {
+                            Console.WriteLine("ohhh ioTimeline == {0}", timelineIndex);
                             nearest.first = keys[0];
                             nearest.second = keys[0];
-                            //if (_ioIsLoop)
-                            //    nearest.second = keys[keys.Length - 1];
                         }
                         else
                         {
                             for (int i = 0; i < keys.Length; i++)
                             {
-                                Console.WriteLine("key[{0}] = {1}", i, keys[i]);
+                                //Console.WriteLine("key[{0}] = {1}", i, keys[i]);
                                 if (keys[i] >= timelineIndex)
                                 {
                                     nearest.second = keys[i];
@@ -1237,6 +1221,7 @@ namespace FreeFrame
                                 }
                             }
                         }
+
 
 
 
@@ -1263,20 +1248,7 @@ namespace FreeFrame
                             Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
                             Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
                                                                                                    // If reverse and loop invert the two shape every odd
-                            if (_ioIsLoop && _ioIsReverse)
-                            {
-                                if (keys.Length > 1)
-                                {
-                                    int delta = keys[keys.Length - 1] - keys[0];
-                                    Console.WriteLine("(timelineIndex:{0} / delta:{1}) {2} % 2 == 1 =>>>> {3}", _ioTimeline, delta, _ioTimeline / delta, (int)Math.Floor((double)_ioTimeline / delta) % 2 == 1);
-                                    if ((int)Math.Floor((double)_ioTimeline / delta) % 2 == 1) // if odd
-                                    {
-                                        Console.WriteLine("Invertttttttttttttt");
-                                        second = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
-                                        first = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null
-                                    }
-                                }
-                            }
+                            
 
                             //if (first != null && second != null)
                             {
@@ -1324,6 +1296,7 @@ namespace FreeFrame
                     else
                     {
                         // doesnt exist somewhere else, so just draw the one on the screen.
+                        Console.WriteLine("Draw the current one");
                         shape.ImplementObject();
                     }
                 }

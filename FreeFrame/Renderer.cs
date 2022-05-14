@@ -102,26 +102,15 @@ namespace FreeFrame
             int uProjection = _shader.GetUniformLocation("u_Projection");
             _shader.SetUniformMat4(uProjection, camera.GetViewMatrix());
 
+            int uRadius = _shader.GetUniformLocation("u_Radius");
+            _shader.SetUniformFloat(uRadius, shape.CornerRadius);
 
-            Type type = shape.GetType();
-            if (type == typeof(SVGCircle))
-            {
-                int uRadius = _shader.GetUniformLocation("u_Radius");
-                int uPosition = _shader.GetUniformLocation("u_Position");
+            int uSize = _shader.GetUniformLocation("u_Size");
+            _shader.SetUniformVec2(uSize, new Vector2(shape.Width, shape.Height));
 
-                _shader.SetUniformFloat(uRadius, shape.Width / 2);
-                _shader.SetUniformVec2(uPosition, new Vector2(shape.X + shape.Width / 2, shape.Y + shape.Height / 2)); 
-            }
-            else if (type == typeof(SVGRectangle))
-            {
-                int uRadius = _shader.GetUniformLocation("u_Radius");
-                int uSize = _shader.GetUniformLocation("u_Size");
-                int uPosition = _shader.GetUniformLocation("u_Position");
+            int uPosition = _shader.GetUniformLocation("u_Position");
+            _shader.SetUniformVec2(uPosition, new Vector2(shape.X, shape.Y));
 
-                _shader.SetUniformFloat(uRadius, ((SVGRectangle)shape).CornerRadius);
-                _shader.SetUniformVec2(uSize, new Vector2(shape.Width, shape.Height)); 
-                _shader.SetUniformVec2(uPosition, new Vector2(shape.X, shape.Y)); // Invert y axis
-            }
 
             GL.BindVertexArray(VertexArrayObjectID);
 

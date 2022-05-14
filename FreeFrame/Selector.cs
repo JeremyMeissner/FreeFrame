@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace FreeFrame
 {
-    public class Selector
+    public class Selector : IDrawable
     {
         public struct Area
         {
@@ -33,7 +33,9 @@ namespace FreeFrame
             None
         }
 
-        private List<(Renderer vao, Area hitbox, SelectorType type)> _vaos;
+        private List<(Renderer vao, Area hitbox, SelectorType type)> _vaos;  // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
+
+        public List<Renderer> Vaos { get => null; set => _ = value; } // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
 
         public Selector()
         {
@@ -41,9 +43,7 @@ namespace FreeFrame
         }
         public void Select(Shape shape)
         {
-            _vaos.ForEach(i => i.vao.DeleteObjects());
-            _vaos.Clear();
-
+            DeleteObjects();
 
             // Edge
             Area hitbox = new Area
@@ -98,6 +98,11 @@ namespace FreeFrame
             GL.Disable(EnableCap.LineSmooth);
 
         }
+        /// <summary>
+        /// Return true if the given mouse position is in the selector hitbox
+        /// </summary>
+        /// <param name="mousePosition">Mouse position</param>
+        /// <returns>true if touching the selector (and give the selector type), false otherwise (and null) </returns>
         public (bool, SelectorType?) HitBox(Vector2i mousePosition)
         {
             if (_vaos.Count > 0)
@@ -105,6 +110,12 @@ namespace FreeFrame
                     if (part.hitbox.X < mousePosition.X && part.hitbox.X + part.hitbox.Width > mousePosition.X && part.hitbox.Y < mousePosition.Y && part.hitbox.Y + part.hitbox.Height > mousePosition.Y)
                         return (true, part.type);
             return (false, null);
+        }
+
+        public void DeleteObjects()
+        {
+            _vaos.ForEach(i => i.vao.DeleteObjects());
+            _vaos.Clear();
         }
     }
 }

@@ -6,7 +6,7 @@ using OpenTK.Windowing.Desktop;
 
 namespace FreeFrame.Components.Shapes
 {
-    public abstract class Shape
+    public abstract class Shape : IDrawable
     {
         bool _isMoveable = true;
         bool _isResizeable = true;
@@ -40,9 +40,6 @@ namespace FreeFrame.Components.Shapes
             Id = Guid.NewGuid();
         }
 
-        /// <summary>
-        /// Trigge draw element through OpenGL context
-        /// </summary>
         public virtual void Draw(Vector2i clientSize, Camera camera)
         {
             //Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());

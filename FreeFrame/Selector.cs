@@ -24,6 +24,8 @@ namespace FreeFrame
                 Width = width;
                 Height = height;
             }
+            public float[] ToFloatArray() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // Clockwise
+
         }
         public enum SelectorType
         {
@@ -32,6 +34,7 @@ namespace FreeFrame
             Resize,
             None
         }
+        private Shape? _selectedShape;
 
         private List<(Renderer vao, Area hitbox, SelectorType type)> _vaos;  // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
 
@@ -45,6 +48,8 @@ namespace FreeFrame
         {
             DeleteObjects();
 
+            _selectedShape = shape;
+
             // Edge
             Area hitbox = new Area
             {
@@ -53,7 +58,7 @@ namespace FreeFrame
                 Width = shape.Width,
                 Height = shape.Height
             };
-            _vaos.Add((new Renderer(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
+            _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
 
             // Move selector (top-left)
             hitbox = new Area
@@ -64,7 +69,7 @@ namespace FreeFrame
                 Height = 10
             };
             if (shape.IsMoveable)
-                _vaos.Add((new Renderer(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
+                _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
 
             // Resize selector (bottom-right)
             hitbox = new Area
@@ -75,28 +80,27 @@ namespace FreeFrame
                 Height = 10
             };
             if (shape.IsResizeable)
-                _vaos.Add((new Renderer(AreaToFloatArray(hitbox), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
+                _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
         }
-        public static float[] AreaToFloatArray(Area area)
-        {
-            return new float[]
-            {
-                area.X, area.Y, area.X + area.Width, area.Y, area.X + area.Width, area.Y + area.Height, area.X, area.Y + area.Height // Clockwise
-            };
-        }
+
         public void Draw(Vector2i clientSize, Camera camera)
         {
             GL.Enable(EnableCap.LineSmooth);
-            GL.LineWidth(3.0f);
+            GL.LineWidth(3.0f);                 
+            Matrix4 transformation = Matrix4.Identity;
+
+            if (_selectedShape != null)
+                transformation = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(_selectedShape.Angle));
+
             foreach ((Renderer vao, Area _, SelectorType type) part in _vaos)
             {
                 if (part.type == SelectorType.Edge)
-                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 200, 255));
+                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 200, 255), transformation);
                 else
-                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 255, 255));
+                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 255, 255), transformation);
             }
-            GL.Disable(EnableCap.LineSmooth);
 
+            GL.Disable(EnableCap.LineSmooth);
         }
         /// <summary>
         /// Return true if the given mouse position is in the selector hitbox

@@ -47,7 +47,7 @@ namespace FreeFrame
                 _shader = new Shader("Shaders/shader.vert", "Shaders/rectangle.frag");
             ImplementObjects(vertices, indexes);
         }
-        public void Draw(Vector2i clientSize, Camera camera, Color4 color)
+        public void Draw(Vector2i clientSize, Camera camera, Color4 color, Matrix4 transformation)
         {
             _shader.Use();
 
@@ -64,8 +64,7 @@ namespace FreeFrame
             _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
-            Matrix4 transform = Matrix4.Identity;
-            _shader.SetUniformMat4(uTransformation, transform);
+            _shader.SetUniformMat4(uTransformation, transformation);
 
             int uView = _shader.GetUniformLocation("u_View");
             _shader.SetUniformMat4(uView, camera.GetViewMatrix());

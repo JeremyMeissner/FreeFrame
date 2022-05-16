@@ -43,11 +43,11 @@ namespace FreeFrame.Components.Shapes
             Id = Guid.NewGuid();
         }
 
-        public virtual void Draw(Vector2i clientSize, Camera camera)
+        public virtual void Draw(Vector2i clientSize)
         {
             //Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
             foreach (Renderer vao in Vaos)
-                vao.Draw(clientSize, camera, Color, this);
+                vao.Draw(clientSize, Color, this);
         }
         public void DeleteObjects()
         {
@@ -55,7 +55,16 @@ namespace FreeFrame.Components.Shapes
                 vao.DeleteObjects();
             Vaos.Clear();
         }
-        public Shape Clone() => (Shape)MemberwiseClone();
+        public Shape ShallowCopy() => (Shape)MemberwiseClone();
+        public Shape DeepCopy()
+        {
+            Shape shape = (Shape)MemberwiseClone();
+            shape.Id = Guid.NewGuid();
+            shape.DeleteObjects();
+            shape.Vaos = new List<Renderer>();
+            shape.ImplementObject();
+            return shape;
+        }
 
 
         /// <summary>
@@ -86,6 +95,7 @@ namespace FreeFrame.Components.Shapes
             a = (int)(color.A * 255);
             return '#' + r.ToString("X2") + g.ToString("X2") + b.ToString("X2") + a.ToString("X2");
         }
+
     }
 
 }

@@ -83,7 +83,7 @@ namespace FreeFrame
                 _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
         }
 
-        public void Draw(Vector2i clientSize, Camera camera)
+        public void Draw(Vector2i clientSize)
         {
             GL.Enable(EnableCap.LineSmooth);
             GL.LineWidth(3.0f);                 
@@ -95,9 +95,9 @@ namespace FreeFrame
             foreach ((Renderer vao, Area _, SelectorType type) part in _vaos)
             {
                 if (part.type == SelectorType.Edge)
-                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 200, 255), transformation);
+                    part.vao.Draw(clientSize, new Color4(0, 125, 200, 255), transformation);
                 else
-                    part.vao.Draw(clientSize, camera, new Color4(0, 125, 255, 255), transformation);
+                    part.vao.Draw(clientSize, new Color4(0, 125, 255, 255), transformation);
             }
 
             GL.Disable(EnableCap.LineSmooth);

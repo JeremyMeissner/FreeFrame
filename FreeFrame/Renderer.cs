@@ -47,7 +47,7 @@ namespace FreeFrame
                 _shader = new Shader("Shaders/shader.vert", "Shaders/rectangle.frag");
             ImplementObjects(vertices, indexes);
         }
-        public void Draw(Vector2i clientSize, Camera camera, Color4 color, Matrix4 transformation)
+        public void Draw(Vector2i clientSize, Color4 color, Matrix4 transformation)
         {
             _shader.Use();
 
@@ -66,17 +66,11 @@ namespace FreeFrame
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
             _shader.SetUniformMat4(uTransformation, transformation);
 
-            int uView = _shader.GetUniformLocation("u_View");
-            _shader.SetUniformMat4(uView, camera.GetViewMatrix());
-
-            int uProjection = _shader.GetUniformLocation("u_Projection");
-            _shader.SetUniformMat4(uProjection, camera.GetViewMatrix());
-
             GL.BindVertexArray(VertexArrayObjectID);
 
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
-        public void Draw(Vector2i clientSize, Camera camera, Color4 color, Shape shape)
+        public void Draw(Vector2i clientSize, Color4 color, Shape shape)
         {
             _shader.Use();
             // Applied projection matrix
@@ -94,12 +88,6 @@ namespace FreeFrame
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
             Matrix4 rotation = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(shape.Angle));
             _shader.SetUniformMat4(uTransformation, rotation);
-
-            int uView = _shader.GetUniformLocation("u_View");
-            _shader.SetUniformMat4(uView, camera.GetViewMatrix());
-
-            int uProjection = _shader.GetUniformLocation("u_Projection");
-            _shader.SetUniformMat4(uProjection, camera.GetViewMatrix());
 
             int uRadius = _shader.GetUniformLocation("u_Radius");
             _shader.SetUniformFloat(uRadius, shape.CornerRadius);

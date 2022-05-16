@@ -16,7 +16,7 @@ namespace FreeFrame
         /// <summary>
         /// Trigge draw element through OpenGL context
         /// </summary>
-        public void Draw(Vector2i clientSize, Camera camera);
+        public void Draw(Vector2i clientSize);
         public void DeleteObjects();
     }
 }

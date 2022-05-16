@@ -4,8 +4,6 @@ layout(location = 0) in vec2 position;
 
 uniform mat4 u_Model_To_NDC;
 uniform mat4 u_Transformation;
-uniform mat4 u_View;
-uniform mat4 u_Projection;
 
 uniform vec2 u_Resolution;
 uniform vec2 u_Position;

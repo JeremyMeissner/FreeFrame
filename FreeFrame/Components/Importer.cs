@@ -90,5 +90,14 @@ namespace FreeFrame.Components
                     fs.WriteByte(bytes[i]);
             }
         }
+
+        static public Color4 HexadecimalToRGB(string hexadecimal)
+        {
+            float r = Convert.ToInt32(hexadecimal.Substring(1, 2), 16) / 255f;
+            float g = Convert.ToInt32(hexadecimal.Substring(3, 2), 16) / 255f;
+            float b = Convert.ToInt32(hexadecimal.Substring(5, 2), 16) / 255f;
+            float a = Convert.ToInt32(hexadecimal.Substring(7, 2), 16) / 255f;
+            return new Color4(r, g, b, a);
+        }
     }
 }

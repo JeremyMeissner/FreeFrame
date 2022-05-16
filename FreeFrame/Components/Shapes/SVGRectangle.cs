@@ -16,6 +16,7 @@ namespace FreeFrame.Components.Shapes
         const int DefaultHeight = 0;
         const int DefaultRX = 0;
         const int DefaultRY = 0;
+        const string DefaultColor = "#000000FF";
         #endregion
 
         public SVGRectangle(XmlReader reader) : this(
@@ -24,19 +25,21 @@ namespace FreeFrame.Components.Shapes
             Convert.ToInt32(reader["x"]),
             Convert.ToInt32(reader["y"]),
             Convert.ToInt32(reader["rx"]),
-            Convert.ToInt32(reader["ry"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
+            Convert.ToInt32(reader["ry"]), 
+            Convert.ToString(reader["fill"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
         {
         }
         public SVGRectangle() : this(DefaultWidth, DefaultHeight, DefaultX, DefaultY) { }
         public SVGRectangle(int width, int height) : this(width, height, DefaultX, DefaultY) { }
-        public SVGRectangle(int width, int height, int x, int y) : this(width, height, x, y, DefaultRX, DefaultRY) { }
-        public SVGRectangle(int width, int height, int x, int y, int rx, int ry)
+        public SVGRectangle(int width, int height, int x, int y) : this(width, height, x, y, DefaultRX, DefaultRY, DefaultColor) { }
+        public SVGRectangle(int width, int height, int x, int y, int rx, int ry, string color)
         {
             X = x;
             Y = y;
             Width = width;
             Height = height;
             CornerRadius = Math.Max(rx, ry);
+            Color = Importer.HexadecimalToRGB(color);
 
             ImplementObject();
         }

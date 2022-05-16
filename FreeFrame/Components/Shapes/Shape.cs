@@ -32,7 +32,10 @@ namespace FreeFrame.Components.Shapes
         public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
         public Guid Id { get => _id; private  set => _id = value; }
         public List<Renderer> Vaos { get => vaos; protected set => vaos = value; }
-
+        public string ShortId
+        {
+            get => Id.ToString().Substring(0, 6);
+        }
         public Shape() 
         {
             Vaos = new List<Renderer>();

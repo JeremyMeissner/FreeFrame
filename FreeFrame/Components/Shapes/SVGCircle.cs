@@ -13,16 +13,18 @@ namespace FreeFrame.Components.Shapes
         public SVGCircle(XmlReader reader) : this(
             Convert.ToInt32(reader["r"]),
             Convert.ToInt32(reader["cx"]),
-            Convert.ToInt32(reader["cy"])) // TODO: Error handler if r, cx or cy are not here
+            Convert.ToInt32(reader["cy"]),
+            Convert.ToString(reader["fill"])) // TODO: Error handler if r, cx or cy are not here
         { }
-        public SVGCircle() : this(0, 0, 0) { }
-        public SVGCircle(int r, int cx, int cy)
+        public SVGCircle() : this(0, 0, 0, "#000000FF") { }
+        public SVGCircle(int r, int cx, int cy, string color)
         {
             IsCornerRadiusChangeable = false;
             X = cx - r;
             Y = cy - r;
             Height = r*2;
             Width = Height;
+            Color = Importer.HexadecimalToRGB(color);
 
             ImplementObject();
         }

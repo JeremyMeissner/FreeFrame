@@ -107,6 +107,10 @@ namespace FreeFrame.Components.Shapes
                 }
             }
 
+            string color = reader["fill"] ?? throw new Exception("color not here"); // TODO: Error handler if d is note here
+            Color = Importer.HexadecimalToRGB(color);
+
+
             // Update common properties, use the given attributes
             List<Vector2i> points = GetSelectablePoints();
             X = points.Min(i => i.X);

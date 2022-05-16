@@ -38,6 +38,11 @@ namespace FreeFrame
             Create,
             Move
         }
+        enum ImportMode
+        {
+            Add,
+            Override
+        }
         enum CreateMode
         {
             Line,
@@ -74,6 +79,7 @@ namespace FreeFrame
 
         UserMode _userMode;
         CreateMode _createMode;
+        ImportMode _importMode;
 
         ImGuiController _ImGuiController;
 
@@ -462,9 +468,9 @@ namespace FreeFrame
                 case UserMode.Create: // Create mode
                     _selectedShape = _createMode switch
                     {
-                        CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y, "#000000FF"),
                         CreateMode.Rectangle => new SVGRectangle(0, 0, (int)MouseState.X, (int)MouseState.Y),
-                        CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y, "#000000FF"),
                         _ => throw new Exception("A create mode need to be selected"),
                     };
                     _shapes.Add(_selectedShape);
@@ -823,15 +829,45 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
             ImGui.Text("Tree View");
             ImGui.Spacing();
-            foreach (Shape shape in _shapes)
+            for (int i = _shapes.Count - 1; i >= 0; i--)
             {
-                if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
+                if (ImGui.Selectable(String.Format("{0} - {1}##{2}", _shapes[i].ShortId, _shapes[i].GetType().Name, _shapes[i].GetHashCode()), _selectedShape == _shapes[i]))
                 {
-                    _selectedShape = shape;
-                    _selector.Select(shape);
+                    _selectedShape = _shapes[i];
+                    _selector.Select(_shapes[i]);
                     _userMode = UserMode.Edit;
                     Console.WriteLine("New shape selected through tree view");
                 }
+                if (i - 1 >= 0)
+                {
+                    if (ImGui.ArrowButton(String.Format("Down##d{0}", i), ImGuiDir.Down))
+                    {
+                        InvertShape(i, i - 1);
+                        SelectShape(_shapes[i - 1]);
+                    }
+                }
+                if (i + 1 < _shapes.Count)
+                {
+                    if (i - 1 >= 0)
+                        ImGui.SameLine();
+                    if (ImGui.ArrowButton(String.Format("Up##u{0}", i), ImGuiDir.Up))
+                    {
+                        InvertShape(i, i + 1);
+                        SelectShape(_shapes[i + 1]);
+                    }
+                }
+                ImGui.Separator();
+            }
+            foreach (Shape shape in _shapes)
+            {
+                //ImGui.Text(String.Format("{0}", shape.GetType().Name));
+                //if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
+                //{
+                //    _selectedShape = shape;
+                //    _selector.Select(shape);
+                //    _userMode = UserMode.Edit;
+                //    Console.WriteLine("New shape selected through tree view");
+                //}
             }
             ImGui.End();
 
@@ -1061,9 +1097,15 @@ namespace FreeFrame
                     if (ImGui.BeginMenu("Open"))
                     {
                         if (ImGui.MenuItem("New project", "Ctrl+O"))
+                        {
                             _dialogFilePicker = true;
+                            _importMode = ImportMode.Override;
+                        }
                         if (ImGui.MenuItem("Import a file", "Ctrl+I"))
-                        { }
+                        {
+                            _dialogFilePicker = true;
+                            _importMode = ImportMode.Add;
+                        }
                         ImGui.EndMenu();
                     }
                     if (ImGui.BeginMenu("Save"))
@@ -1121,7 +1163,19 @@ namespace FreeFrame
                 {
                     ResetSelection();
                     ResetTimeline();
-                    (_shapes, bool compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
+                    bool compatibilityFlag;
+
+                    switch (_importMode)
+                    {
+                        case ImportMode.Add:
+                            (List<Shape> newShapes, compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
+                            _shapes.AddRange(newShapes);
+                            break;
+                        case ImportMode.Override:
+                        default:
+                            (_shapes, compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
+                            break;
+                    }
                     FilePicker.RemoveFilePicker(this);
                     if (compatibilityFlag)
                         _dialogCompatibility = true;
@@ -1146,6 +1200,18 @@ namespace FreeFrame
                 ImGui.EndPopup();
             }
             ImGui.End();
+        }
+        public void SelectShape(Shape shape)
+        {
+            _selectedShape = shape;
+            _selector.Select(shape);
+            _userMode = UserMode.Edit;
+        }
+        public void InvertShape(int index1, int index2)
+        {
+            Shape tmpShape = _shapes[index2].Clone();
+            _shapes[index2] = _shapes[index1].Clone();
+            _shapes[index1] = tmpShape;
         }
 
         static void HelpMarker(string desc)
@@ -1193,7 +1259,7 @@ namespace FreeFrame
 
                         int timelineIndex = _ioTimeline;
 
-                       
+
 
                         if (timelineIndex >= keys[keys.Length - 1])
                         {
@@ -1248,7 +1314,7 @@ namespace FreeFrame
                             Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
                             Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
                                                                                                    // If reverse and loop invert the two shape every odd
-                            
+
 
                             //if (first != null && second != null)
                             {

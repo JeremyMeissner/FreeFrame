@@ -16,17 +16,19 @@ namespace FreeFrame.Components.Shapes
         const int DefaultY1 = 0;
         const int DefaultX2 = 0;
         const int DefaultY2 = 0;
+        const string DefaultColor = "#000000FF";
         #endregion
 
         public SVGLine(XmlReader reader) : this(
             Convert.ToInt32(reader["x1"]),
             Convert.ToInt32(reader["y1"]),
             Convert.ToInt32(reader["x2"]),
-            Convert.ToInt32(reader["y2"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
+            Convert.ToInt32(reader["y2"]),
+            Convert.ToString(reader["fill"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
         {
         }
-        public SVGLine() : this(DefaultX1, DefaultY1, DefaultX2, DefaultY2) { }
-        public SVGLine(int x1, int y1, int x2, int y2)
+        public SVGLine() : this(DefaultX1, DefaultY1, DefaultX2, DefaultY2, DefaultColor) { }
+        public SVGLine(int x1, int y1, int x2, int y2, string color)
         {
             IsCornerRadiusChangeable = false;
 
@@ -34,6 +36,7 @@ namespace FreeFrame.Components.Shapes
             Y = y1;
             Width = x2 - X;
             Height = y2 - Y;
+            Color = Importer.HexadecimalToRGB(color);
 
             ImplementObject();
         }

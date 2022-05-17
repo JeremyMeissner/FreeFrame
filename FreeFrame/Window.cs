@@ -55,6 +55,8 @@ namespace FreeFrame
         int _ioWidth;
         int _ioHeight;
         System.Numerics.Vector4 _ioColor;
+
+        System.Numerics.Vector3 _ioBgColor;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
 
@@ -88,8 +90,9 @@ namespace FreeFrame
             base.OnLoad();
 
             //Helper.EnableDebugMode();
+            _ioBgColor = new System.Numerics.Vector3(0.1f, 0.1f, 0.1f);
+            GL.ClearColor(_ioBgColor.X, _ioBgColor.Y, _ioBgColor.Z, 1.0f);
 
-            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
             GL.Enable(EnableCap.Multisample);
 
             _userMode = UserMode.Idle;
@@ -138,7 +141,6 @@ namespace FreeFrame
                         x = _mouseOriginalState.X;
                 }
                 Title += String.Format(" (delta x: {0} delta y: {1})", x - _mouseOriginalState.X, y - _mouseOriginalState.Y);
-
             }
 
             // Update title based on current context
@@ -160,26 +162,6 @@ namespace FreeFrame
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
             _timeline.OnRenderFrame(e, this);
-
-            if (KeyboardState.IsKeyDown(Keys.Q))
-            {
-                ////Console.WriteLine("Draw me please");
-                //foreach (KeyValuePair<int, List<Shape>> shapes in thetimeline)
-                //{
-                //    foreach (Shape shape in shapes.Value)
-                //    {
-                //        shape.ImplementObject();
-                //        shape.Draw(ClientSize);
-                //    }
-                //}
-                //if (_selectedShape != null)
-                //    _selectedShape.ImplementObject(); // Reset VAOS for selected shape
-            }
-
-            //if (KeyboardState.IsKeyDown(Keys.Space))
-            //    _userMode = UserMode.Move;
-            //else if (KeyboardState.WasKeyDown(Keys.Space) && KeyboardState.IsKeyDown(Keys.Space) == false)
-            //    _userMode = UserMode.Idle;
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
                 ResetSelection();
@@ -640,16 +622,22 @@ namespace FreeFrame
             }
 
             ImGui.Spacing();
+
+            if (SelectedShape == null)
+                ImGui.BeginDisabled();
+            ImGui.Text("Color");
+            ImGui.ColorEdit4("##Color", ref _ioColor);
+            if (SelectedShape == null)
+                ImGui.EndDisabled();
+
+            ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            ImGui.Text("Color");
+            ImGui.Text("Background Color");
             ImGui.Spacing();
-            if (SelectedShape == null)
-                ImGui.BeginDisabled();
-            ImGui.ColorEdit4("Color", ref _ioColor);
-            if (SelectedShape == null)
-                ImGui.EndDisabled();
+            if (ImGui.ColorEdit3("##BgColor", ref _ioBgColor))
+                GL.ClearColor(_ioBgColor.X, _ioBgColor.Y, _ioBgColor.Z, 1.0f);
             ImGui.End();
 
             // Tree view side
@@ -782,8 +770,6 @@ namespace FreeFrame
                 if (picker.Draw())
                 {
                     ResetSelection();
-                    _timeline.ResetTimeline();
-                    //ResetTimeline();
                     bool compatibilityFlag;
 
                     switch (_importMode)
@@ -795,6 +781,7 @@ namespace FreeFrame
                         case ImportMode.Override:
                         default:
                             (Shapes, compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
+                            _timeline.ResetTimeline();
                             break;
                     }
                     FilePicker.RemoveFilePicker(this);
@@ -850,8 +837,8 @@ namespace FreeFrame
 
         public void SaveCurrentScreenToMP4()
         {
-            using VideoWriter w = new VideoWriter("output.mp4", 12, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
-            for (int i = 0; i <= 100; i++) // TODO: please dont hardcode this
+            using VideoWriter w = new VideoWriter("output.mp4", _timeline.IoFps, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
+            for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++) // TODO: please dont hardcode this
             {
                 RenderFrameBySecondIndex(i);
                 w.Write(TakeSnap().ToMat());
@@ -861,7 +848,7 @@ namespace FreeFrame
         {
             using (var gif = AnimatedGif.AnimatedGif.Create("output.gif", 1000 / _timeline.IoFps))
             {
-                for (int i = 0; i < 100; i++) // TODO: please dont hardcode this
+                for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++) // TODO: please dont hardcode this
                 {
                     RenderFrameBySecondIndex(i);
                     gif.AddFrame(TakeSnap(), delay: -1, quality: GifQuality.Bit8);

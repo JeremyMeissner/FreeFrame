@@ -19,14 +19,14 @@ namespace FreeFrame.Components.Shapes
         #endregion
 
         private List<Renderer> vaos;
-        public virtual int X { get => _x; set => _x = value; }
-        public virtual int Y { get => _y; set => _y = value; }
-        public virtual int Width { get => _width; set => _width = value; }
-        public virtual int Height { get => _height; set => _height = value; }
+        public int X { get => _x; set => _x = value; }
+        public int Y { get => _y; set => _y = value; }
+        public int Width { get => _width; set => _width = Math.Max(0, value); }
+        public int Height { get => _height; set => _height = Math.Max(0, value); }
         public Color4 Color { get => _color; set => _color = value; }
+        public int Angle { get => _angle; set => _angle = value; }
         public bool IsMoveable { get => _isMoveable; protected set => _isMoveable = value; }
         public bool IsResizeable { get => _isResizeable; protected set => _isResizeable = value; }
-        public int Angle { get => _angle; set => _angle = value; }
         public bool IsAngleChangeable { get => _isAngleChangeable; set => _isAngleChangeable = value; }
         public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
         public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }

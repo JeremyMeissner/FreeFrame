@@ -12,11 +12,11 @@ namespace FreeFrame
 {
     public class Timeline
     {
-        const int DEFAULT_FPS = 24;
-        const int MIN_FPS = 1;
-        const int MAX_FPS = 120;
-        const int MIN_TIMELINE = 1;
-        const int MAX_TIMELINE = 100;
+        public const int DEFAULT_FPS = 24;
+        public const int MIN_FPS = 1;
+        public const int MAX_FPS = 120;
+        public const int MIN_TIMELINE = 1;
+        public const int MAX_TIMELINE = 100;
 
         private int _ioTimeline;
         private int _ioFps;

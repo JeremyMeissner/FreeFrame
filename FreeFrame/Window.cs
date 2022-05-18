@@ -143,14 +143,6 @@ namespace FreeFrame
                 Title += String.Format(" (delta x: {0} delta y: {1})", x - _mouseOriginalState.X, y - _mouseOriginalState.Y);
             }
 
-            // Update title based on current context
-            //if (_selectedShape != null)
-            //    Title = String.Format("FreeFrame - Selected: {0} Mode: {1}", _selectedShape.GetType().Name, _userMode.ToString());
-            //else
-            //    Title = "FreeFrame";
-
-            //if (_selectedShape != null)
-            //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)

@@ -77,7 +77,6 @@ namespace FreeFrame.Components.Shapes.Path
         {
             X += deltaPosition.X;
             Y += deltaPosition.Y;
-            //throw new NotImplementedException();
         }
 
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Y), null);
@@ -236,7 +235,6 @@ namespace FreeFrame.Components.Shapes.Path
         public override void MoveDelta(Vector2i deltaPosition)
         {
             X += deltaPosition.X;
-            //LastY += deltaPosition.Y;
         }
         public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Last.Y), null);
 
@@ -408,16 +406,12 @@ namespace FreeFrame.Components.Shapes.Path
 
             if (IsRelative)
             {
-                //points.Add(new Vector2i(Last.X - X1, Last.Y - Y1)); // Selectors
-                //points.Add(new Vector2i(Last.X - X2, Last.Y - Y2));
                 points.Add(new Vector2i(Last.X, Last.Y));
                 points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(X1, Y1)); // Selectors
-                //points.Add(new Vector2i(X2, Y2));
                 points.Add(new Vector2i(X, Y));
             }
             return points;
@@ -548,15 +542,11 @@ namespace FreeFrame.Components.Shapes.Path
             if (IsRelative)
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(Last.X + Last.X1, Last.Y + Last.Y1)); // Selectors
-                //points.Add(new Vector2i(Last.X + X2, Last.Y + Y2));
                 points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(Last.X1, Last.Y1)); // Selectors
-                //points.Add(new Vector2i(X2, Y2));
                 points.Add(new Vector2i(X, Y));
             }
             return points;
@@ -675,13 +665,11 @@ namespace FreeFrame.Components.Shapes.Path
             if (IsRelative)
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(Last.X + X1, Last.Y + Y1)); // Selectors
                 points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(X1, Y1)); // Selectors
                 points.Add(new Vector2i(X, Y));
             }
             return points;
@@ -795,13 +783,11 @@ namespace FreeFrame.Components.Shapes.Path
             if (IsRelative)
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(Last.X + Last.X1, Last.Y + Last.Y1)); // Selectors
                 points.Add(new Vector2i(Last.X + X, Last.Y + Y));
             }
             else
             {
                 points.Add(new Vector2i(Last.X, Last.Y));
-                //points.Add(new Vector2i(Last.X1, Last.Y1)); // Selectors
                 points.Add(new Vector2i(X, Y));
             }
             return points;

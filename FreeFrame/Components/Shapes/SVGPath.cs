@@ -145,8 +145,9 @@ namespace FreeFrame.Components.Shapes
             foreach (DrawAttribute attr in DrawAttributes)
             {
                 Type attrType = attr.GetType();
-                if (attrType == typeof(MoveTo) && attr.IsRelative == false) // Update position of each absolute MoveTo
+                if (attr.IsRelative == false) // Update position of each absolute attr
                 {
+                    Console.WriteLine("{0} is relative? =>{1}", attr.GetType().Name, attr.IsRelative);
                     if (deltaX == null || deltaY == null)
                     {
                         // Get delta X and Y only one time
@@ -155,6 +156,24 @@ namespace FreeFrame.Components.Shapes
                     }
                     attr.X += (int)deltaX;
                     attr.Y += (int)deltaY;
+
+                    attr.X1 += (int)deltaX;
+                    attr.Y1 += (int)deltaY;
+
+                    if (attrType == typeof(CurveTo))
+                    {
+                        ((CurveTo)attr).X2 += (int)deltaX;
+                        ((CurveTo)attr).Y2 += (int)deltaY;
+                    }
+                    else if (attrType == typeof(SmoothCurveTo))
+                    {
+                        
+                        Console.WriteLine(attr.GetType().Name + " - " + attr.ToString());
+                        Console.WriteLine("x2: {0}, y2: {1}", ((SmoothCurveTo)attr).X2, ((SmoothCurveTo)attr).Y2);
+                        Console.WriteLine("x1: {0}, y1: {1}", DrawAttribute.Last.X1, DrawAttribute.Last.Y1);
+                        ((SmoothCurveTo)attr).X2 += (int)deltaX;
+                        ((SmoothCurveTo)attr).Y2 += (int)deltaY;
+                    }
                 }
                 if (attrType == typeof(CurveTo) ||
                     attrType == typeof(SmoothCurveTo) ||

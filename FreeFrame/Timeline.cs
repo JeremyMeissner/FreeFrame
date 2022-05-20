@@ -26,6 +26,7 @@ namespace FreeFrame
 
         private SortedDictionary<int, List<Shape>> _timeline;
 
+        public SortedDictionary<int, List<Shape>> SortedTimeline { get => _timeline; set => _timeline = value; }
         public int IoTimeline
         {
             get => _ioTimeline;
@@ -45,7 +46,7 @@ namespace FreeFrame
             _ioIsPlaying = false;
             IoFps = DEFAULT_FPS;
             _secondsEllapsed = 0;
-            _timeline = new SortedDictionary<int, List<Shape>>();
+            SortedTimeline = new SortedDictionary<int, List<Shape>>();
         }
         public void OnRenderFrame(FrameEventArgs e, Window window)
         {
@@ -86,13 +87,13 @@ namespace FreeFrame
 
             if (window.SelectedShape != null)
             {
-                if (_timeline.ContainsKey(IoTimeline) && _timeline[IoTimeline] != null && _timeline[IoTimeline].Any(x => x.Id == window.SelectedShape.Id))
+                if (SortedTimeline.ContainsKey(IoTimeline) && SortedTimeline[IoTimeline] != null && SortedTimeline[IoTimeline].Any(x => x.Id == window.SelectedShape.Id))
                 {
                     if (ImGui.Button(String.Format("Remove keyframe {0} for {1}", IoTimeline, window.SelectedShape.GetType().Name)))
                     {
-                        _timeline[IoTimeline].Remove(_timeline[IoTimeline].Find(x => x.Id == window.SelectedShape.Id)!); // Can't be null
-                        if (_timeline[IoTimeline].Count == 0)
-                            _timeline.Remove(IoTimeline);
+                        SortedTimeline[IoTimeline].Remove(SortedTimeline[IoTimeline].Find(x => x.Id == window.SelectedShape.Id)!); // Can't be null
+                        if (SortedTimeline[IoTimeline].Count == 0)
+                            SortedTimeline.Remove(IoTimeline);
                         // If list _timeline[_ioTimeline] empty then null it
                     }
                 }
@@ -100,19 +101,19 @@ namespace FreeFrame
                 {
                     if (ImGui.Button(String.Format("Create keyframe for {0}", window.SelectedShape.GetType().Name)))
                     {
-                        if (_timeline.ContainsKey(IoTimeline) == false || _timeline[IoTimeline] == null)
-                            _timeline[IoTimeline] = new List<Shape>();
+                        if (SortedTimeline.ContainsKey(IoTimeline) == false || SortedTimeline[IoTimeline] == null)
+                            SortedTimeline[IoTimeline] = new List<Shape>();
 
-                        foreach (Shape shape in _timeline[IoTimeline])
+                        foreach (Shape shape in SortedTimeline[IoTimeline])
                         {
                             if (shape.Id == window.SelectedShape.Id)
                             {
                                 Console.WriteLine("Already exist");
-                                _timeline[IoTimeline].Remove(shape);
+                                SortedTimeline[IoTimeline].Remove(shape);
                                 break;
                             }
                         }
-                        _timeline[IoTimeline].Add(window.SelectedShape.ShallowCopy());
+                        SortedTimeline[IoTimeline].Add(window.SelectedShape.ShallowCopy());
                     }
                 }
             }
@@ -123,7 +124,7 @@ namespace FreeFrame
             ImGui.Text("Animation");
             ImGui.Spacing();
 
-            int numberColumns = _timeline.Count;
+            int numberColumns = SortedTimeline.Count;
             if (numberColumns > 0)
             {
                 foreach (Shape shape in window.Shapes)
@@ -137,7 +138,7 @@ namespace FreeFrame
                         if (ImGui.BeginTable(String.Format("elements##{0}", shape.Id), numberColumns + 1, ImGuiTableFlags.Borders))
                         {
                             ImGui.TableSetupColumn("Properties");
-                            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                            foreach (KeyValuePair<int, List<Shape>> shapes in SortedTimeline)
                                 ImGui.TableSetupColumn(shapes.Key.ToString());
                             ImGui.TableHeadersRow();
 
@@ -150,7 +151,7 @@ namespace FreeFrame
                                 ImGui.TableNextRow();
                                 ImGui.TableSetColumnIndex(i);
                                 ImGui.Text("X");
-                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                                 {
                                     i++;
                                     Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -165,7 +166,7 @@ namespace FreeFrame
                                 ImGui.TableNextRow();
                                 ImGui.TableSetColumnIndex(i);
                                 ImGui.Text("Y");
-                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                                 {
                                     i++;
                                     Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -183,7 +184,7 @@ namespace FreeFrame
                                 ImGui.TableNextRow();
                                 ImGui.TableSetColumnIndex(i);
                                 ImGui.Text("Width");
-                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                                 {
                                     i++;
                                     Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -198,7 +199,7 @@ namespace FreeFrame
                                 ImGui.TableNextRow();
                                 ImGui.TableSetColumnIndex(i);
                                 ImGui.Text("Height");
-                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                                 {
                                     i++;
                                     Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -216,7 +217,7 @@ namespace FreeFrame
                                 ImGui.TableNextRow();
                                 ImGui.TableSetColumnIndex(i);
                                 ImGui.Text("Angle");
-                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                                 {
                                     i++;
                                     Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -234,7 +235,7 @@ namespace FreeFrame
                                 ImGui.TableNextRow();
                                 ImGui.TableSetColumnIndex(i);
                                 ImGui.Text("Corner Radius");
-                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                                foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                                 {
                                     i++;
                                     Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -250,7 +251,7 @@ namespace FreeFrame
                             ImGui.TableNextRow();
                             ImGui.TableSetColumnIndex(i);
                             ImGui.Text("Color");
-                            foreach (KeyValuePair<int, List<Shape>> timeline in _timeline)
+                            foreach (KeyValuePair<int, List<Shape>> timeline in SortedTimeline)
                             {
                                 i++;
                                 Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
@@ -274,15 +275,15 @@ namespace FreeFrame
             ImGui.Text("Timeline");
             int numberColumns = 0, numberRows = 0;
 
-            numberColumns = _timeline.Count;
-            if (_timeline.Count > 0)
-                numberRows = _timeline.Max(i => i.Value != null ? i.Value.Count : 0);
+            numberColumns = SortedTimeline.Count;
+            if (SortedTimeline.Count > 0)
+                numberRows = SortedTimeline.Max(i => i.Value != null ? i.Value.Count : 0);
 
             if (numberColumns > 0)
             {
                 if (ImGui.BeginTable("elements", numberColumns, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
                 {
-                    foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                    foreach (KeyValuePair<int, List<Shape>> shapes in SortedTimeline)
                         if (shapes.Value != null)
                             ImGui.TableSetupColumn(shapes.Key.ToString());
                     ImGui.TableHeadersRow();
@@ -291,7 +292,7 @@ namespace FreeFrame
                     {
                         int columnIndex = 0;
                         ImGui.TableNextRow();
-                        foreach (KeyValuePair<int, List<Shape>> shapes in _timeline)
+                        foreach (KeyValuePair<int, List<Shape>> shapes in SortedTimeline)
                         {
                             if (shapes.Value != null)
                             {
@@ -318,9 +319,9 @@ namespace FreeFrame
         }
         public void UpdateShapeInTimeline(Shape shape)
         {
-            if (_timeline.ContainsKey(IoTimeline) == true && _timeline[IoTimeline] != null)
+            if (SortedTimeline.ContainsKey(IoTimeline) == true && SortedTimeline[IoTimeline] != null)
             {
-                Shape? existingShape = _timeline[IoTimeline].Find(x => x.Id == shape.Id);
+                Shape? existingShape = SortedTimeline[IoTimeline].Find(x => x.Id == shape.Id);
                 if (existingShape != null)
                 {
                     Console.WriteLine("There is a shape like meee");
@@ -338,10 +339,10 @@ namespace FreeFrame
         {
             foreach (Shape shape in window.Shapes)
             {
-                if (_timeline.ContainsKey(IoTimeline) == true && _timeline[IoTimeline] != null && _timeline[IoTimeline].Any(x => x.Id == shape.Id))
+                if (SortedTimeline.ContainsKey(IoTimeline) == true && SortedTimeline[IoTimeline] != null && SortedTimeline[IoTimeline].Any(x => x.Id == shape.Id))
                 {
                     // Draw the current one in this list
-                    Shape sibling = _timeline[IoTimeline].Find(x => x.Id == shape.Id)!;
+                    Shape sibling = SortedTimeline[IoTimeline].Find(x => x.Id == shape.Id)!;
                     Console.WriteLine("One already exist");
 
                     shape.X = sibling.X;
@@ -355,9 +356,9 @@ namespace FreeFrame
                 }
                 else // Doesn't exist in the list
                 {
-                    if (_timeline.Any(i => i.Value.Any(j => j.Id == shape.Id))) // If exist somewhere else but not here
+                    if (SortedTimeline.Any(i => i.Value.Any(j => j.Id == shape.Id))) // If exist somewhere else but not here
                     {
-                        int[] keys = _timeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToArray(); // Key key everywhere it exist
+                        int[] keys = SortedTimeline.Where(pair => pair.Value.Any(x => x.Id == shape.Id)).Select(pair => pair.Key).ToArray(); // Key key everywhere it exist
 
                         // Find two nearest
                         (int first, int second) nearest = (int.MaxValue, int.MaxValue);
@@ -395,8 +396,8 @@ namespace FreeFrame
                         }
                         Console.WriteLine("HHHHHHHHHHHHHHHHHHHHHHHHHHHHH first: {0}   second: {1}", nearest.first, nearest.second);
 
-                        Shape first = _timeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
-                        Shape second = _timeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
+                        Shape first = SortedTimeline[nearest.first].Find(x => x.Id == shape.Id)!; // can't be null
+                        Shape second = SortedTimeline[nearest.second].Find(x => x.Id == shape.Id)!; // can't be null;
                                                                                                // If reverse and loop invert the two shape every odd
 
                         shape.X = LinearInterpolate(timelineIndex, nearest.first, nearest.second, first.X, second.X);
@@ -441,7 +442,7 @@ namespace FreeFrame
         public void RemoveElementInTimeline(Shape shapeToRemove)
         {
             List<int> shapesToDelete = new();
-            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline) // Remove element in the timeline
+            foreach (KeyValuePair<int, List<Shape>> shapes in SortedTimeline) // Remove element in the timeline
             {
                 foreach (Shape shape in shapes.Value)
                 {
@@ -456,17 +457,17 @@ namespace FreeFrame
                     shapesToDelete.Add(shapes.Key);
             }
             foreach (int id in shapesToDelete)
-                _timeline.Remove(id);
+                SortedTimeline.Remove(id);
         }
         public void ResetTimeline()
         {
-            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline) // Remove element in the timeline
+            foreach (KeyValuePair<int, List<Shape>> shapes in SortedTimeline) // Remove element in the timeline
             {
                 foreach (Shape shape in shapes.Value)
                     shape.DeleteObjects();
                 shapes.Value.Clear();
             }
-            _timeline.Clear();
+            SortedTimeline.Clear();
         }
     }
 }

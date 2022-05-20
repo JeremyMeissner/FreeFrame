@@ -19,8 +19,8 @@ namespace FreeFrame.Components.Shapes.Path
 
         private bool _isRelative;
         public bool IsRelative { get => _isRelative; protected set => _isRelative = value; }
-        public int Y1 { get => _y1; protected set => _y1 = value; }
-        public int X1 { get => _x1; protected set => _x1 = value; }
+        public int Y1 { get => _y1; set => _y1 = value; }
+        public int X1 { get => _x1; set => _x1 = value; }
         public int X { get => _x; set => _x = value; }
         public int Y { get => _y; set => _y = value; }
 
@@ -330,8 +330,8 @@ namespace FreeFrame.Components.Shapes.Path
         int _x2;
         int _y2;
 
-        public int X2 { get => _x2; private set => _x2 = value; }
-        public int Y2 { get => _y2; private set => _y2 = value; }
+        public int X2 { get => _x2; set => _x2 = value; }
+        public int Y2 { get => _y2; set => _y2 = value; }
 
         /// <summary>
         /// Use to draw a cubic Bézier curve from the current point to the given point.
@@ -429,7 +429,6 @@ namespace FreeFrame.Components.Shapes.Path
             Y += deltaPosition.Y;
         }
 
-
         public override (Vector2i position, Vector2i? controlPosition) Information()
         {
             throw new NotImplementedException();
@@ -437,27 +436,47 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override void UpdateLast()
         {
+                Console.WriteLine("Update last");
             if (IsRelative)
             {
+                Console.WriteLine("relativeee");
                 if (X > X2)
                     Last.X1 += X + X2;
                 else if (X < X2)
                     Last.X1 += X - X2;
                 else
                     Last.X1 += X;
+
+                if (Y > Y2)
+                    Last.Y1 += Y + Y2;
+                else if (Y < Y2)
+                    Last.Y1 += Y - Y2;
+                else
+                    Last.Y1 += Y;
+
+
                 Last.X += X;
                 Last.Y += Y;
             }
             else
             {
-                if (X > X2)
-                    Last.X1 = X + X2;
-                else if (X < X2)
-                    Last.X1 = X - X2;
-                else
-                    Last.X1 = X;
-                Last.X = X;
-                Last.Y = Y;
+                Console.WriteLine("absolute");
+                //if (X > X2)
+                //    Last.X1 = X + X2;
+                //else if (X < X2)
+                //    Last.X1 = X - X2;
+                //else
+                //    Last.X1 = X;
+
+                //if (Y > Y2)
+                //    Last.Y1 = Y + Y2;
+                //else if (Y < Y2)
+                //    Last.Y1 = Y - Y2;
+                //else
+                //    Last.Y1 = Y;
+
+                //Last.X = X;
+                //Last.Y = Y;
             }
         }
     }
@@ -471,8 +490,8 @@ namespace FreeFrame.Components.Shapes.Path
         int _x2;
         int _y2;
 
-        public int X2 { get => _x2; private set => _x2 = value; }
-        public int Y2 { get => _y2; private set => _y2 = value; }
+        public int X2 { get => _x2; set => _x2 = value; }
+        public int Y2 { get => _y2; set => _y2 = value; }
 
         /// <summary>
         /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
@@ -573,6 +592,14 @@ namespace FreeFrame.Components.Shapes.Path
                     Last.X1 += X - X2;
                 else
                     Last.X1 += X;
+
+                if (Y > Y2)
+                    Last.Y1 += Y + Y2;
+                else if (Y < Y2)
+                    Last.Y1 += Y - Y2;
+                else
+                    Last.Y1 += Y;
+
                 Last.X += X;
                 Last.Y += Y;
             }
@@ -584,6 +611,14 @@ namespace FreeFrame.Components.Shapes.Path
                     Last.X1 = X - X2;
                 else
                     Last.X1 = X;
+
+                if (Y > Y2)
+                    Last.Y1 = Y + Y2;
+                else if (Y < Y2)
+                    Last.Y1 = Y - Y2;
+                else
+                    Last.Y1 = Y;
+
                 Last.X = X;
                 Last.Y = Y;
             }

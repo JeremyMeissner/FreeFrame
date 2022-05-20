@@ -11,48 +11,102 @@ namespace FreeFrame.Components
 {
     public static class Importer
     {
-        static public (List<Shape>, bool) ImportFromStream(Stream pStream)
+        static public (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromStream(Stream pStream)
         {
             List<Shape> shapes = new List<Shape>();
             bool compatibilityFlag = false;
 
+            Shape? previous = null;
+
             using (XmlReader reader = XmlReader.Create(pStream))
             {
-                while (reader.Read())
+                try
                 {
-                    //if (reader.HasAttributes)
+                    while (reader.Read())
                     {
-                        //Console.WriteLine("Attributes of <" + reader.Name + ">");
-                        switch (reader.Name)
+                        //if (reader.HasAttributes)
                         {
-                            case "xml":
-                            case "svg":
-                                break; // Skip knowned elements
-                            case "polygon":
-                                shapes.Add(new SVGPolygon(reader));
-                                break;
-                            case "path":
-                                shapes.Add(new SVGPath(reader));
-                                break;
-                            case "rect":
-                                shapes.Add(new SVGRectangle(reader));
-                                break;
-                            case "circle":
-                                shapes.Add(new SVGCircle(reader));
-                                break;
-                            case "line":
-                                shapes.Add(new SVGLine(reader));
-                                break;
-                            default:
-                                compatibilityFlag = true; // If an element is unknow, the flag is trigger
-                                break;
+                            //Console.WriteLine("Attributes of <" + reader.Name + ">");
+                            switch (reader.Name)
+                            {
+                                case "xml":
+                                case "svg":
+                                    break; // Skip knowned elements
+                                case "polygon":
+                                    shapes.Add(new SVGPolygon(reader));
+                                    previous = shapes.Last();
+                                    break;
+                                case "path":
+                                    shapes.Add(new SVGPath(reader));
+                                    previous = shapes.Last();
+                                    break;
+                                case "rect":
+                                    shapes.Add(new SVGRectangle(reader));
+                                    previous = shapes.Last();
+                                    break;
+                                case "circle":
+                                    shapes.Add(new SVGCircle(reader));
+                                    previous = shapes.Last();
+                                    break;
+                                case "line":
+                                    shapes.Add(new SVGLine(reader));
+                                    previous = shapes.Last();
+                                    break;
+                                case "animate":
+                                    if (previous != null)
+                                    {
+                                        string attr = reader["attributeName"].ToString();
+                                        int nbrKeyFrames = reader["values"].ToString().Count(c => c == ';');
+                                        // regex
+
+                                        for (int i = 0; i < nbrKeyFrames+1; i++)
+                                        {
+                                            int positionInTimeline = i * (Timeline.MAX_TIMELINE / (nbrKeyFrames + 1));
+                                        }
+                                        switch (attr)
+                                        {
+                                            case "rx":
+
+                                            case "ry":
+                                            case "width":
+                                            case "height":
+                                            case "x":
+                                            case "y":
+                                            case "fill":
+                                            case "color":
+                                            default:
+                                                break;
+                                        }
+                                        
+
+                                        //reader["dur"];
+                                    }
+                                    break;
+                                case "animateTransform":
+                                    if (reader["attributeName"].ToString() == "transform" && reader["type"].ToString() == "rotate")
+                                    {
+                                        // Only read first one Z from
+                                        // from="z _ _"
+                                        // to="z _ _"
+                                        // get angle
+                                    }
+                                    break;
+                                default:
+                                    compatibilityFlag = true; // If an element is unknow, the flag is trigger
+                                    break;
+                            }
                         }
+
                     }
                 }
+                catch (Exception)
+                {
+                    throw new Exception("Error while importing");
+                }
             }
-            return (shapes, compatibilityFlag);
+            return (shapes, new SortedDictionary<int, List<Shape>>(), compatibilityFlag);
         }
-        static public (List<Shape>, bool) ImportFromFile(string pFilename)
+        static public (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromFile(string pFilename)
         {
             if (!File.Exists(pFilename))
                 throw new ArgumentException($"'{pFilename}' file cannot be found.", nameof(pFilename)); // TODO: replace by a simple alert window
@@ -61,7 +115,7 @@ namespace FreeFrame.Components
 
             return ImportFromStream(new MemoryStream(byteArray));
         }
-        static public (List<Shape>, bool) ImportFromString(string pString)
+        static public (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromString(string pString)
         {
             byte[] byteArray = Encoding.UTF8.GetBytes(pString);
 

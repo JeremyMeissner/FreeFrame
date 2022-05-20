@@ -46,7 +46,8 @@ namespace FreeFrame
         {
             Line,
             Rectangle,
-            Circle
+            Circle,
+            Triangle
         }
         int _ioAngle;
         int _ioCornerRadius;
@@ -59,6 +60,7 @@ namespace FreeFrame
         System.Numerics.Vector3 _ioBgColor;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+        bool _dialogError = false;
 
 
         Vector2i _mouseOriginalState;
@@ -365,6 +367,7 @@ namespace FreeFrame
                         CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y, "#000000FF"),
                         CreateMode.Rectangle => new SVGRectangle(0, 0, (int)MouseState.X, (int)MouseState.Y),
                         CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y, "#000000FF"),
+                        CreateMode.Triangle => new SVGPolygon((int)MouseState.X, (int)MouseState.Y, 0, 0, "#000000FF"),
                         _ => throw new Exception("A create mode need to be selected"),
                     };
                     Shapes.Add(SelectedShape);
@@ -749,7 +752,11 @@ namespace FreeFrame
                     _userMode = UserMode.Create;
                     _createMode = CreateMode.Rectangle;
                 }
-                if (ImGui.Selectable("Triangle")) { /* Do stuff */ }
+                if (ImGui.Selectable("Triangle")) 
+                {
+                    _userMode = UserMode.Create;
+                    _createMode = CreateMode.Triangle;
+                }
                 ImGui.EndPopup();
             }
 
@@ -762,23 +769,31 @@ namespace FreeFrame
                 if (picker.Draw())
                 {
                     ResetSelection();
-                    bool compatibilityFlag;
-
-                    switch (_importMode)
+                    //bool compatibilityFlag = false;
+                    try
                     {
-                        case ImportMode.Add:
-                            (List<Shape> newShapes, compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
-                            Shapes.AddRange(newShapes);
-                            break;
-                        case ImportMode.Override:
-                        default:
-                            (Shapes, compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
-                            _timeline.ResetTimeline();
-                            break;
+                        switch (_importMode)
+                        {
+                            case ImportMode.Add:
+                                (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                Shapes.AddRange(newShapes);
+                                // TODO: merde both timelines
+                                break;
+                            case ImportMode.Override:
+                            default:
+                                (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                _timeline.ResetTimeline();
+                                break;
+                        }
                     }
+                    catch (Exception)
+                    {
+                        _dialogError = true;
+                    }
+                    
                     FilePicker.RemoveFilePicker(this);
-                    if (compatibilityFlag)
-                        _dialogCompatibility = true;
+                    //if (compatibilityFlag)
+                    //    _dialogCompatibility = true;
 
                 }
                 _dialogFilePicker = false;
@@ -796,6 +811,21 @@ namespace FreeFrame
                 {
                     ImGui.CloseCurrentPopup();
                     _dialogCompatibility = false;
+                }
+                ImGui.EndPopup();
+            }
+
+            // Error alert
+            if (_dialogError)
+                ImGui.OpenPopup("Error Problem");
+            if (ImGui.BeginPopupModal("Error Problem")) // ImGuiWindowFlags.AlwaysAutoResize
+            {
+                ImGui.Text("There was an error while importing the file, please check the syntax");
+                ImGui.Separator();
+                if (ImGui.Button("OK"))
+                {
+                    ImGui.CloseCurrentPopup();
+                    _dialogError = false;
                 }
                 ImGui.EndPopup();
             }
@@ -887,6 +917,8 @@ namespace FreeFrame
             GL.ReadPixels(0, 0, ClientSize.X, ClientSize.Y, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, bmpData.Scan0);
 
             bmp.UnlockBits(bmpData);
+
+            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
 
             return bmp;
         }

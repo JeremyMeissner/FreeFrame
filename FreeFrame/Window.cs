@@ -55,6 +55,9 @@ namespace FreeFrame
         int _ioY;
         int _ioWidth;
         int _ioHeight;
+        int _ioTimeline;
+        int _ioFps;
+        bool _ioIsPlaying;
         System.Numerics.Vector4 _ioColor;
 
         System.Numerics.Vector3 _ioBgColor;
@@ -110,6 +113,8 @@ namespace FreeFrame
 
             _timeline = new Timeline();
 
+            _ioFps = Timeline.DEFAULT_FPS;
+
             // TODO: default values for io 
         }
 
@@ -156,6 +161,8 @@ namespace FreeFrame
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
             _timeline.OnRenderFrame(e, this);
+
+            _ioTimeline = _timeline.TimelineIndex;
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
                 ResetSelection();
@@ -480,7 +487,50 @@ namespace FreeFrame
             ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
-            _timeline.DrawDebugUI(this);
+            ImGui.Text("Timeline");
+            int numberColumns = 0, numberRows = 0;
+
+            numberColumns = _timeline.SortedTimeline.Count;
+            if (_timeline.SortedTimeline.Count > 0)
+                numberRows = _timeline.SortedTimeline.Max(i => i.Value != null ? i.Value.Count : 0);
+
+            if (numberColumns > 0)
+            {
+                if (ImGui.BeginTable("elements", numberColumns, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
+                {
+                    foreach (KeyValuePair<int, List<Shape>> shapes in _timeline.SortedTimeline)
+                        if (shapes.Value != null)
+                            ImGui.TableSetupColumn(shapes.Key.ToString());
+                    ImGui.TableHeadersRow();
+
+                    for (int row = 0; row < numberRows; row++)
+                    {
+                        int columnIndex = 0;
+                        ImGui.TableNextRow();
+                        foreach (KeyValuePair<int, List<Shape>> shapes in _timeline.SortedTimeline)
+                        {
+                            if (shapes.Value != null)
+                            {
+                                if (shapes.Value.Count > row)
+                                {
+                                    ImGui.TableSetColumnIndex(columnIndex);
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].GetType().Name));
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].Id));
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].GetHashCode()));
+                                    foreach (Renderer vao in shapes.Value[row].Vaos)
+                                    {
+                                        ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
+                                        ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));
+                                        ImGui.Text(String.Format("IBO: {0}", vao.IndexBufferObjectID));
+                                    }
+                                }
+                                columnIndex++;
+                            }
+                        }
+                    }
+                    ImGui.EndTable();
+                }
+            }
             ImGui.End();
         }
 
@@ -676,7 +726,154 @@ namespace FreeFrame
             ImGui.Begin("Animation", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(0, ClientSize.Y - ImGui.GetWindowHeight()));
-            _timeline.DrawAnimationList(this);
+            ImGui.Text("Animation");
+            ImGui.Spacing();
+
+            int numberColumns = _timeline.SortedTimeline.Count;
+            if (numberColumns > 0)
+            {
+                foreach (Shape shape in Shapes)
+                {
+                    if (ImGui.BeginTable("shape", 2, ImGuiTableFlags.Resizable))
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text(string.Format("{0} - {1}", shape.ShortId, shape.GetType().Name));
+                        ImGui.TableSetColumnIndex(1);
+                        if (ImGui.BeginTable(String.Format("elements##{0}", shape.Id), numberColumns + 1, ImGuiTableFlags.Borders))
+                        {
+                            ImGui.TableSetupColumn("Properties");
+                            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline.SortedTimeline)
+                                ImGui.TableSetupColumn(shapes.Key.ToString());
+                            ImGui.TableHeadersRow();
+
+
+                            int i = 0;
+
+                            if (shape.IsMoveable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("X");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.X.ToString());
+                                    }
+                                }
+
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Y");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Y.ToString());
+                                    }
+                                }
+                            }
+
+                            if (shape.IsResizeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Width");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Width.ToString());
+                                    }
+                                }
+
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Height");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Height.ToString());
+                                    }
+                                }
+                            }
+
+                            if (shape.IsAngleChangeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Angle");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(String.Format("{0}°", sibling.Angle));
+                                    }
+                                }
+                            }
+
+                            if (shape.IsCornerRadiusChangeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Corner Radius");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.CornerRadius.ToString());
+                                    }
+                                }
+                            }
+
+                            i = 0;
+                            ImGui.TableNextRow();
+                            ImGui.TableSetColumnIndex(i);
+                            ImGui.Text("Color");
+                            foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                            {
+                                i++;
+                                Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                if (sibling != null)
+                                {
+                                    ImGui.TableSetColumnIndex(i);
+                                    ImGui.Text(String.Format("RGBA({0}, {1}, {2}, {3})", sibling.Color.R, sibling.Color.G, sibling.Color.B, sibling.Color.A));
+                                }
+                            }
+
+                            ImGui.EndTable();
+                        }
+                        ImGui.EndTable();
+                        ImGui.Spacing();
+                    }
+                }
+            }
             ImGui.End();
 
 
@@ -684,7 +881,63 @@ namespace FreeFrame
             ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
-            _timeline.DrawUI(this);
+
+            ImGui.Text("Timeline");
+            ImGui.Spacing();
+            if (ImGui.SliderInt("frame", ref _ioTimeline, Timeline.MIN_TIMELINE, Timeline.MAX_TIMELINE))
+            {
+                _timeline.TimelineIndex = _ioTimeline;
+                _timeline.RenderInterpolation(this);
+            }
+
+            ImGui.SameLine();
+
+            ImGui.PushItemWidth(80f);
+            if (ImGui.InputInt("fps", ref _ioFps))
+            {
+                _ioFps = Math.Clamp(_ioFps, Timeline.MIN_FPS, Timeline.MAX_FPS);
+                _timeline.Fps = _ioFps;
+            }
+            ImGui.PopItemWidth();
+
+            if (ImGui.Button(_timeline.IsPlaying == false ? "Play" : "Pause"))
+                _timeline.IsPlaying = !_timeline.IsPlaying;
+
+            ImGui.SameLine();
+
+            if (SelectedShape != null)
+            {
+                if (_timeline.SortedTimeline.ContainsKey(_timeline.TimelineIndex) && _timeline.SortedTimeline[_timeline.TimelineIndex] != null && _timeline.SortedTimeline[_timeline.TimelineIndex].Any(x => x.Id == SelectedShape.Id))
+                {
+                    if (ImGui.Button(String.Format("Remove keyframe {0} for {1}", _timeline.TimelineIndex, SelectedShape.GetType().Name)))
+                    {
+                        _timeline.SortedTimeline[_timeline.TimelineIndex].Remove(_timeline.SortedTimeline[_timeline.TimelineIndex].Find(x => x.Id == SelectedShape.Id)!); // Can't be null
+                        if (_timeline.SortedTimeline[_timeline.TimelineIndex].Count == 0)
+                            _timeline.SortedTimeline.Remove(_timeline.TimelineIndex);
+                        // If list _timeline[_ioTimeline] empty then null it
+                    }
+                }
+                else
+                {
+                    if (ImGui.Button(String.Format("Create keyframe for {0}", SelectedShape.GetType().Name)))
+                    {
+                        if (_timeline.SortedTimeline.ContainsKey(_timeline.TimelineIndex) == false || _timeline.SortedTimeline[_timeline.TimelineIndex] == null)
+                            _timeline.SortedTimeline[_timeline.TimelineIndex] = new List<Shape>();
+
+                        foreach (Shape shape in _timeline.SortedTimeline[_timeline.TimelineIndex])
+                        {
+                            if (shape.Id == SelectedShape.Id)
+                            {
+                                Console.WriteLine("Already exist");
+                                _timeline.SortedTimeline[_timeline.TimelineIndex].Remove(shape);
+                                break;
+                            }
+                        }
+                        _timeline.SortedTimeline[_timeline.TimelineIndex].Add(SelectedShape.ShallowCopy());
+                    }
+                }
+            }
+
             ImGui.End();
 
 
@@ -859,7 +1112,7 @@ namespace FreeFrame
 
         public void SaveCurrentScreenToMP4()
         {
-            using VideoWriter w = new VideoWriter("output.mp4", _timeline.IoFps, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
+            using VideoWriter w = new VideoWriter("output.mp4", _timeline.Fps, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
             for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++) // TODO: please dont hardcode this
             {
                 RenderFrameBySecondIndex(i);
@@ -868,7 +1121,7 @@ namespace FreeFrame
         }
         public void SaveCurrentScreenToGIF()
         {
-            using (var gif = AnimatedGif.AnimatedGif.Create("output.gif", 1000 / _timeline.IoFps))
+            using (var gif = AnimatedGif.AnimatedGif.Create("output.gif", 1000 / _timeline.Fps))
             {
                 for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++) // TODO: please dont hardcode this
                 {
@@ -883,7 +1136,7 @@ namespace FreeFrame
         }
         public void SaveCurrentScreenToPNG()
         {
-            RenderFrameBySecondIndex(_timeline.IoTimeline);
+            RenderFrameBySecondIndex(_timeline.TimelineIndex);
             TakeSnap().Save("output.png", ImageFormat.Png);
         }
 
@@ -892,7 +1145,7 @@ namespace FreeFrame
         {
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the colorV
             ResetSelection();
-            _timeline.IoTimeline = second;
+            _timeline.TimelineIndex = second;
             _timeline.RenderInterpolation(this);
             foreach (Shape shape in Shapes)
                 shape.Draw(ClientSize);

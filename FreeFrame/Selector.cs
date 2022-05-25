@@ -38,7 +38,7 @@ namespace FreeFrame
 
         private List<(Renderer vao, Area hitbox, SelectorType type)> _vaos;  // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
 
-        public List<Renderer> Vaos { get => null; set => _ = value; } // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
+        //public List<Renderer> Vaos { get => null; set => _ = value; } // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
 
         public Selector()
         {

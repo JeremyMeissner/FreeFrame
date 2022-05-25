@@ -322,7 +322,7 @@ namespace FreeFrame
             }
             return nearest.shape;
         }
-        public void OnLeftMouseDown()
+        private void OnLeftMouseDown()
         {
             switch (_userMode)
             {
@@ -363,7 +363,7 @@ namespace FreeFrame
                     break;
             }
         }
-        public void OnLeftMouseEnter() // TODO: Rename this
+        private void OnLeftMouseEnter() // TODO: Rename this
         {
             // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
             switch (_userMode)
@@ -442,12 +442,12 @@ namespace FreeFrame
             }
 
         }
-        public void OnLeftMouseUp()
+        private void OnLeftMouseUp()
         {
             _selectorType = SelectorType.None;
         }
 
-        public void ShowUIDebug()
+        private void ShowUIDebug()
         {
             ImGui.Begin("Debug");
             ImGui.Text("Selected shape:");
@@ -534,7 +534,7 @@ namespace FreeFrame
             ImGui.End();
         }
 
-        public void ShowUI()
+        private void ShowUI()
         {
             // ImGui settings
             ImGui.GetStyle().WindowRounding = 0.0f;
@@ -1005,7 +1005,7 @@ namespace FreeFrame
                     _userMode = UserMode.Create;
                     _createMode = CreateMode.Rectangle;
                 }
-                if (ImGui.Selectable("Triangle")) 
+                if (ImGui.Selectable("Triangle"))
                 {
                     _userMode = UserMode.Create;
                     _createMode = CreateMode.Triangle;
@@ -1023,27 +1023,27 @@ namespace FreeFrame
                 {
                     ResetSelection();
                     //bool compatibilityFlag = false;
-                    try
+                    switch (_importMode)
                     {
-                        switch (_importMode)
-                        {
-                            case ImportMode.Add:
-                                (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
-                                Shapes.AddRange(newShapes);
-                                // TODO: merde both timelines
-                                break;
-                            case ImportMode.Override:
-                            default:
-                                (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
-                                _timeline.ResetTimeline();
-                                break;
-                        }
+                        case ImportMode.Add:
+                            (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                            Shapes.AddRange(newShapes);
+                            // TODO: merde both timelines
+                            break;
+                        case ImportMode.Override:
+                        default:
+                            (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                            _timeline.ResetTimeline();
+                            break;
+                    }
+                    try //TODO: fix trycatch
+                    {
                     }
                     catch (Exception)
                     {
                         _dialogError = true;
                     }
-                    
+
                     FilePicker.RemoveFilePicker(this);
                     //if (compatibilityFlag)
                     //    _dialogCompatibility = true;

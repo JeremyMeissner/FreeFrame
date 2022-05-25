@@ -9,10 +9,10 @@ namespace FreeFrame
 {
     public interface IDrawable
     {
-        List<Renderer> Vaos
-        {
-            get;
-        }
+        //List<Renderer> Vaos
+        //{
+        //    get;
+        //}
         /// <summary>
         /// Trigge draw element through OpenGL context
         /// </summary>

@@ -10,7 +10,7 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPolygon : Shape
     {
-        readonly Regex _pointsRegex = new(@" *(\d+) *, *(\d+) *"); // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/points
+        readonly Regex _pointsAttributeRegex = new(@" *(\d+) *, *(\d+) *"); // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/points
 
         #region Geometry properties
         List<Vector2i> _points = new();
@@ -24,7 +24,7 @@ namespace FreeFrame.Components.Shapes
             IsCornerRadiusChangeable = false;
 
             string points = reader["points"] ?? throw new Exception("points not here"); // TODO: Error handler if points is note here
-            MatchCollection matches = _pointsRegex.Matches(points); // Retrieve every points
+            MatchCollection matches = _pointsAttributeRegex.Matches(points); // Retrieve every points
 
             foreach (Match match in matches)
                 _points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
@@ -69,13 +69,11 @@ namespace FreeFrame.Components.Shapes
             List<Vector2i> selectablePoints = new List<Vector2i>();
             if (_points.Count == 3) // Because a triangle is also base on the size
             {
-                selectablePoints.Add(new Vector2i(X + Width / 2, Y));
-                selectablePoints.Add(new Vector2i(X, Y + Height));
-                selectablePoints.Add(new Vector2i(X + Width, Y + Height));
+                selectablePoints.Add(new Vector2i(X, Y));
+                selectablePoints.Add(new Vector2i(X + Width, Y));
             }
-            else
-                foreach (Vector2i point in _points)
-                    selectablePoints.Add(new Vector2i(X + point.X, Y + point.Y));
+            foreach (Vector2i point in _points)
+                selectablePoints.Add(new Vector2i(X + point.X, Y + point.Y));
             return selectablePoints;
         }
 

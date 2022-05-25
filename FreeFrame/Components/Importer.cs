@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using FreeFrame.Components.Shapes;
@@ -11,93 +12,116 @@ namespace FreeFrame.Components
 {
     public static class Importer
     {
-        static public (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromStream(Stream pStream)
+        static private (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromStream(Stream pStream)
         {
             List<Shape> shapes = new List<Shape>();
+            SortedDictionary<int, List<Shape>> timeline = new SortedDictionary<int, List<Shape>>();
             bool compatibilityFlag = false;
 
             Shape? previous = null;
 
             using (XmlReader reader = XmlReader.Create(pStream))
             {
-                try
+                while (reader.Read())
                 {
-                    while (reader.Read())
+                    if (reader.HasAttributes)
                     {
-                        //if (reader.HasAttributes)
+                        //Console.WriteLine("Attributes of <" + reader.Name + ">");
+                        switch (reader.Name)
                         {
-                            //Console.WriteLine("Attributes of <" + reader.Name + ">");
-                            switch (reader.Name)
-                            {
-                                case "xml":
-                                case "svg":
-                                    break; // Skip knowned elements
-                                case "polygon":
-                                    shapes.Add(new SVGPolygon(reader));
-                                    previous = shapes.Last();
-                                    break;
-                                case "path":
-                                    shapes.Add(new SVGPath(reader));
-                                    previous = shapes.Last();
-                                    break;
-                                case "rect":
-                                    shapes.Add(new SVGRectangle(reader));
-                                    previous = shapes.Last();
-                                    break;
-                                case "circle":
-                                    shapes.Add(new SVGCircle(reader));
-                                    previous = shapes.Last();
-                                    break;
-                                case "line":
-                                    shapes.Add(new SVGLine(reader));
-                                    previous = shapes.Last();
-                                    break;
-                                case "animate":
-                                    if (previous != null)
-                                    {
-                                        string attr = reader["attributeName"].ToString();
-                                        int nbrKeyFrames = reader["values"].ToString().Count(c => c == ';');
-                                        // regex
+                            case "xml":
+                            case "svg":
+                                break; // Skip knowned elements
+                            case "polygon":
+                                shapes.Add(new SVGPolygon(reader));
+                                previous = shapes.Last();
+                                break;
+                            case "path":
+                                shapes.Add(new SVGPath(reader));
+                                previous = shapes.Last();
+                                break;
+                            case "rect":
+                                shapes.Add(new SVGRectangle(reader));
+                                previous = shapes.Last();
+                                break;
+                            case "circle":
+                                shapes.Add(new SVGCircle(reader));
+                                previous = shapes.Last();
+                                break;
+                            case "line":
+                                shapes.Add(new SVGLine(reader));
+                                previous = shapes.Last();
+                                break;
+                            case "animate":
+                                if (previous != null)
+                                {
+                                    string attr = reader["attributeName"].ToString();
+                                    int nbrKeyFrames = reader["values"].ToString().Count(c => c == ';');
+                                    // regex
+                                    Regex rx = new Regex(@"\d|#\d{8}");
 
-                                        for (int i = 0; i < nbrKeyFrames+1; i++)
-                                        {
-                                            int positionInTimeline = i * (Timeline.MAX_TIMELINE / (nbrKeyFrames + 1));
-                                        }
+                                    MatchCollection matches = rx.Matches(reader["values"]);
+
+                                    for (int i = 0; i < nbrKeyFrames + 1; i++)
+                                    {
+                                        int positionInTimeline = i * (Timeline.MAX_TIMELINE / (nbrKeyFrames + 1));
+                                        if (timeline.ContainsKey(positionInTimeline) == false)
+                                            timeline.Add(positionInTimeline, null);
+                                        if (timeline[positionInTimeline] == null)
+                                            timeline[positionInTimeline] = new List<Shape>();
+                                        Shape shape = previous.ShallowCopy();
+
+                                        string matchResult = matches[i].Value;
+
                                         switch (attr)
                                         {
                                             case "rx":
-
                                             case "ry":
+                                                shape.CornerRadius = Convert.ToInt32(matchResult);
+                                                break;
                                             case "width":
+                                                shape.Width = Convert.ToInt32(matchResult);
+                                                break;
                                             case "height":
+                                                shape.Height = Convert.ToInt32(matchResult);
+                                                break;
                                             case "x":
+                                                shape.X = Convert.ToInt32(matchResult);
+                                                break;
                                             case "y":
+                                                shape.Y = Convert.ToInt32(matchResult);
+                                                break;
                                             case "fill":
-                                            case "color":
+                                                shape.Color = HexadecimalToRGB(matchResult);
+                                                break;
                                             default:
                                                 break;
                                         }
-                                        
+                                        timeline[positionInTimeline].Add(shape);
+                                    }
 
-                                        //reader["dur"];
-                                    }
-                                    break;
-                                case "animateTransform":
-                                    if (reader["attributeName"].ToString() == "transform" && reader["type"].ToString() == "rotate")
-                                    {
-                                        // Only read first one Z from
-                                        // from="z _ _"
-                                        // to="z _ _"
-                                        // get angle
-                                    }
-                                    break;
-                                default:
-                                    compatibilityFlag = true; // If an element is unknow, the flag is trigger
-                                    break;
-                            }
+
+                                    //reader["dur"]; //TODO: fps base on duration ?
+                                }
+                                break;
+                            case "animateTransform":
+                                if (reader["attributeName"].ToString() == "transform" && reader["type"].ToString() == "rotate")
+                                {
+                                    // Only read first one Z from
+                                    // from="z _ _"
+                                    // to="z _ _"
+                                    // get angle
+                                }
+                                break;
+                            default:
+                                compatibilityFlag = true; // If an element is unknow, the flag is trigger
+                                break;
                         }
-
                     }
+
+                }
+                try //TODO: fix trycatch
+                {
                 }
                 catch (Exception)
                 {

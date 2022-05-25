@@ -13,27 +13,17 @@ namespace FreeFrame.Components.Shapes
     public class SVGPath : Shape
     {
 
-        readonly Dictionary<char, Regex> _dAttributesRegex = new()
+        readonly Dictionary<char, Regex> _dAttributeRegex = new()
         {
-            { 'M', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
             { 'm', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
-            { 'L', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
             { 'l', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
-            { 'H', new Regex(@" *(-?\d+) *") },
             { 'h', new Regex(@" *(-?\d+) *") },
-            { 'V', new Regex(@" *(-?\d+) *") },
             { 'v', new Regex(@" *(-?\d+) *") },
-            { 'C', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
             { 'c', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
-            { 'S', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
             { 's', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
-            { 'Q', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
             { 'q', new Regex(@" *(-?\d+) *, *(-?\d+) +(-?\d+) *, *(-?\d+) *") },
-            { 'T', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
             { 't', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
-            { 'A', new Regex(@" *(-?\d+) +(-?\d+) +(-?\d+) +(-?\d) +(-?\d) +(-?\d+) *, *(-?\d+) *") },
             { 'a', new Regex(@" *(-?\d+) +(-?\d+) +(-?\d+) +(-?\d) +(-?\d) +(-?\d+) *, *(-?\d+) *") },
-            { 'Z', new Regex("") },
             { 'z', new Regex("") },
         };
 
@@ -53,50 +43,40 @@ namespace FreeFrame.Components.Shapes
             for (int i = 0; i < d.Length; i++)
             {
                 char c = d[i]; // Get current char
+                char lowerC = char.ToLower(d[i]); // Get current char
 
-                if (_dAttributesRegex.ContainsKey(c))
+                if (_dAttributeRegex.ContainsKey(lowerC))
                 {
-                    MatchCollection matches = _dAttributesRegex[c].Matches(d, startIndex); // Retrieve the associated regular expression
-                    match = _dAttributesRegex[c].Match(d, startIndex); // Retrieve the associated regular expression
-                    switch (c)
+                    match = _dAttributeRegex[lowerC].Match(d, startIndex); // Retrieve the associated regular expression
+                    switch (lowerC)
                     {
-                        case 'M':
                         case 'm':
                             DrawAttributes.Add(new MoveTo(match.Groups[1], match.Groups[2], c == 'm')); // 'm' is relative and 'M' absolute
                             break;
-                        case 'l':
                         case 'L':
                             DrawAttributes.Add(new LineTo(match.Groups[1], match.Groups[2], c == 'l')); // 'l' is relative and 'L' absolute
                             break;
-                        case 'H':
                         case 'h':
                             DrawAttributes.Add(new HorizontalLineTo(match.Groups[1], c == 'h')); // 'h' is relative and 'H' absolute
                             break;
-                        case 'V':
                         case 'v':
                             DrawAttributes.Add(new VerticalLineTo(match.Groups[1], c == 'v')); // 'v' is relative and 'V' absolute
                             break;
-                        case 'C':
                         case 'c':
                             DrawAttributes.Add(new CurveTo(match.Groups[1], match.Groups[2], match.Groups[3], match.Groups[4], match.Groups[5], match.Groups[6], c == 'c')); // 'c' is relative and 'C' absolute
                             break;
-                        case 'S':
                         case 's':
                             DrawAttributes.Add(new SmoothCurveTo(match.Groups[1], match.Groups[2], match.Groups[3], match.Groups[4], c == 's')); // 's' is relative and 'S' absolute
                             break;
-                        case 'Q':
                         case 'q':
                             DrawAttributes.Add(new QuadraticBezierCurveTo(match.Groups[1], match.Groups[2], match.Groups[3], match.Groups[4], c == 'q')); // 'q' is relative and 'Q' absolute
                             break;
-                        case 'T':
                         case 't':
                             DrawAttributes.Add(new SmoothQuadraticBezierCurveTo(match.Groups[1], match.Groups[2], c == 't')); // 't' is relative and 'T' absolute
                             break;
-                        case 'A':
                         case 'a':
                             DrawAttributes.Add(new EllipticalArc(match.Groups[1], match.Groups[2], match.Groups[3], match.Groups[4], match.Groups[5], match.Groups[6], match.Groups[7], c == 'a')); // 'a' is relative and 'A' absolute
                             break;
-                        case 'Z':
                         case 'z':
                             DrawAttributes.Add(new ClosePath());
                             break;

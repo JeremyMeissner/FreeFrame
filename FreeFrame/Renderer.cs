@@ -73,6 +73,7 @@ namespace FreeFrame
         public void Draw(Vector2i clientSize, Color4 color, Shape shape)
         {
             _shader.Use();
+
             // Applied projection matrix
             int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); // TODO: Don't need to apply projection matrix at each frame I think
             Matrix4 matrix = Matrix4.CreateOrthographicOffCenter(0, clientSize.X, clientSize.Y, 0, -1.0f, 1.0f);
@@ -104,7 +105,6 @@ namespace FreeFrame
             GL.Enable(EnableCap.Blend);
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
             GL.Disable(EnableCap.Blend);
-
         }
         public void ImplementObjects(float[] vertices, uint[] indexes)
         {

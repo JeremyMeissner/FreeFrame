@@ -31,7 +31,7 @@ namespace FreeFrame.Components.Shapes
 
         public List<DrawAttribute> DrawAttributes { get => _drawAttributes; set => _drawAttributes = value; }
 
-        public SVGPath(XmlReader reader) //: this()
+        public SVGPath(XmlReader reader)
         {
             IsResizeable = false;
             IsCornerRadiusChangeable = false;

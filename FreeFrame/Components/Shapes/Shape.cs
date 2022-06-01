@@ -18,7 +18,7 @@ namespace FreeFrame.Components.Shapes
         Guid _id;
         #endregion
 
-        private List<Renderer> vaos;
+        private List<Renderer> renderers;
         public int X { get => _x; set => _x = value; }
         public int Y { get => _y; set => _y = value; }
         public int Width { get => _width; set => _width = Math.Max(0, value); }
@@ -31,14 +31,14 @@ namespace FreeFrame.Components.Shapes
         public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
         public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
         public Guid Id { get => _id; private  set => _id = value; }
-        public List<Renderer> Vaos { get => vaos; protected set => vaos = value; }
+        public List<Renderer> Renderers { get => renderers; protected set => renderers = value; }
         public string ShortId
         {
             get => Id.ToString().Substring(0, 6);
         }
         public Shape() 
         {
-            Vaos = new List<Renderer>();
+            Renderers = new List<Renderer>();
             Color = Color4.Black;
             Id = Guid.NewGuid();
         }
@@ -46,14 +46,14 @@ namespace FreeFrame.Components.Shapes
         public virtual void Draw(Vector2i clientSize)
         {
             //Console.WriteLine("Draw {0}, {1}, {2}", GetType().Name, Id, GetHashCode());
-            foreach (Renderer vao in Vaos)
+            foreach (Renderer vao in Renderers)
                 vao.Draw(clientSize, Color, this);
         }
         public void DeleteObjects()
         {
-            foreach (Renderer vao in Vaos)
+            foreach (Renderer vao in Renderers)
                 vao.DeleteObjects();
-            Vaos.Clear();
+            Renderers.Clear();
         }
         public Shape ShallowCopy() => (Shape)MemberwiseClone();
         public Shape DeepCopy()
@@ -61,7 +61,7 @@ namespace FreeFrame.Components.Shapes
             Shape shape = (Shape)MemberwiseClone();
             shape.Id = Guid.NewGuid();
             shape.DeleteObjects();
-            shape.Vaos = new List<Renderer>();
+            shape.Renderers = new List<Renderer>();
             shape.ImplementObject();
             return shape;
         }

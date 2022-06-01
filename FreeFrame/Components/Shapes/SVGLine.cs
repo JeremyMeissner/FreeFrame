@@ -40,7 +40,7 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
-        public override float[] GetVertices() => new float[] { X, Y, Width + X, Height + Y }; // x, y, x, y, x, y, ... (clockwise)
+        public override float[] GetVertices() => new float[] { X, Y, X + Width, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: please dont hardcode
         public override string ToString() => $"<line x1=\"{X}\" y1=\"{Y}\" x2=\"{Width + X}\" y2=\"{Height + Y}\" fill=\"{ColorToHexadecimal(Color)}\"/>";
         public override List<Vector2i> GetSelectablePoints()
@@ -52,11 +52,11 @@ namespace FreeFrame.Components.Shapes
         }
         public override void ImplementObject()
         {
-            foreach (Renderer vao in Vaos)
+            foreach (Renderer vao in Renderers)
                 vao.DeleteObjects();
-            Vaos.Clear();
+            Renderers.Clear();
 
-            Vaos.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines, this ));
+            Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines, this ));
         }
         public override void Move(Vector2i position)
         {

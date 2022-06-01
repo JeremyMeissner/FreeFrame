@@ -103,14 +103,14 @@ namespace FreeFrame.Components.Shapes
 
         public override void ImplementObject()
         {
-            foreach (Renderer vao in Vaos)
+            foreach (Renderer vao in Renderers)
                 vao.DeleteObjects();
-            Vaos.Clear();
+            Renderers.Clear();
 
             if (_points.Count == 3) // Triangle
-                Vaos.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
+                Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
             else
-                Vaos.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.LineLoop, this));
+                Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.LineLoop, this));
 
         }
 

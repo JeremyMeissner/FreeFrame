@@ -32,7 +32,6 @@ namespace FreeFrame
             _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
         }
 
-        // TODO: rename this renderer?
         public Renderer(float[] vertices, uint[] indexes, PrimitiveType primitiveType) : this(primitiveType)
         {
             ImplementObjects(vertices, indexes);

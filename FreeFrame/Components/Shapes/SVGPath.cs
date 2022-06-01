@@ -161,11 +161,11 @@ namespace FreeFrame.Components.Shapes
                     attrType == typeof(SmoothQuadraticBezierCurveTo) ||
                     attrType == typeof(EllipticalArc))
                 {
-                    Vaos.Add(new Renderer(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
+                    Renderers.Add(new Renderer(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }
                 else
                 {
-                    Vaos.Add(new Renderer(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
+                    Renderers.Add(new Renderer(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.Lines, this));
                 }
                 attr.UpdateLast(); // Update Last's inner variables 
             }

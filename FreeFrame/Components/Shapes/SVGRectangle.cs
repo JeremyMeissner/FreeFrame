@@ -45,11 +45,11 @@ namespace FreeFrame.Components.Shapes
         }
         public override void ImplementObject()
         {
-            foreach (Renderer vao in Vaos)
+            foreach (Renderer vao in Renderers)
                 vao.DeleteObjects();
-            Vaos.Clear();
+            Renderers.Clear();
 
-            Vaos.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
+            Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
         }
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
@@ -58,8 +58,6 @@ namespace FreeFrame.Components.Shapes
             return $"<rect x=\"{X}\" y=\"{Y}\" width=\"{Width}\" height=\"{Height}\" rx=\"{CornerRadius}\" ry=\"{CornerRadius}\" fill=\"{ColorToHexadecimal(Color)}\"/>";
         }
             
-
-
         public override List<Vector2i> GetSelectablePoints()
         {
             List<Vector2i> points = new();

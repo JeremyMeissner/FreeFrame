@@ -30,7 +30,7 @@ namespace FreeFrame.Components.Shapes
         List<DrawAttribute> _drawAttributes = new();
 
         public List<DrawAttribute> DrawAttributes { get => _drawAttributes; set => _drawAttributes = value; }
-
+        public SVGPath() { }
         public SVGPath(XmlReader reader)
         {
             IsResizeable = false;
@@ -147,7 +147,7 @@ namespace FreeFrame.Components.Shapes
                     }
                     else if (attrType == typeof(SmoothCurveTo))
                     {
-                        
+
                         Console.WriteLine(attr.GetType().Name + " - " + attr.ToString());
                         Console.WriteLine("x2: {0}, y2: {1}", ((SmoothCurveTo)attr).X2, ((SmoothCurveTo)attr).Y2);
                         Console.WriteLine("x1: {0}, y1: {1}", DrawAttribute.Last.X1, DrawAttribute.Last.Y1);

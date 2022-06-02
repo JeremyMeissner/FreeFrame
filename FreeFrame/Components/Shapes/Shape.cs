@@ -1,5 +1,6 @@
 ﻿using FreeFrame.Components.Shapes.Path;
 using MathNet.Numerics.LinearAlgebra;
+using Newtonsoft.Json;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
@@ -25,18 +26,18 @@ namespace FreeFrame.Components.Shapes
         public int Height { get => _height; set => _height = Math.Max(0, value); }
         public Color4 Color { get => _color; set => _color = value; }
         public int Angle { get => _angle; set => _angle = value; }
-        public bool IsMoveable { get => _isMoveable; protected set => _isMoveable = value; }
-        public bool IsResizeable { get => _isResizeable; protected set => _isResizeable = value; }
+        public bool IsMoveable { get => _isMoveable; set => _isMoveable = value; }
+        public bool IsResizeable { get => _isResizeable; set => _isResizeable = value; }
         public bool IsAngleChangeable { get => _isAngleChangeable; set => _isAngleChangeable = value; }
         public bool IsCornerRadiusChangeable { get => _isCornerRadiusChangeable; set => _isCornerRadiusChangeable = value; }
         public int CornerRadius { get => _cornerRadius; set => _cornerRadius = value; }
-        public Guid Id { get => _id; private  set => _id = value; }
-        public List<Renderer> Renderers { get => renderers; protected set => renderers = value; }
+        public Guid Id { get => _id; set => _id = value; }
+        public List<Renderer> Renderers { get => renderers; set => renderers = value; }
         public string ShortId
         {
             get => Id.ToString().Substring(0, 6);
         }
-        public Shape() 
+        public Shape()
         {
             Renderers = new List<Renderer>();
             Color = Color4.Black;

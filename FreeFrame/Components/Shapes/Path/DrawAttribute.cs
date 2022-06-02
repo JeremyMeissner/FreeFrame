@@ -18,7 +18,7 @@ namespace FreeFrame.Components.Shapes.Path
         int _x, _y, _x1, _y1 = 0;
 
         private bool _isRelative;
-        public bool IsRelative { get => _isRelative; protected set => _isRelative = value; }
+        public bool IsRelative { get => _isRelative; set => _isRelative = value; }
         public int Y1 { get => _y1; set => _y1 = value; }
         public int X1 { get => _x1; set => _x1 = value; }
         public int X { get => _x; set => _x = value; }
@@ -47,6 +47,7 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class MoveTo : DrawAttribute
     {
+        public MoveTo() { }
         /// <summary>
         /// Moving the current point to another point.
         /// </summary>
@@ -102,6 +103,7 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class LineTo : DrawAttribute
     {
+        public LineTo() { }
         /// <summary>
         /// Use to draw a straight line from the current point to the given point.
         /// </summary>
@@ -182,6 +184,7 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class HorizontalLineTo : DrawAttribute
     {
+        public HorizontalLineTo() { }
         /// <summary>
         /// Use to draw a horizontal line from the current point to the given point.
         /// </summary>
@@ -253,6 +256,7 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class VerticalLineTo : DrawAttribute
     {
+        public VerticalLineTo() { }
         /// <summary>
         /// Use to draw a vertical line from the current point to the given point.
         /// </summary>
@@ -333,6 +337,7 @@ namespace FreeFrame.Components.Shapes.Path
         public int X2 { get => _x2; set => _x2 = value; }
         public int Y2 { get => _y2; set => _y2 = value; }
 
+        public CurveTo() { }
         /// <summary>
         /// Use to draw a cubic Bézier curve from the current point to the given point.
         /// </summary>
@@ -489,6 +494,7 @@ namespace FreeFrame.Components.Shapes.Path
         public int X2 { get => _x2; set => _x2 = value; }
         public int Y2 { get => _y2; set => _y2 = value; }
 
+        public SmoothCurveTo() { }
         /// <summary>
         /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
         /// </summary>
@@ -497,6 +503,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="x">end point x</param>
         /// <param name="y">end point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
+
         public SmoothCurveTo(Group x2, Group y2, Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(x2.Value), Convert.ToInt32(y2.Value), Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
         /// <summary>
         /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
@@ -629,6 +636,7 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class QuadraticBezierCurveTo : DrawAttribute
     {
+        public QuadraticBezierCurveTo() { }
         /// <summary>
         /// Use to draw a quadratic Bézier curve.
         /// </summary>
@@ -753,6 +761,7 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class SmoothQuadraticBezierCurveTo : DrawAttribute
     {
+        public SmoothQuadraticBezierCurveTo() { }
         /// <summary>
         /// Use to draw a smooth quadratic Bézier curve.
         /// </summary>
@@ -878,6 +887,7 @@ namespace FreeFrame.Components.Shapes.Path
         bool _largeArcFlag;
         bool _sweepFlag;
 
+        public EllipticalArc() { }
         /// <summary>
         /// Use to draw an ellipse. 
         /// </summary>
@@ -889,6 +899,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="x">new current point x</param>
         /// <param name="y">new current point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
+
         public EllipticalArc(Group rx, Group ry, Group angle, Group largeArcFlag, Group sweepFlag, Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(rx.Value), Convert.ToInt32(ry.Value), Convert.ToInt32(angle.Value), Convert.ToInt32(largeArcFlag.Value) == 0 ? false : true, Convert.ToInt32(sweepFlag.Value) == 0 ? false : true, Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
         /// <summary>
         /// Use to draw an ellipse. 
@@ -949,11 +960,10 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public class ClosePath : DrawAttribute
     {
+        public ClosePath() { }
         /// <summary>
         /// Draw a straight line from the current position to the first point in the path.
         /// </summary>
-        public ClosePath() { }
-
         public override List<Vector2i> GetSelectablePoints()
         {
             throw new NotImplementedException();

@@ -22,7 +22,14 @@ namespace FreeFrame
         public int VertexBufferObjectID { get => _vertexBufferObjectID; private set => _vertexBufferObjectID = value; }
         public int VertexArrayObjectID { get => _vertexArrayObjectID; private set => _vertexArrayObjectID = value; }
         public int IndexBufferObjectID { get => _indexBufferObjectID; private set => _indexBufferObjectID = value; }
-
+        public Renderer()
+        {
+            _primitiveType = PrimitiveType.Triangles;
+            VertexArrayObjectID = GL.GenVertexArray();
+            VertexBufferObjectID = GL.GenBuffer();
+            IndexBufferObjectID = GL.GenBuffer();
+            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
+        }
         public Renderer(PrimitiveType primitiveType)
         {
             _primitiveType = primitiveType;

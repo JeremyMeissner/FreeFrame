@@ -28,11 +28,18 @@ using AnimatedGif;
 using System.Drawing.Drawing2D;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace FreeFrame
 {
     public class Window : GameWindow
     {
+        struct Workspace
+        {
+            public List<Shape> Shapes { get; set; }
+            public SortedDictionary<int, List<Shape>> SortedTimeline { get; set; }
+            public System.Numerics.Vector3 BgColor { get; set; }
+        }
         enum UserMode
         {
             Idle,
@@ -67,9 +74,7 @@ namespace FreeFrame
         bool _dialogCompatibility = false;
         bool _dialogError = false;
 
-
         Vector2i _mouseOriginalState;
-
 
         Timeline _timeline;
 
@@ -490,9 +495,12 @@ namespace FreeFrame
             ImGui.Text("Timeline");
             int numberColumns = 0, numberRows = 0;
 
-            numberColumns = _timeline.SortedTimeline.Count;
-            if (_timeline.SortedTimeline.Count > 0)
-                numberRows = _timeline.SortedTimeline.Max(i => i.Value != null ? i.Value.Count : 0);
+            if (_timeline.SortedTimeline != null)
+            {
+                numberColumns = _timeline.SortedTimeline.Count;
+                if (_timeline.SortedTimeline.Count > 0)
+                    numberRows = _timeline.SortedTimeline.Max(i => i.Value != null ? i.Value.Count : 0);
+            }
 
             if (numberColumns > 0)
             {
@@ -966,7 +974,9 @@ namespace FreeFrame
                     }
                     if (ImGui.BeginMenu("Save"))
                     {
-                        if (ImGui.MenuItem("Save as SVG", "Ctrl+S"))
+                        if (ImGui.MenuItem("Save"))
+                            SaveFreeFrameWorkspace();
+                        if (ImGui.MenuItem("Save as SVG"))
                             SaveCurrentScreenToSVG();
                         if (ImGui.MenuItem("Save as MP4"))
                             SaveCurrentScreenToMP4();
@@ -1121,7 +1131,28 @@ namespace FreeFrame
         }
         public void SaveFreeFrameWorkspace()
         {
-            string jsonString = JsonSerializer.Serialize(weatherForecast);
+            Workspace workspace = new()
+            {
+                SortedTimeline = _timeline.SortedTimeline,
+                BgColor = _ioBgColor,
+                Shapes = Shapes
+            };
+            
+            string jsonString = JsonConvert.SerializeObject(workspace, Formatting.Indented, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto // Because I have abstract classes
+            });
+
+            File.WriteAllText("serialize.json", jsonString);
+
+            Workspace fromJson = JsonConvert.DeserializeObject<Workspace>(jsonString, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto // Because I have abstract classes
+            });
+
+            Shapes = fromJson.Shapes;
+            _timeline.SortedTimeline = fromJson.SortedTimeline;
+            _ioBgColor = fromJson.BgColor;
         }
         public void SaveCurrentScreenToGIF()
         {

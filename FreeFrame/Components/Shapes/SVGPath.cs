@@ -53,7 +53,7 @@ namespace FreeFrame.Components.Shapes
                         case 'm':
                             DrawAttributes.Add(new MoveTo(match.Groups[1], match.Groups[2], c == 'm')); // 'm' is relative and 'M' absolute
                             break;
-                        case 'L':
+                        case 'l':
                             DrawAttributes.Add(new LineTo(match.Groups[1], match.Groups[2], c == 'l')); // 'l' is relative and 'L' absolute
                             break;
                         case 'h':

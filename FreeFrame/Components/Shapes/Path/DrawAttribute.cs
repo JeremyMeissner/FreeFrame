@@ -436,47 +436,43 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override void UpdateLast()
         {
-                Console.WriteLine("Update last");
             if (IsRelative)
             {
-                Console.WriteLine("relativeee");
                 if (X > X2)
-                    Last.X1 += X + X2;
+                    Last.X1 = X - X2 + X;
                 else if (X < X2)
-                    Last.X1 += X - X2;
+                    Last.X1 = X2 - X + X2;
                 else
-                    Last.X1 += X;
+                    Last.X1 = X2;
 
                 if (Y > Y2)
-                    Last.Y1 += Y + Y2;
+                    Last.Y1 = Y - Y2 + Y;
                 else if (Y < Y2)
-                    Last.Y1 += Y - Y2;
+                    Last.Y1 = Y2 - Y + Y2;
                 else
-                    Last.Y1 += Y;
-
+                    Last.Y1 += Y2;
 
                 Last.X += X;
                 Last.Y += Y;
             }
             else
             {
-                Console.WriteLine("absolute");
-                //if (X > X2)
-                //    Last.X1 = X + X2;
-                //else if (X < X2)
-                //    Last.X1 = X - X2;
-                //else
-                //    Last.X1 = X;
+                if (X > X2)
+                    Last.X1 = X - X2 + X;
+                else if (X < X2)
+                    Last.X1 = X2 - X + X2;
+                else
+                    Last.X1 = X;
 
-                //if (Y > Y2)
-                //    Last.Y1 = Y + Y2;
-                //else if (Y < Y2)
-                //    Last.Y1 = Y - Y2;
-                //else
-                //    Last.Y1 = Y;
+                if (Y > Y2)
+                    Last.Y1 = Y - Y2 + Y;
+                else if (Y < Y2)
+                    Last.Y1 = Y2 - Y + Y2;
+                else
+                    Last.Y1 = Y;
 
-                //Last.X = X;
-                //Last.Y = Y;
+                Last.X = X;
+                Last.Y = Y;
             }
         }
     }
@@ -587,18 +583,20 @@ namespace FreeFrame.Components.Shapes.Path
             if (IsRelative)
             {
                 if (X > X2)
-                    Last.X1 += X + X2;
+                {
+                    Last.X1 = X - X2 + X;
+                }
                 else if (X < X2)
-                    Last.X1 += X - X2;
+                    Last.X1 = X2 - X + X2;
                 else
-                    Last.X1 += X;
+                    Last.X1 = X;
 
                 if (Y > Y2)
-                    Last.Y1 += Y + Y2;
+                    Last.Y1 = Y - Y2 + Y;
                 else if (Y < Y2)
-                    Last.Y1 += Y - Y2;
+                    Last.Y1 = Y2 - Y + Y2;
                 else
-                    Last.Y1 += Y;
+                    Last.Y1 = Y;
 
                 Last.X += X;
                 Last.Y += Y;
@@ -606,16 +604,16 @@ namespace FreeFrame.Components.Shapes.Path
             else
             {
                 if (X > X2)
-                    Last.X1 = X + X2;
+                    Last.X1 = X - X2 + X;
                 else if (X < X2)
-                    Last.X1 = X - X2;
+                    Last.X1 = X2 - X + X2;
                 else
                     Last.X1 = X;
 
                 if (Y > Y2)
-                    Last.Y1 = Y + Y2;
+                    Last.Y1 = Y - Y2 + Y;
                 else if (Y < Y2)
-                    Last.Y1 = Y - Y2;
+                    Last.Y1 = Y2 - Y + Y2;
                 else
                     Last.Y1 = Y;
 

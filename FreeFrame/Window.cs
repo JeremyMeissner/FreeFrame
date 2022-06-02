@@ -26,6 +26,8 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using AnimatedGif;
 using System.Drawing.Drawing2D;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FreeFrame
 {
@@ -1116,6 +1118,10 @@ namespace FreeFrame
                 RenderFrameBySecondIndex(i);
                 w.Write(TakeSnap().ToMat());
             }
+        }
+        public void SaveFreeFrameWorkspace()
+        {
+            string jsonString = JsonSerializer.Serialize(weatherForecast);
         }
         public void SaveCurrentScreenToGIF()
         {

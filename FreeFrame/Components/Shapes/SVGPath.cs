@@ -36,7 +36,7 @@ namespace FreeFrame.Components.Shapes
             IsResizeable = false;
             IsCornerRadiusChangeable = false;
 
-            string d = reader["d"] ?? throw new Exception("d not here"); // TODO: Error handler if d is note here
+            string d = reader["d"] ?? throw new Exception("d not here");
             Match match;
             int startIndex = 0;
 
@@ -87,7 +87,7 @@ namespace FreeFrame.Components.Shapes
                 }
             }
 
-            string color = reader["fill"] ?? throw new Exception("color not here"); // TODO: Error handler if d is note here
+            string color = reader["fill"] ?? throw new Exception("color not here");
             Color = Importer.HexadecimalToRGB(color);
 
 

@@ -53,12 +53,12 @@ namespace FreeFrame
                 _shader = new Shader("Shaders/shader.vert", "Shaders/rectangle.frag");
             ImplementObjects(vertices, indexes);
         }
-        public void Draw(Vector2i clientSize, Color4 color, Matrix4 transformation)
+        public void Draw(Vector2i clientSize, Color4 color)
         {
             _shader.Use();
 
             // Applied projection matrix
-            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); // TODO: Don't need to apply projection matrix at each frame I think
+            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); 
             Matrix4 matrix = Matrix4.CreateOrthographicOffCenter(0, clientSize.X, clientSize.Y, 0, -1.0f, 1.0f);
             _shader.SetUniformMat4(uModelToNDC, matrix);
 
@@ -70,7 +70,7 @@ namespace FreeFrame
             _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
-            _shader.SetUniformMat4(uTransformation, transformation);
+            _shader.SetUniformMat4(uTransformation, Matrix4.Identity);
 
             GL.BindVertexArray(VertexArrayObjectID);
 
@@ -81,7 +81,7 @@ namespace FreeFrame
             _shader.Use();
 
             // Applied projection matrix
-            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC"); // TODO: Don't need to apply projection matrix at each frame I think
+            int uModelToNDC = _shader.GetUniformLocation("u_Model_To_NDC");
             Matrix4 matrix = Matrix4.CreateOrthographicOffCenter(0, clientSize.X, clientSize.Y, 0, -1.0f, 1.0f);
             _shader.SetUniformMat4(uModelToNDC, matrix);
 

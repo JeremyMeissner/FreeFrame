@@ -87,17 +87,13 @@ namespace FreeFrame
         {
             GL.Enable(EnableCap.LineSmooth);
             GL.LineWidth(3.0f);                 
-            Matrix4 transformation = Matrix4.Identity;
-
-            if (_selectedShape != null)
-                transformation = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(_selectedShape.Angle));
 
             foreach ((Renderer vao, Area _, SelectorType type) part in _vaos)
             {
                 if (part.type == SelectorType.Edge)
-                    part.vao.Draw(clientSize, new Color4(0, 125, 200, 255), transformation);
+                    part.vao.Draw(clientSize, new Color4(0, 125, 200, 255));
                 else
-                    part.vao.Draw(clientSize, new Color4(0, 125, 255, 255), transformation);
+                    part.vao.Draw(clientSize, new Color4(0, 125, 255, 255));
             }
 
             GL.Disable(EnableCap.LineSmooth);

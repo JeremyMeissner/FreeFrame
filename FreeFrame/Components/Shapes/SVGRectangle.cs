@@ -52,7 +52,7 @@ namespace FreeFrame.Components.Shapes
             Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
         }
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y, X + Width, Y + Height, X, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 }; // TODO: please dont hardcode
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1, 2, 0, 2, 3 };
         public override string ToString()
         {
             return $"<rect x=\"{X}\" y=\"{Y}\" width=\"{Width}\" height=\"{Height}\" rx=\"{CornerRadius}\" ry=\"{CornerRadius}\" fill=\"{ColorToHexadecimal(Color)}\"/>";

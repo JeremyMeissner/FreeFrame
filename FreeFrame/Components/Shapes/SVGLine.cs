@@ -41,7 +41,7 @@ namespace FreeFrame.Components.Shapes
             ImplementObject();
         }
         public override float[] GetVertices() => new float[] { X, Y, X + Width, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: please dont hardcode
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 };
         public override string ToString() => $"<line x1=\"{X}\" y1=\"{Y}\" x2=\"{Width + X}\" y2=\"{Height + Y}\" fill=\"{ColorToHexadecimal(Color)}\"/>";
         public override List<Vector2i> GetSelectablePoints()
         {

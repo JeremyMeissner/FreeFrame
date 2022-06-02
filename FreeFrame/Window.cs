@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using FreeFrame.Lib.ImGuiTools;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
-using FreeFrame.Lib.FilePicker;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using static FreeFrame.Selector;
@@ -29,11 +28,13 @@ using System.Drawing.Drawing2D;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
+using FreeFrame.Lib.FileExplorer;
 
 namespace FreeFrame
 {
     public class Window : GameWindow
     {
+        const int DEFAULT_IO_INT = 0;
         struct Workspace
         {
             public List<Shape> Shapes { get; set; }
@@ -48,8 +49,17 @@ namespace FreeFrame
         }
         enum ImportMode
         {
+            Workspace,
             Add,
             Override
+        }
+        enum ExportMode
+        {
+            Workspace,
+            GIF,
+            MP4,
+            PNG,
+            SVG
         }
         enum CreateMode
         {
@@ -66,12 +76,12 @@ namespace FreeFrame
         int _ioHeight;
         int _ioTimeline;
         int _ioFps;
-        bool _ioIsPlaying;
         System.Numerics.Vector4 _ioColor;
 
         System.Numerics.Vector3 _ioBgColor;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+        bool _dialogFileSaver = false;
         bool _dialogError = false;
 
         Vector2i _mouseOriginalState;
@@ -87,6 +97,7 @@ namespace FreeFrame
         UserMode _userMode;
         CreateMode _createMode;
         ImportMode _importMode;
+        ExportMode _exportMode;
 
         ImGuiController _ImGuiController;
 
@@ -101,33 +112,35 @@ namespace FreeFrame
             base.OnLoad();
 
             //Helper.EnableDebugMode();
-            _ioBgColor = new System.Numerics.Vector3(0.1f, 0.1f, 0.1f);
-            GL.ClearColor(_ioBgColor.X, _ioBgColor.Y, _ioBgColor.Z, 1.0f);
-
-            GL.Enable(EnableCap.Multisample);
 
             _userMode = UserMode.Idle;
             _createMode = CreateMode.Rectangle;
 
             Shapes = new List<Shape>();
-
             _selector = new Selector();
-
             _mouseOriginalState = new Vector2i(0, 0);
-
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
-
             _timeline = new Timeline();
 
+            // Input/Output
+            _ioAngle = DEFAULT_IO_INT;
+            _ioCornerRadius = DEFAULT_IO_INT;
+            _ioX = DEFAULT_IO_INT;
+            _ioY = DEFAULT_IO_INT;
+            _ioWidth = DEFAULT_IO_INT;
+            _ioHeight = DEFAULT_IO_INT;
+            _ioTimeline = DEFAULT_IO_INT;
             _ioFps = Timeline.DEFAULT_FPS;
+            _ioColor = new System.Numerics.Vector4(0f, 0f, 0f, 1f);
+            _ioBgColor = new System.Numerics.Vector3(0.1f, 0.1f, 0.1f);
+            GL.ClearColor(_ioBgColor.X, _ioBgColor.Y, _ioBgColor.Z, 1.0f);
 
-            // TODO: default values for io 
+            GL.Enable(EnableCap.Multisample);
         }
 
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            // TODO: map the new NDC to the window
 
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
 
@@ -187,7 +200,7 @@ namespace FreeFrame
                 }
             }
 
-            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false)) // TODO: Fix duplication
+            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false)) 
             {
                 if (_selectedShape != null)
                 {
@@ -355,7 +368,7 @@ namespace FreeFrame
                         {
                             if (nearestShape != _selectedShape)
                             {
-                                Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
+                                //Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); 
                                 _userMode = UserMode.Edit;
                                 _selector.Select(nearestShape);
                                 _selectedShape = nearestShape;
@@ -368,7 +381,7 @@ namespace FreeFrame
                     break;
             }
         }
-        private void OnLeftMouseEnter() // TODO: Rename this
+        private void OnLeftMouseEnter()
         {
             // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
             switch (_userMode)
@@ -960,30 +973,55 @@ namespace FreeFrame
                 {
                     if (ImGui.BeginMenu("Open"))
                     {
-                        if (ImGui.MenuItem("New project", "Ctrl+O"))
+                        if (ImGui.MenuItem("Open a new project"))
                         {
                             _dialogFilePicker = true;
-                            _importMode = ImportMode.Override;
+                            _importMode = ImportMode.Workspace;
                         }
-                        if (ImGui.MenuItem("Import a file", "Ctrl+I"))
+                        if (ImGui.MenuItem("Import a SVG"))
                         {
                             _dialogFilePicker = true;
                             _importMode = ImportMode.Add;
+                        }
+                        if (ImGui.MenuItem("Open a new project from a SVG"))
+                        {
+                            _dialogFilePicker = true;
+                            _importMode = ImportMode.Override;
                         }
                         ImGui.EndMenu();
                     }
                     if (ImGui.BeginMenu("Save"))
                     {
                         if (ImGui.MenuItem("Save"))
-                            SaveFreeFrameWorkspace();
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.Workspace;
+                            //SaveFreeFrameWorkspace();
+                        }
                         if (ImGui.MenuItem("Save as SVG"))
-                            SaveCurrentScreenToSVG();
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.SVG;
+                            //SaveCurrentScreenToSVG();
+                        }
                         if (ImGui.MenuItem("Save as MP4"))
-                            SaveCurrentScreenToMP4();
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.MP4;
+                            //SaveCurrentScreenToMP4();
+                        }
                         if (ImGui.MenuItem("Save as GIF"))
-                            SaveCurrentScreenToGIF();
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.GIF;
+                            //SaveCurrentScreenToGIF();
+                        }
                         if (ImGui.MenuItem("Save as PNG"))
-                            SaveCurrentScreenToPNG();
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.PNG;
+                            //SaveCurrentScreenToPNG();
+                        }
                         ImGui.EndMenu();
                     }
                     if (ImGui.MenuItem("Close", "Ctrl+W")) { /* Do stuff */ }
@@ -1022,43 +1060,81 @@ namespace FreeFrame
                 }
                 ImGui.EndPopup();
             }
+            // File picker dialog
+            if (_dialogFileSaver)
+                ImGui.OpenPopup("save-file");
+            if (ImGui.BeginPopupModal("save-file")) // ImGuiWindowFlags.AlwaysAutoResize
+            {
+                var picker = FileSaver.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"));
+                if (picker.Draw())
+                {
+                    string path = picker.CurrentFolder + '\\' + picker.Filename;
+                    switch (_exportMode)
+                    {
+                        case ExportMode.Workspace:
+                            SaveFreeFrameWorkspace(path);
+                            break;
+                        case ExportMode.GIF:
+                            SaveCurrentScreenToGIF(path);
+                            break;
+                        case ExportMode.MP4:
+                            SaveCurrentScreenToMP4(path);
+                            break;
+                        case ExportMode.PNG:
+                            SaveCurrentScreenToPNG(path);
+                            break;
+                        case ExportMode.SVG:
+                            SaveCurrentScreenToSVG(path);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                //FileSaver.Remove(this);
+                _dialogFileSaver = false;
+                ImGui.EndPopup();
+            }
 
             // File picker dialog
             if (_dialogFilePicker)
                 ImGui.OpenPopup("open-file");
             if (ImGui.BeginPopupModal("open-file")) // ImGuiWindowFlags.AlwaysAutoResize
             {
-                var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), ".svg");
+                var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), _importMode == ImportMode.Workspace ? ".freeframe" : ".svg");
                 if (picker.Draw())
                 {
                     ResetSelection();
                     //bool compatibilityFlag = false;
-                    switch (_importMode)
+
+                    try
                     {
-                        case ImportMode.Add:
-                            (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
-                            Shapes.AddRange(newShapes);
-                            // TODO: merde both timelines
-                            break;
-                        case ImportMode.Override:
-                        default:
-                            (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
-                            _timeline.ResetTimeline();
-                            break;
-                    }
-                    try //TODO: fix trycatch
-                    {
+                        switch (_importMode)
+                        {
+                            case ImportMode.Workspace:
+                                ImportFreeFrameWorkspace(picker.SelectedFile);
+                                break;
+                            case ImportMode.Add:
+                                (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                Shapes.AddRange(newShapes);
+                                break;
+                            case ImportMode.Override:
+                                (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                _timeline.ResetTimeline();
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     catch (Exception)
                     {
                         _dialogError = true;
                     }
 
-                    FilePicker.RemoveFilePicker(this);
                     //if (compatibilityFlag)
                     //    _dialogCompatibility = true;
 
                 }
+                //FilePicker.Remove(this);
                 _dialogFilePicker = false;
                 ImGui.EndPopup();
             }
@@ -1120,16 +1196,16 @@ namespace FreeFrame
             }
         }
 
-        public void SaveCurrentScreenToMP4()
+        public void SaveCurrentScreenToMP4(string path)
         {
-            using VideoWriter w = new VideoWriter("output.mp4", _timeline.Fps, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
-            for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++) // TODO: please dont hardcode this
+            using VideoWriter w = new VideoWriter(path + ".mp4", _timeline.Fps, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
+            for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++)
             {
                 RenderFrameBySecondIndex(i);
                 w.Write(TakeSnap().ToMat());
             }
         }
-        public void SaveFreeFrameWorkspace()
+        public void SaveFreeFrameWorkspace(string path)
         {
             Workspace workspace = new()
             {
@@ -1137,48 +1213,51 @@ namespace FreeFrame
                 BgColor = _ioBgColor,
                 Shapes = Shapes
             };
-            
+
             string jsonString = JsonConvert.SerializeObject(workspace, Formatting.Indented, new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.Auto // Because I have abstract classes
+                TypeNameHandling = TypeNameHandling.Auto, // Because I have abstract classes
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
             });
 
-            File.WriteAllText("serialize.json", jsonString);
-
-            Workspace fromJson = JsonConvert.DeserializeObject<Workspace>(jsonString, new JsonSerializerSettings
+            File.WriteAllText(path + ".freeframe", jsonString);
+        }
+        public void ImportFreeFrameWorkspace(string path)
+        {
+            Workspace fromJson = JsonConvert.DeserializeObject<Workspace>(File.ReadAllText(path), new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Auto // Because I have abstract classes
             });
 
-            Shapes = fromJson.Shapes;
-            _timeline.SortedTimeline = fromJson.SortedTimeline;
+            Shapes = fromJson.Shapes ?? new();
+            _timeline.SortedTimeline = fromJson.SortedTimeline ?? new();
             _ioBgColor = fromJson.BgColor;
         }
-        public void SaveCurrentScreenToGIF()
+        public void SaveCurrentScreenToGIF(string path)
         {
-            using (var gif = AnimatedGif.AnimatedGif.Create("output.gif", 1000 / _timeline.Fps))
+            using (var gif = AnimatedGif.AnimatedGif.Create(path + ".gif", 1000 / _timeline.Fps))
             {
-                for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++) // TODO: please dont hardcode this
+                for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++)
                 {
                     RenderFrameBySecondIndex(i);
                     gif.AddFrame(TakeSnap(), delay: -1, quality: GifQuality.Bit8);
                 }
             }
         }
-        public void SaveCurrentScreenToSVG()
+        public void SaveCurrentScreenToSVG(string path)
         {
-            Importer.ExportToFile(Shapes, ClientSize);
+            Importer.ExportToFile(Shapes, ClientSize, path + ".svg");
         }
-        public void SaveCurrentScreenToPNG()
+        public void SaveCurrentScreenToPNG(string path)
         {
             RenderFrameBySecondIndex(_timeline.TimelineIndex);
-            TakeSnap().Save("output.png", ImageFormat.Png);
+            TakeSnap().Save(path + ".png", ImageFormat.Png);
         }
 
         // [SupportedOSPlatform("windows")]
         public void RenderFrameBySecondIndex(int second)
         {
-            GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the colorV
+            GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
             ResetSelection();
             _timeline.TimelineIndex = second;
             _timeline.RenderInterpolation(this);
@@ -1187,14 +1266,6 @@ namespace FreeFrame
         }
         public Bitmap TakeSnap()
         {
-            //Matrix matrix = new Matrix();
-
-            //matrix.Scale(1, -1);
-
-            //return Bitmap
-
-            Console.WriteLine("Snap time");
-
             Bitmap bmp = new Bitmap(ClientSize.X, ClientSize.Y);
 
             // Lock the bits

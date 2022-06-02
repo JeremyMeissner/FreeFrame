@@ -15,6 +15,8 @@ namespace FreeFrame.Components.Shapes.Path
     /// </summary>
     public abstract class DrawAttribute
     {
+        public const int CURVE_ACCURACY = 100;
+
         int _x, _y, _x1, _y1 = 0;
 
         private bool _isRelative;
@@ -135,7 +137,7 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices;
         }
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 };
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'l' : 'L', X, Y);
 
@@ -214,7 +216,7 @@ namespace FreeFrame.Components.Shapes.Path
             return vertices;
         }
 
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 };
 
         public override string ToString() => String.Format("{0} {1}", IsRelative ? 'h' : 'H', X);
 
@@ -285,7 +287,7 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices;
         }
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: Please dont hardcode this
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 };
 
         public override List<Vector2i> GetSelectablePoints()
         {
@@ -378,9 +380,9 @@ namespace FreeFrame.Components.Shapes.Path
             // Only edges
             if (IsRelative)
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 3) * Last.X + 3 * Math.Pow((1 - t), 2) * t * (Last.X + X1) + 3 * (1 - t) * Math.Pow(t, 2) * (Last.X + X2) + Math.Pow(t, 3) * (Last.X + X));
                     y = (float)(Math.Pow((1 - t), 3) * Last.Y + 3 * Math.Pow((1 - t), 2) * t * (Last.Y + Y1) + 3 * (1 - t) * Math.Pow(t, 2) * (Last.Y + Y2) + Math.Pow(t, 3) * (Last.Y + Y));
@@ -390,9 +392,9 @@ namespace FreeFrame.Components.Shapes.Path
             }
             else
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 3) * Last.X + 3 * Math.Pow((1 - t), 2) * t * X1 + 3 * (1 - t) * Math.Pow(t, 2) * X2 + Math.Pow(t, 3) * X);
                     y = (float)(Math.Pow((1 - t), 3) * Last.Y + 3 * Math.Pow((1 - t), 2) * t * Y1 + 3 * (1 - t) * Math.Pow(t, 2) * Y2 + Math.Pow(t, 3) * Y);
@@ -530,9 +532,9 @@ namespace FreeFrame.Components.Shapes.Path
             // Only edges
             if (IsRelative)
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 3) * Last.X + 3 * Math.Pow((1 - t), 2) * t * (Last.X + Last.X1) + 3 * (1 - t) * Math.Pow(t, 2) * (Last.X + X2) + Math.Pow(t, 3) * (Last.X + X));
                     y = (float)(Math.Pow((1 - t), 3) * Last.Y + 3 * Math.Pow((1 - t), 2) * t * (Last.Y + Last.Y1) + 3 * (1 - t) * Math.Pow(t, 2) * (Last.Y + Y2) + Math.Pow(t, 3) * (Last.Y + Y));
@@ -542,9 +544,9 @@ namespace FreeFrame.Components.Shapes.Path
             }
             else
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 3) * Last.X + 3 * Math.Pow((1 - t), 2) * t * Last.X1 + 3 * (1 - t) * Math.Pow(t, 2) * X2 + Math.Pow(t, 3) * X);
                     y = (float)(Math.Pow((1 - t), 3) * Last.Y + 3 * Math.Pow((1 - t), 2) * t * Last.Y1 + 3 * (1 - t) * Math.Pow(t, 2) * Y2 + Math.Pow(t, 3) * Y);
@@ -672,9 +674,9 @@ namespace FreeFrame.Components.Shapes.Path
             // Only edges
             if (IsRelative)
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 2) * Last.X + 2 * (1 - t) * t * (Last.X + X1) + Math.Pow(t, 2) * (Last.X + X));
                     y = (float)(Math.Pow((1 - t), 2) * Last.Y + 2 * (1 - t) * t * (Last.Y + Y1) + Math.Pow(t, 2) * (Last.Y + Y));
@@ -684,9 +686,9 @@ namespace FreeFrame.Components.Shapes.Path
             }
             else
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 2) * Last.X + 2 * (1 - t) * t * X1 + Math.Pow(t, 2) * X);
                     y = (float)(Math.Pow((1 - t), 2) * Last.Y + 2 * (1 - t) * t * Y1 + Math.Pow(t, 2) * Y);
@@ -791,9 +793,9 @@ namespace FreeFrame.Components.Shapes.Path
             // Only edges
             if (IsRelative)
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 2) * Last.X + 2 * (1 - t) * t * (Last.X + Last.X1) + Math.Pow(t, 2) * (Last.X + X));
                     y = (float)(Math.Pow((1 - t), 2) * Last.Y + 2 * (1 - t) * t * (Last.Y + Last.Y1) + Math.Pow(t, 2) * (Last.Y + Y));
@@ -803,9 +805,9 @@ namespace FreeFrame.Components.Shapes.Path
             }
             else
             {
-                for (int i = 0; i < 100; i++) // TODO: Magic value please dont hard code this
+                for (int i = 0; i < CURVE_ACCURACY; i++)
                 {
-                    t = i / 100.0f;
+                    t = i / CURVE_ACCURACY;
 
                     x = (float)(Math.Pow((1 - t), 2) * Last.X + 2 * (1 - t) * t * Last.X1 + Math.Pow(t, 2) * X);
                     y = (float)(Math.Pow((1 - t), 2) * Last.Y + 2 * (1 - t) * t * Last.Y1 + Math.Pow(t, 2) * Y);

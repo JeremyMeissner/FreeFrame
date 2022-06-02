@@ -22,7 +22,7 @@ namespace FreeFrame
             if (compileStatus == 0)
             {
                 Console.WriteLine("{0}: {1}", type.ToString(), GL.GetShaderInfoLog(shader));
-                throw new Exception(); // TODO: Remove this exception
+                throw new Exception();
             }
 
             return shader;

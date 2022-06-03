@@ -200,7 +200,7 @@ namespace FreeFrame
                 }
             }
 
-            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false)) 
+            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false))
             {
                 if (_selectedShape != null)
                 {
@@ -1232,6 +1232,11 @@ namespace FreeFrame
             Shapes = fromJson.Shapes ?? new();
             _timeline.SortedTimeline = fromJson.SortedTimeline ?? new();
             _ioBgColor = fromJson.BgColor;
+
+            // Implement new objects and render
+            foreach (Shape shape in Shapes)
+                shape.ImplementObject();
+            _timeline.RenderInterpolation(this);
         }
         public void SaveCurrentScreenToGIF(string path)
         {

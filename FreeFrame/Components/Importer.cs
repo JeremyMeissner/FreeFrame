@@ -23,8 +23,7 @@ namespace FreeFrame.Components
             using (XmlReader reader = XmlReader.Create(pStream))
             {
 
-                try
-                {
+                
                     while (reader.Read())
                     {
                         if (reader.HasAttributes)
@@ -62,6 +61,9 @@ namespace FreeFrame.Components
                         }
 
                     }
+                // TODO: Fix trycatch
+                try
+                {
                 }
                 catch (Exception)
                 {

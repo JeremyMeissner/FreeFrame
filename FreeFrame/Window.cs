@@ -1106,8 +1106,6 @@ namespace FreeFrame
                     ResetSelection();
                     //bool compatibilityFlag = false;
 
-                    try
-                    {
                         switch (_importMode)
                         {
                             case ImportMode.Workspace:
@@ -1124,6 +1122,9 @@ namespace FreeFrame
                             default:
                                 break;
                         }
+                    // TODO: Fix trycatch
+                    try
+                    {
                     }
                     catch (Exception)
                     {

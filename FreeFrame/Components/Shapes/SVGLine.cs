@@ -24,7 +24,7 @@ namespace FreeFrame.Components.Shapes
             Convert.ToInt32(reader["y1"]),
             Convert.ToInt32(reader["x2"]),
             Convert.ToInt32(reader["y2"]),
-            Convert.ToString(reader["fill"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
+            Convert.ToString(reader["fill"] == null ? DefaultColor : reader["fill"]))
         {
         }
         public SVGLine() : this(DefaultX1, DefaultY1, DefaultX2, DefaultY2, DefaultColor) { }

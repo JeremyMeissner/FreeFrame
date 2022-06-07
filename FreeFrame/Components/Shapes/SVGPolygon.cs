@@ -10,6 +10,10 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPolygon : Shape
     {
+        #region Default values
+        const string DefaultColor = "#000000FF";
+        #endregion
+
         readonly Regex _pointsAttributeRegex = new(@" *(\d+) *, *(\d+) *"); // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/points
 
         #region Geometry properties
@@ -17,8 +21,6 @@ namespace FreeFrame.Components.Shapes
 
         public List<Vector2i> Points { get => _points; set => _points = value; }
         #endregion
-
-        // TODO: Also add Polyline https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/points
 
         public SVGPolygon() { }
         public SVGPolygon(XmlReader reader)
@@ -32,7 +34,7 @@ namespace FreeFrame.Components.Shapes
             foreach (Match match in matches)
                 Points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
 
-            string color = reader["fill"] ?? throw new Exception("color not here"); // TODO: Error handler if d is note here
+            string color = reader["fill"] ?? DefaultColor; // TODO: Error handler if d is note here
             Color = Importer.HexadecimalToRGB(color);
 
             // Fill geometry values

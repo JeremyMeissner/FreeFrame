@@ -10,13 +10,19 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGCircle : Shape
     {
+        #region Default values
+        const int DefaultR = 0;
+        const int DefaultCY = 0;
+        const int DefaultCX = 0;
+        const string DefaultColor = "#000000FF";
+        #endregion
         public SVGCircle(XmlReader reader) : this(
             Convert.ToInt32(reader["r"]),
             Convert.ToInt32(reader["cx"]),
             Convert.ToInt32(reader["cy"]),
-            Convert.ToString(reader["fill"])) // TODO: Error handler if r, cx or cy are not here
+            Convert.ToString(reader["fill"] == null ? DefaultColor : reader["fill"]))
         { }
-        public SVGCircle() : this(0, 0, 0, "#000000FF") { }
+        public SVGCircle() : this(DefaultR, DefaultCX, DefaultCY, "#000000FF") { }
         public SVGCircle(int r, int cx, int cy, string color)
         {
             IsCornerRadiusChangeable = false;

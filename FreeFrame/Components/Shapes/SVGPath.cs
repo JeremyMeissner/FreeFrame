@@ -12,7 +12,12 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPath : Shape
     {
+        #region Default values
+        const string DefaultColor = "#000000FF";
+        #endregion
 
+        // First point x,y of the path
+        int _x0, _y0 = 0;
         readonly Dictionary<char, Regex> _dAttributeRegex = new()
         {
             { 'm', new Regex(@" *(-?\d+) *, *(-?\d+) *") },
@@ -48,6 +53,13 @@ namespace FreeFrame.Components.Shapes
                 if (_dAttributeRegex.ContainsKey(lowerC))
                 {
                     match = _dAttributeRegex[lowerC].Match(d, startIndex); // Retrieve the associated regular expression
+
+                    if (startIndex == 0)
+                    {
+                        _x0 = Convert.ToInt32(match.Groups[1].Value);
+                        _y0 = Convert.ToInt32(match.Groups[2].Value);
+                    }
+
                     switch (lowerC)
                     {
                         case 'm':
@@ -78,7 +90,7 @@ namespace FreeFrame.Components.Shapes
                             DrawAttributes.Add(new EllipticalArc(match.Groups[1], match.Groups[2], match.Groups[3], match.Groups[4], match.Groups[5], match.Groups[6], match.Groups[7], c == 'a')); // 'a' is relative and 'A' absolute
                             break;
                         case 'z':
-                            DrawAttributes.Add(new ClosePath());
+                            DrawAttributes.Add(new LineTo(_x0, _y0));
                             break;
                         default:
                             throw new Exception("Unknowed properties in d");
@@ -87,7 +99,7 @@ namespace FreeFrame.Components.Shapes
                 }
             }
 
-            string color = reader["fill"] ?? throw new Exception("color not here");
+            string color = reader["fill"] ?? DefaultColor;
             Color = Importer.HexadecimalToRGB(color);
 
 

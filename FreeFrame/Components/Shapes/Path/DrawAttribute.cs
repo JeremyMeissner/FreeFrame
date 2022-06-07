@@ -21,12 +21,16 @@ namespace FreeFrame.Components.Shapes.Path
 
         private bool _isRelative;
         public bool IsRelative { get => _isRelative; set => _isRelative = value; }
+
+        // Current X1,Y1 point
         public int Y1 { get => _y1; set => _y1 = value; }
         public int X1 { get => _x1; set => _x1 = value; }
+
+        // Current X,Y point
         public int X { get => _x; set => _x = value; }
         public int Y { get => _y; set => _y = value; }
 
-
+        // Last drawn values
         public static (int X, int Y, int X1, int Y1) Last = (0, 0, 0, 0);
 
         /// <summary>
@@ -949,46 +953,6 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", IsRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), X, Y);
-
-        public override void UpdateLast()
-        {
-            throw new NotImplementedException();
-        }
-    }
-    /// <summary>
-    /// ClosePath, Z or z.
-    /// Use to draw a straight line from the current position to the first point in the path.
-    /// More info: https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#closepath
-    /// </summary>
-    public class ClosePath : DrawAttribute
-    {
-        public ClosePath() { }
-        /// <summary>
-        /// Draw a straight line from the current position to the first point in the path.
-        /// </summary>
-        public override List<Vector2i> GetSelectablePoints()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override float[] GetVertices()
-        {
-            throw new NotImplementedException();
-        }
-        public override uint[] GetVerticesIndexes()
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
-        public override string ToString() => "z";
 
         public override void UpdateLast()
         {

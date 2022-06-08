@@ -270,7 +270,7 @@ namespace FreeFrame
 
             Shapes.ForEach(shape => shape.DeleteObjects());
         }
-        
+
         private void OnLeftMouseDown()
         {
             if (_userMode != UserMode.Create) // If it's not to create
@@ -929,9 +929,9 @@ namespace FreeFrame
                     if (ImGui.Button(String.Format("Remove keyframe {0} for {1}", _timeline.TimelineIndex, _selectedShape.GetType().Name)))
                     {
                         _timeline.SortedTimeline[_timeline.TimelineIndex].Remove(_timeline.SortedTimeline[_timeline.TimelineIndex].Find(x => x.Id == _selectedShape.Id)!); // Can't be null
+                        // If timeline empty then null it
                         if (_timeline.SortedTimeline[_timeline.TimelineIndex].Count == 0)
                             _timeline.SortedTimeline.Remove(_timeline.TimelineIndex);
-                        // If list _timeline[_ioTimeline] empty then null it
                     }
                 }
                 else
@@ -992,31 +992,26 @@ namespace FreeFrame
                         {
                             _dialogFileSaver = true;
                             _exportMode = ExportMode.Workspace;
-                            //SaveFreeFrameWorkspace();
                         }
                         if (ImGui.MenuItem("Save as SVG"))
                         {
                             _dialogFileSaver = true;
                             _exportMode = ExportMode.SVG;
-                            //SaveCurrentScreenToSVG();
                         }
                         if (ImGui.MenuItem("Save as MP4"))
                         {
                             _dialogFileSaver = true;
                             _exportMode = ExportMode.MP4;
-                            //SaveCurrentScreenToMP4();
                         }
                         if (ImGui.MenuItem("Save as GIF"))
                         {
                             _dialogFileSaver = true;
                             _exportMode = ExportMode.GIF;
-                            //SaveCurrentScreenToGIF();
                         }
                         if (ImGui.MenuItem("Save as PNG"))
                         {
                             _dialogFileSaver = true;
                             _exportMode = ExportMode.PNG;
-                            //SaveCurrentScreenToPNG();
                         }
                         ImGui.EndMenu();
                     }
@@ -1059,7 +1054,7 @@ namespace FreeFrame
             // File picker dialog
             if (_dialogFileSaver)
                 ImGui.OpenPopup("save-file");
-            if (ImGui.BeginPopupModal("save-file")) // ImGuiWindowFlags.AlwaysAutoResize
+            if (ImGui.BeginPopupModal("save-file"))
             {
                 var picker = FileSaver.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"));
                 if (picker.Draw())
@@ -1085,8 +1080,8 @@ namespace FreeFrame
                         default:
                             break;
                     }
+                    FileSaver.Clear();
                 }
-                //FileSaver.Remove(this);
                 _dialogFileSaver = false;
                 ImGui.EndPopup();
             }
@@ -1094,7 +1089,7 @@ namespace FreeFrame
             // File picker dialog
             if (_dialogFilePicker)
                 ImGui.OpenPopup("open-file");
-            if (ImGui.BeginPopupModal("open-file")) // ImGuiWindowFlags.AlwaysAutoResize
+            if (ImGui.BeginPopupModal("open-file"))
             {
                 var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), _importMode == ImportMode.Workspace ? ".freeframe" : ".svg");
                 if (picker.Draw())
@@ -1130,8 +1125,8 @@ namespace FreeFrame
                     //if (compatibilityFlag)
                     //    _dialogCompatibility = true;
 
+                    FilePicker.Clear();
                 }
-                //FilePicker.Remove(this);
                 _dialogFilePicker = false;
                 ImGui.EndPopup();
             }
@@ -1139,6 +1134,7 @@ namespace FreeFrame
             // Compatibility alert
             if (_dialogCompatibility)
                 ImGui.OpenPopup("Compatibility Problem");
+
             if (ImGui.BeginPopupModal("Compatibility Problem")) // ImGuiWindowFlags.AlwaysAutoResize
             {
                 ImGui.Text("Some SVG elements are not compatible. Go to the list of compatible SVG elements");
@@ -1310,7 +1306,6 @@ namespace FreeFrame
             TakeSnap().Save(path + ".png", ImageFormat.Png);
         }
 
-
         /// <summary>
         /// Render the timeline
         /// </summary>
@@ -1340,7 +1335,7 @@ namespace FreeFrame
 
             // Lock the bits
             BitmapData bmpData = bmp.LockBits(new System.Drawing.Rectangle(0, 0, ClientSize.X, ClientSize.Y), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            
+
             // Fill with current window
             GL.ReadPixels(0, 0, ClientSize.X, ClientSize.Y, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, bmpData.Scan0);
 

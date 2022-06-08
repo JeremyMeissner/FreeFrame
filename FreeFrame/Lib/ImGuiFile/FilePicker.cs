@@ -12,7 +12,7 @@ namespace FreeFrame.Lib.FileExplorer
 {
     public class FilePicker
     {
-        static readonly Dictionary<object, FilePicker> _filePickers = new Dictionary<object, FilePicker>();
+        static Dictionary<object, FilePicker> _filePickers = new Dictionary<object, FilePicker>();
 
         public string RootFolder;
         public string CurrentFolder;
@@ -52,12 +52,12 @@ namespace FreeFrame.Lib.FileExplorer
 
                 fp.AllowedExtensions.AddRange(searchFilter.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
 
-
                 _filePickers.Add(o, fp);
             }
-
             return fp;
         }
+
+        public static void Clear() => _filePickers.Clear();
 
         public bool Draw()
         {
@@ -101,7 +101,6 @@ namespace FreeFrame.Lib.FileExplorer
                                     result = true;
                                     ImGui.CloseCurrentPopup();
                                 }
-
                             }
                         }
                     }
@@ -114,6 +113,7 @@ namespace FreeFrame.Lib.FileExplorer
             {
                 result = false;
                 ImGui.CloseCurrentPopup();
+                Clear();
             }
 
             if (OnlyAllowFolders)
@@ -166,6 +166,5 @@ namespace FreeFrame.Lib.FileExplorer
 
             return ret;
         }
-
     }
 }

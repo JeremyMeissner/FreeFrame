@@ -24,13 +24,13 @@ namespace FreeFrame.Components.Shapes
             IsResizeable = false;
             IsCornerRadiusChangeable = false;
 
-            string points = reader["points"] ?? throw new Exception("points not here"); // TODO: Error handler if points is note here
+            string points = reader["points"] ?? throw new Exception("points not here");
             MatchCollection matches = _pointsAttributeRegex.Matches(points); // Retrieve every points
 
             foreach (Match match in matches)
                 Points.Add((Convert.ToInt32(match.Groups[1].Value), Convert.ToInt32(match.Groups[2].Value)));
 
-            string color = reader["fill"] ?? DefaultColor; // TODO: Error handler if d is note here
+            string color = reader["fill"] ?? DefaultColor;
             Color = Importer.HexadecimalToRGB(color);
 
             // Fill geometry values
@@ -72,7 +72,7 @@ namespace FreeFrame.Components.Shapes
         public override float[] GetVertices()
         {
             if (Points.Count == 3) // Because a triangle is also base on the size
-                return new float[] { X + Width / 2, Y, X, Y + Height, X + Width, Y + Height }; // TODO: Use Select, Cast, whatever                                                                   
+                return new float[] { X + Width / 2, Y, X, Y + Height, X + Width, Y + Height };                                                               
             else // Any other polygon
             {
                 List<float> vertices = new List<float>();

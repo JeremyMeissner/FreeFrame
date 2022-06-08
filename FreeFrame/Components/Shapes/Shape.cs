@@ -9,11 +9,6 @@ namespace FreeFrame.Components.Shapes
 {
     public abstract class Shape : IDrawable
     {
-        bool _isMoveable = true;
-        bool _isResizeable = true;
-        bool _isAngleChangeable = true;
-        bool _isCornerRadiusChangeable = true;
-
         #region Default values
         public const string DefaultColor = "#000000FF";
         #endregion
@@ -22,6 +17,10 @@ namespace FreeFrame.Components.Shapes
         private int _x, _y, _width, _height, _angle, _cornerRadius;
         private Color4 _color;
         Guid _id;
+        bool _isMoveable = true;
+        bool _isResizeable = true;
+        bool _isAngleChangeable = true;
+        bool _isCornerRadiusChangeable = true;
         #endregion
 
         private List<Renderer> renderers;
@@ -46,7 +45,6 @@ namespace FreeFrame.Components.Shapes
         {
             get => Id.ToString().Substring(0, 6);
         }
-
         public Shape()
         {
             Renderers = new List<Renderer>();

@@ -57,6 +57,5 @@ namespace FreeFrame
             GL.Enable(EnableCap.DebugOutput);
             GL.Enable(EnableCap.DebugOutputSynchronous);
         }
-
     }
 }

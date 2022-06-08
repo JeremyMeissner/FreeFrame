@@ -25,7 +25,7 @@ namespace FreeFrame.Components.Shapes
             Convert.ToInt32(reader["y"]),
             Convert.ToInt32(reader["rx"]),
             Convert.ToInt32(reader["ry"]),
-            Convert.ToString(reader["fill"] == null ? DefaultColor : reader["fill"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
+            Convert.ToString(reader["fill"] == null ? DefaultColor : reader["fill"]))
         {
         }
         public SVGRectangle() : this(DefaultWidth, DefaultHeight, DefaultX, DefaultY) { }

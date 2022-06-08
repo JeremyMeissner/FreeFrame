@@ -46,7 +46,7 @@ namespace FreeFrame.Lib.FileExplorer
 
             return fp;
         }
-        public static void Remove(object o) => _fileSavers.Remove(o);
+        public static void Clear() => _fileSavers.Clear();
 
         public bool Draw()
         {
@@ -86,6 +86,7 @@ namespace FreeFrame.Lib.FileExplorer
             {
                 result = false;
                 ImGui.CloseCurrentPopup();
+                Clear();
             }
             ImGui.SameLine();
             if (ImGui.Button("Save here"))

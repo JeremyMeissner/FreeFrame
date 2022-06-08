@@ -1,5 +1,4 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-using MathNet.Numerics.LinearAlgebra;
 using System;
 using System.Collections.Generic;
 using System.Linq;

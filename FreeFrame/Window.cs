@@ -20,15 +20,15 @@ using System.Drawing.Imaging;
 using System.Runtime.Versioning;
 using Emgu.CV.Util;
 using Emgu.CV.Structure;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
 using AnimatedGif;
 using System.Drawing.Drawing2D;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using FreeFrame.Lib.FileExplorer;
+using SixLabors.ImageSharp.Advanced;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace FreeFrame
 {
@@ -1198,7 +1198,7 @@ namespace FreeFrame
             Shape copy = shape.DeepCopy();
             ResetSelection();
             Shapes.Add(copy);
-            _selectedShape = copy;
+            copy.ImplementObject();
         }
 
         /// <summary>
@@ -1324,7 +1324,6 @@ namespace FreeFrame
                 shape.Draw(ClientSize);
         }
 
-        // [SupportedOSPlatform("windows")]
         /// <summary>
         /// Take a screenshot of the current user view
         /// </summary>

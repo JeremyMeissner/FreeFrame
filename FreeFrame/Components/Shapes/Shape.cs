@@ -1,5 +1,4 @@
 ﻿using FreeFrame.Components.Shapes.Path;
-using MathNet.Numerics.LinearAlgebra;
 using Newtonsoft.Json;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;

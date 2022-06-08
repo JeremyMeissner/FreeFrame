@@ -4,7 +4,6 @@ using System.Text;
 using System.Xml;
 using System.Text.RegularExpressions;
 using FreeFrame.Components.Shapes.Path;
-using DelaunatorSharp;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 

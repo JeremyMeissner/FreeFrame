@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {
-    internal class SVGLine : Shape
+    public class SVGLine : Shape
     {
         #region Default values
         const int DefaultX1 = 0;

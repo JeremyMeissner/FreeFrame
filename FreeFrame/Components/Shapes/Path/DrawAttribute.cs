@@ -34,18 +34,35 @@ namespace FreeFrame.Components.Shapes.Path
         public static (int X, int Y, int X1, int Y1) Last = (0, 0, 0, 0);
 
         /// <summary>
-        /// Should return the vertices position in NDC format
+        /// Update the Last drawn values
+        /// </summary>
+        public abstract void UpdateLast();
+
+        /// <summary>
+        /// Return the vertices position in NDC format
         /// </summary>
         /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
-        /// 
-        public abstract (Vector2i position, Vector2i? controlPosition) Information();
-        public abstract void UpdateLast();
         public abstract float[] GetVertices();
+
+        /// <summary>
+        /// Return the indexes position of the triangles/lines
+        /// </summary>
+        /// <returns>array of indexes</returns>
         public abstract uint[] GetVerticesIndexes();
-        public abstract void MoveDelta(Vector2i deltaPosition);
+
+        /// <summary>
+        /// Retrieve the points that made the attribute detectable
+        /// </summary>
+        /// <returns>Position of all the points</returns>
         public abstract List<Vector2i> GetSelectablePoints();
+
+        /// <summary>
+        /// Retrieve the attribute for the d attribute
+        /// </summary>
+        /// <returns>string of the attribute</returns>
         public abstract override string ToString();
     }
+
     /// <summary>
     /// MoveTo, M or m.
     /// Moving the current point to another point.
@@ -54,6 +71,7 @@ namespace FreeFrame.Components.Shapes.Path
     public class MoveTo : DrawAttribute
     {
         public MoveTo() { }
+        
         /// <summary>
         /// Moving the current point to another point.
         /// </summary>
@@ -61,6 +79,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="y">positin y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public MoveTo(Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
+        
         /// <summary>
         /// Moving the current point to another point.
         /// </summary>
@@ -74,19 +93,12 @@ namespace FreeFrame.Components.Shapes.Path
             IsRelative = isRelative;
         }
         public override float[] GetVertices() => Array.Empty<float>(); // Move doesnt have any vertices
+
         public override uint[] GetVerticesIndexes() => Array.Empty<uint>();
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 'm' : 'M', X, Y);
 
         public override List<Vector2i> GetSelectablePoints() => new List<Vector2i>();
-
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            X += deltaPosition.X;
-            Y += deltaPosition.Y;
-        }
-
-        public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Y), null);
 
         public override void UpdateLast()
         {
@@ -102,6 +114,7 @@ namespace FreeFrame.Components.Shapes.Path
             }
         }
     }
+
     /// <summary>
     /// LineTo, L or l.
     /// Use to draw a straight line from the current point to the given point.
@@ -110,6 +123,7 @@ namespace FreeFrame.Components.Shapes.Path
     public class LineTo : DrawAttribute
     {
         public LineTo() { }
+        
         /// <summary>
         /// Use to draw a straight line from the current point to the given point.
         /// </summary>
@@ -117,6 +131,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="y">end point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public LineTo(Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
+        
         /// <summary>
         /// Use to draw a straight line from the current point to the given point.
         /// </summary>
@@ -129,7 +144,6 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-
         public override float[] GetVertices()
         {
             float[] vertices;
@@ -162,13 +176,6 @@ namespace FreeFrame.Components.Shapes.Path
             return points;
         }
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            X += deltaPosition.X;
-            Y += deltaPosition.Y;
-        }
-        public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Y), null);
-
         public override void UpdateLast()
         {
             if (IsRelative)
@@ -183,6 +190,7 @@ namespace FreeFrame.Components.Shapes.Path
             }
         }
     }
+
     /// <summary>
     /// HorizontalLineTo, H or h.
     /// Use to draw a horizontal line from the current point to the given point.
@@ -191,12 +199,14 @@ namespace FreeFrame.Components.Shapes.Path
     public class HorizontalLineTo : DrawAttribute
     {
         public HorizontalLineTo() { }
+
         /// <summary>
         /// Use to draw a horizontal line from the current point to the given point.
         /// </summary>
         /// <param name="x">offset end point x</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public HorizontalLineTo(Group x, bool isRelative = false) : this(Convert.ToInt32(x.Value), isRelative) { }
+
         /// <summary>
         /// Use to draw a horizontal line from the current point to the given point.
         /// </summary>
@@ -241,12 +251,6 @@ namespace FreeFrame.Components.Shapes.Path
             return points;
         }
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            X += deltaPosition.X;
-        }
-        public override (Vector2i position, Vector2i? controlPosition) Information() => (new Vector2i(X, Last.Y), null);
-
         public override void UpdateLast()
         {
             if (IsRelative)
@@ -255,6 +259,7 @@ namespace FreeFrame.Components.Shapes.Path
                 Last.X = X; // Update last position
         }
     }
+
     /// <summary>
     /// VerticalLineTo, V or v.
     /// Use to draw a vertical line from the current point to the given point.
@@ -263,12 +268,14 @@ namespace FreeFrame.Components.Shapes.Path
     public class VerticalLineTo : DrawAttribute
     {
         public VerticalLineTo() { }
+
         /// <summary>
         /// Use to draw a vertical line from the current point to the given point.
         /// </summary>
         /// <param name="y">offset end point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public VerticalLineTo(Group y, bool isRelative = false) : this(Convert.ToInt32(y.Value), isRelative) { }
+        
         /// <summary>
         /// Use to draw a vertical line from the current point to the given point.
         /// </summary>
@@ -279,7 +286,6 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
-
         public override float[] GetVertices()
         {
             float[] vertices;
@@ -291,6 +297,7 @@ namespace FreeFrame.Components.Shapes.Path
 
             return vertices;
         }
+
         public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 };
 
         public override List<Vector2i> GetSelectablePoints()
@@ -312,16 +319,6 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1}", IsRelative ? 'v' : 'V', Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
-
         public override void UpdateLast()
         {
             if (IsRelative)
@@ -330,6 +327,7 @@ namespace FreeFrame.Components.Shapes.Path
                 Last.Y = Y; // Update last position
         }
     }
+
     /// <summary>
     /// CurveTo, Cubic Bézier Curve, C or c.
     /// Use to draw a cubic Bézier curve from the current point to the given point.
@@ -344,6 +342,7 @@ namespace FreeFrame.Components.Shapes.Path
         public int Y2 { get => _y2; set => _y2 = value; }
 
         public CurveTo() { }
+
         /// <summary>
         /// Use to draw a cubic Bézier curve from the current point to the given point.
         /// </summary>
@@ -355,6 +354,7 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="y">end point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
         public CurveTo(Group x1, Group y1, Group x2, Group y2, Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(x1.Value), Convert.ToInt32(y1.Value), Convert.ToInt32(x2.Value), Convert.ToInt32(y2.Value), Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
+        
         /// <summary>
         /// Use to draw a cubic Bézier curve from the current point to the given point.
         /// </summary>
@@ -430,21 +430,6 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4} {5},{6}", IsRelative ? 'c' : 'C', X1, Y1, X2, Y2, X, Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            X1 += deltaPosition.X;
-            Y1 += deltaPosition.Y;
-            X2 += deltaPosition.X;
-            Y2 += deltaPosition.Y;
-            X += deltaPosition.X;
-            Y += deltaPosition.Y;
-        }
-
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
-
         public override void UpdateLast()
         {
             if (IsRelative)
@@ -487,6 +472,7 @@ namespace FreeFrame.Components.Shapes.Path
             }
         }
     }
+
     /// <summary>
     /// SmoothCurveTo, Smooth Cubic Bézier Curbe, S or s.
     /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
@@ -501,6 +487,7 @@ namespace FreeFrame.Components.Shapes.Path
         public int Y2 { get => _y2; set => _y2 = value; }
 
         public SmoothCurveTo() { }
+
         /// <summary>
         /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
         /// </summary>
@@ -509,8 +496,8 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="x">end point x</param>
         /// <param name="y">end point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
-
         public SmoothCurveTo(Group x2, Group y2, Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(x2.Value), Convert.ToInt32(y2.Value), Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
+        
         /// <summary>
         /// Use to draw a smooth cubic Bézier curve from the current point to the given point.
         /// </summary>
@@ -527,6 +514,7 @@ namespace FreeFrame.Components.Shapes.Path
             Y = y;
             IsRelative = isRelative;
         }
+
         public override float[] GetVertices()
         {
             List<float> vertices = new List<float>();
@@ -582,15 +570,6 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 's' : 'S', X2, Y2, X, Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
-
         public override void UpdateLast()
         {
             if (IsRelative)
@@ -643,6 +622,7 @@ namespace FreeFrame.Components.Shapes.Path
     public class QuadraticBezierCurveTo : DrawAttribute
     {
         public QuadraticBezierCurveTo() { }
+        
         /// <summary>
         /// Use to draw a quadratic Bézier curve.
         /// </summary>
@@ -723,16 +703,6 @@ namespace FreeFrame.Components.Shapes.Path
         }
 
         public override string ToString() => String.Format("{0} {1},{2} {3},{4}", IsRelative ? 'q' : 'Q', X1, Y1, X, Y);
-
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
 
         public override void UpdateLast()
         {
@@ -843,16 +813,6 @@ namespace FreeFrame.Components.Shapes.Path
 
         public override string ToString() => String.Format("{0} {1},{2}", IsRelative ? 't' : 'T', X, Y);
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
-
         public override void UpdateLast()
         {
             if (IsRelative)
@@ -894,6 +854,7 @@ namespace FreeFrame.Components.Shapes.Path
         bool _sweepFlag;
 
         public EllipticalArc() { }
+
         /// <summary>
         /// Use to draw an ellipse. 
         /// </summary>
@@ -905,8 +866,8 @@ namespace FreeFrame.Components.Shapes.Path
         /// <param name="x">new current point x</param>
         /// <param name="y">new current point y</param>
         /// <param name="isRelative">if true, the points becames relatives to the last point</param>
-
         public EllipticalArc(Group rx, Group ry, Group angle, Group largeArcFlag, Group sweepFlag, Group x, Group y, bool isRelative = false) : this(Convert.ToInt32(rx.Value), Convert.ToInt32(ry.Value), Convert.ToInt32(angle.Value), Convert.ToInt32(largeArcFlag.Value) == 0 ? false : true, Convert.ToInt32(sweepFlag.Value) == 0 ? false : true, Convert.ToInt32(x.Value), Convert.ToInt32(y.Value), isRelative) { }
+        
         /// <summary>
         /// Use to draw an ellipse. 
         /// </summary>
@@ -944,14 +905,6 @@ namespace FreeFrame.Components.Shapes.Path
             throw new NotImplementedException();
         }
 
-        public override void MoveDelta(Vector2i deltaPosition)
-        {
-            throw new NotImplementedException();
-        }
-        public override (Vector2i position, Vector2i? controlPosition) Information()
-        {
-            throw new NotImplementedException();
-        }
         public override string ToString() => String.Format("{0} {1} {2} {3} {4} {5} {6},{7}", IsRelative ? 'a' : 'A', _rx, _ry, _angle, Convert.ToInt32(_largeArcFlag), Convert.ToInt32(_sweepFlag), X, Y);
 
         public override void UpdateLast()

@@ -10,10 +10,6 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPolygon : Shape
     {
-        #region Default values
-        const string DefaultColor = "#000000FF";
-        #endregion
-
         readonly Regex _pointsAttributeRegex = new(@" *(\d+) *, *(\d+) *"); // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/points
 
         #region Geometry properties
@@ -68,19 +64,11 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
-        public override List<Vector2i> GetSelectablePoints()
-        {
-            List<Vector2i> selectablePoints = new List<Vector2i>();
-            if (Points.Count == 3) // Because a triangle is also base on the size
-            {
-                selectablePoints.Add(new Vector2i(X, Y));
-                selectablePoints.Add(new Vector2i(X + Width, Y));
-            }
-            foreach (Vector2i point in Points)
-                selectablePoints.Add(new Vector2i(X + point.X, Y + point.Y));
-            return selectablePoints;
-        }
 
+        /// <summary>
+        /// Should return the vertices position in NDC format
+        /// </summary>
+        /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
         public override float[] GetVertices()
         {
             if (Points.Count == 3) // Because a triangle is also base on the size
@@ -97,6 +85,10 @@ namespace FreeFrame.Components.Shapes
             }
         }
 
+        /// <summary>
+        /// Should return the indexes position of the triangles
+        /// </summary>
+        /// <returns>array of indexes</returns>
         public override uint[] GetVerticesIndexes()
         {
             if (Points.Count == 3) // Triangle
@@ -105,19 +97,42 @@ namespace FreeFrame.Components.Shapes
                 return Enumerable.Range(0, Points.Count).Select(i => (uint)i).ToArray();
         }
 
+        /// <summary>
+        /// Reset the renderers and create new ones (use when update any properties of the shape)
+        /// </summary>
         public override void ImplementObject()
         {
-            foreach (Renderer vao in Renderers)
-                vao.DeleteObjects();
+            foreach (Renderer render in Renderers)
+                render.DeleteObjects();
             Renderers.Clear();
 
             if (Points.Count == 3) // Triangle
                 Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Triangles, this));
             else
                 Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.LineLoop, this));
-
         }
 
+        /// <summary>
+        /// Retrieve the points that made the shape detectable
+        /// </summary>
+        /// <returns>Position of all the points</returns>
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> selectablePoints = new List<Vector2i>();
+            if (Points.Count == 3) // Because a triangle is also base on the size
+            {
+                selectablePoints.Add(new Vector2i(X, Y));
+                selectablePoints.Add(new Vector2i(X + Width, Y));
+            }
+            foreach (Vector2i point in Points)
+                selectablePoints.Add(new Vector2i(X + point.X, Y + point.Y));
+            return selectablePoints;
+        }
+
+        /// <summary>
+        /// Move the current shape to the given position
+        /// </summary>
+        /// <param name="position">New position</param>
         public override void Move(Vector2i position)
         {
             X = position.X;
@@ -125,6 +140,10 @@ namespace FreeFrame.Components.Shapes
             ImplementObject();
         }
 
+        /// <summary>
+        /// Resize the current shape to the given size
+        /// </summary>
+        /// <param name="size">New size</param>
         public override void Resize(Vector2i size)
         {
             Width = size.X;
@@ -132,6 +151,10 @@ namespace FreeFrame.Components.Shapes
             ImplementObject();
         }
 
+        /// <summary>
+        /// Retrieve the Shape in the SVG format
+        /// </summary>
+        /// <returns>string of the SVG format</returns>
         public override string ToString()
         {
             string output = "<polygon points=\"";

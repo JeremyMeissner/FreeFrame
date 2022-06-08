@@ -19,17 +19,17 @@ namespace FreeFrame
         private PrimitiveType _primitiveType;
         private Shader _shader;
 
+        // VBO
         public int VertexBufferObjectID { get => _vertexBufferObjectID; private set => _vertexBufferObjectID = value; }
+
+        // VAO
         public int VertexArrayObjectID { get => _vertexArrayObjectID; private set => _vertexArrayObjectID = value; }
+
+        // IBO
         public int IndexBufferObjectID { get => _indexBufferObjectID; private set => _indexBufferObjectID = value; }
-        public Renderer()
-        {
-            _primitiveType = PrimitiveType.Triangles;
-            VertexArrayObjectID = GL.GenVertexArray();
-            VertexBufferObjectID = GL.GenBuffer();
-            IndexBufferObjectID = GL.GenBuffer();
-            _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
-        }
+        
+
+        public Renderer() : this(PrimitiveType.Triangles) { }
         public Renderer(PrimitiveType primitiveType)
         {
             _primitiveType = primitiveType;
@@ -41,6 +41,7 @@ namespace FreeFrame
 
         public Renderer(float[] vertices, uint[] indexes, PrimitiveType primitiveType) : this(primitiveType)
         {
+            // Create all the objects and index for OpenGL and send data
             ImplementObjects(vertices, indexes);
         }
 
@@ -51,8 +52,15 @@ namespace FreeFrame
                 _shader = new Shader("Shaders/shader.vert", "Shaders/circle.frag"); 
             else if (type == typeof(SVGRectangle))
                 _shader = new Shader("Shaders/shader.vert", "Shaders/rectangle.frag");
+
+            // Create all the objects and index for OpenGL and send data
             ImplementObjects(vertices, indexes);
         }
+        /// <summary>
+        /// Call the Draw method of OpenGL
+        /// </summary>
+        /// <param name="clientSize">Window size</param>
+        /// <param name="color">Element color</param>
         public void Draw(Vector2i clientSize, Color4 color)
         {
             _shader.Use();
@@ -66,16 +74,27 @@ namespace FreeFrame
             int uColor = _shader.GetUniformLocation("u_Color");
             _shader.SetUniformVec4(uColor, (Vector4)color);
 
+            // Applied window size
             int uResolution = _shader.GetUniformLocation("u_Resolution");
             _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
+            // Applied transformation
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
             _shader.SetUniformMat4(uTransformation, Matrix4.Identity);
 
+            // Bind VAO
             GL.BindVertexArray(VertexArrayObjectID);
 
+            // Draw
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
         }
+
+        /// <summary>
+        /// Call the Draw method of OpenGL
+        /// </summary>
+        /// <param name="clientSize">Window size</param>
+        /// <param name="color">Element color</param>
+        /// <param name="shape">Shape type</param>
         public void Draw(Vector2i clientSize, Color4 color, Shape shape)
         {
             _shader.Use();
@@ -89,25 +108,31 @@ namespace FreeFrame
             int uColor = _shader.GetUniformLocation("u_Color");
             _shader.SetUniformVec4(uColor, (Vector4)color);
 
+            // Applied window size
             int uResolution = _shader.GetUniformLocation("u_Resolution");
             _shader.SetUniformVec2(uResolution, (Vector2)clientSize);
 
+            // Applied transformation
             int uTransformation = _shader.GetUniformLocation("u_Transformation");
             Matrix4 rotation = Matrix4.CreateRotationZ(MathHelper.DegreesToRadians(shape.Angle));
             _shader.SetUniformMat4(uTransformation, rotation);
 
+            // Applied corner radius
             int uRadius = _shader.GetUniformLocation("u_Radius");
             _shader.SetUniformFloat(uRadius, shape.CornerRadius);
 
+            // Applied width
             int uSize = _shader.GetUniformLocation("u_Size");
             _shader.SetUniformVec2(uSize, new Vector2(shape.Width, shape.Height));
 
+            // Applied position
             int uPosition = _shader.GetUniformLocation("u_Position");
             _shader.SetUniformVec2(uPosition, new Vector2(shape.X, shape.Y));
 
-
+            // Bind VAO
             GL.BindVertexArray(VertexArrayObjectID);
 
+            // Draw
             GL.Enable(EnableCap.Blend);
             GL.DrawElements(_primitiveType, _indexCount, DrawElementsType.UnsignedInt, 0);
             GL.Disable(EnableCap.Blend);
@@ -140,6 +165,9 @@ namespace FreeFrame
 
             _indexCount = indexes.Length;
         }
+        /// <summary>
+        /// Delete all the buffer objects and shader
+        /// </summary>
         public void DeleteObjects()
         {
             GL.DeleteBuffer(VertexBufferObjectID);

@@ -9,14 +9,15 @@ namespace FreeFrame
 {
     public interface IDrawable
     {
-        //List<Renderer> Vaos
-        //{
-        //    get;
-        //}
         /// <summary>
-        /// Trigge draw element through OpenGL context
+        /// Trigger draw element through OpenGL context
         /// </summary>
+        /// <param name="clientSize">Window size</param>
         public void Draw(Vector2i clientSize);
+
+        /// <summary>
+        /// Deletes the objects saved in OpenGL context
+        /// </summary>
         public void DeleteObjects();
     }
 }

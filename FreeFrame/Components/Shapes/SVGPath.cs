@@ -12,10 +12,6 @@ namespace FreeFrame.Components.Shapes
 {
     public class SVGPath : Shape
     {
-        #region Default values
-        const string DefaultColor = "#000000FF";
-        #endregion
-
         // First point x,y of the path
         int _x0, _y0 = 0;
         readonly Dictionary<char, Regex> _dAttributeRegex = new()
@@ -48,13 +44,13 @@ namespace FreeFrame.Components.Shapes
             for (int i = 0; i < d.Length; i++)
             {
                 char c = d[i]; // Get current char
-                char lowerC = char.ToLower(d[i]); // Get current char
+                char lowerC = char.ToLower(d[i]);
 
                 if (_dAttributeRegex.ContainsKey(lowerC))
                 {
                     match = _dAttributeRegex[lowerC].Match(d, startIndex); // Retrieve the associated regular expression
 
-                    if (startIndex == 0)
+                    if (startIndex == 0) // Save default location point for z
                     {
                         _x0 = Convert.ToInt32(match.Groups[1].Value);
                         _y0 = Convert.ToInt32(match.Groups[2].Value);
@@ -112,14 +108,38 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
+
+        public override float[] GetVertices() => new float[] { };
+        public override uint[] GetVerticesIndexes() => new uint[] { };
+
+        /// <summary>
+        /// Reset the renderers and create new ones (use when update any properties of the shape)
+        /// </summary>
         public override void ImplementObject()
         {
             Move(new Vector2i(X, Y)); // Update the position since the attr doesnt use the X and Y variables directly
         }
 
-        public override float[] GetVertices() => new float[] { };
-        public override uint[] GetVerticesIndexes() => new uint[] { };
+        /// <summary>
+        /// Retrieve the points that made the shape detectable
+        /// </summary>
+        /// <returns>Position of all the points</returns>
+        public override List<Vector2i> GetSelectablePoints()
+        {
+            List<Vector2i> points = new();
 
+            foreach (DrawAttribute attr in DrawAttributes)
+            {
+                points.AddRange(attr.GetSelectablePoints());
+                attr.UpdateLast(); // Each attr depend on the previous. The previous element is the last element that called GetVertices() 
+            }
+            return points;
+        }
+
+        /// <summary>
+        /// Move the current shape to the given position
+        /// </summary>
+        /// <param name="position">New position</param>
         public override void Move(Vector2i position)
         {
             int x = 0, y = 0;
@@ -139,7 +159,7 @@ namespace FreeFrame.Components.Shapes
                 Type attrType = attr.GetType();
                 if (attr.IsRelative == false) // Update position of each absolute attr
                 {
-                    Console.WriteLine("{0} is relative? =>{1}", attr.GetType().Name, attr.IsRelative);
+                    //Console.WriteLine("{0} is relative? =>{1}", attr.GetType().Name, attr.IsRelative);
                     if (deltaX == null || deltaY == null)
                     {
                         // Get delta X and Y only one time
@@ -159,10 +179,6 @@ namespace FreeFrame.Components.Shapes
                     }
                     else if (attrType == typeof(SmoothCurveTo))
                     {
-
-                        Console.WriteLine(attr.GetType().Name + " - " + attr.ToString());
-                        Console.WriteLine("x2: {0}, y2: {1}", ((SmoothCurveTo)attr).X2, ((SmoothCurveTo)attr).Y2);
-                        Console.WriteLine("x1: {0}, y1: {1}", DrawAttribute.Last.X1, DrawAttribute.Last.Y1);
                         ((SmoothCurveTo)attr).X2 += (int)deltaX;
                         ((SmoothCurveTo)attr).Y2 += (int)deltaY;
                     }
@@ -171,7 +187,7 @@ namespace FreeFrame.Components.Shapes
                     attrType == typeof(SmoothCurveTo) ||
                     attrType == typeof(QuadraticBezierCurveTo) ||
                     attrType == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attrType == typeof(EllipticalArc))
+                    attrType == typeof(EllipticalArc)) // Only thoses are LineStrip type
                 {
                     Renderers.Add(new Renderer(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }
@@ -186,19 +202,17 @@ namespace FreeFrame.Components.Shapes
             X = position.X;
             Y = position.Y;
         }
+
+        /// <summary>
+        /// Resize the current shape to the given size
+        /// </summary>
+        /// <param name="size">New size</param>
         public override void Resize(Vector2i size) => throw new NotImplementedException("Can't resize a path");
-        public override List<Vector2i> GetSelectablePoints()
-        {
-            List<Vector2i> points = new();
 
-            foreach (DrawAttribute attr in DrawAttributes)
-            {
-                points.AddRange(attr.GetSelectablePoints());
-                attr.UpdateLast(); // Each attr depend on the previous. The previous element is the last element that called GetVertices() 
-            }
-            return points;
-        }
-
+        /// <summary>
+        /// Retrieve the Shape in the SVG format
+        /// </summary>
+        /// <returns>string of the SVG format</returns>
         public override string ToString()
         {
             string output = "<path d=\"";

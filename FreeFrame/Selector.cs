@@ -34,21 +34,22 @@ namespace FreeFrame
             Resize,
             None
         }
-        private Shape? _selectedShape;
 
-        private List<(Renderer vao, Area hitbox, SelectorType type)> _vaos;  // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
-
-        //public List<Renderer> Vaos { get => null; set => _ = value; } // TODO: Just have a List<Renderer> like Shape in order to put it in the interface
+        private List<(Renderer vao, Area hitbox, SelectorType type)> _selectors;
 
         public Selector()
         {
-            _vaos = new List<(Renderer vao, Area hitbox, SelectorType type)>();
+            _selectors = new List<(Renderer vao, Area hitbox, SelectorType type)>();
         }
+
+        /// <summary>
+        /// Select the shape to draw the selector with
+        /// </summary>
+        /// <param name="shape">Selected shape</param>
         public void Select(Shape shape)
         {
+            // Delete current Selector
             DeleteObjects();
-
-            _selectedShape = shape;
 
             // Edge
             Area hitbox = new Area
@@ -58,42 +59,51 @@ namespace FreeFrame
                 Width = shape.Width,
                 Height = shape.Height
             };
-            _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge));
+            _selectors.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 3 }, PrimitiveType.LineLoop), hitbox, SelectorType.Edge)); // The edge is only a square empty
 
-            // Move selector (top-left)
-            hitbox = new Area
-            {
-                X = shape.X - 5,
-                Y = shape.Y - 5,
-                Width = 10,
-                Height = 10
-            };
+
             if (shape.IsMoveable)
-                _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move));
-
-            // Resize selector (bottom-right)
-            hitbox = new Area
             {
-                X = shape.X + shape.Width - 5,
-                Y = shape.Y + shape.Height - 5,
-                Width = 10,
-                Height = 10
-            };
+                // Move selector (top-left)
+                hitbox = new Area
+                {
+                    X = shape.X - 5,
+                    Y = shape.Y - 5,
+                    Width = 10,
+                    Height = 10
+                };
+                _selectors.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Move)); // The corner are filled so it's two triangles
+            }
+
             if (shape.IsResizeable)
-                _vaos.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize));
+            {
+                // Resize selector (bottom-right)
+                hitbox = new Area
+                {
+                    X = shape.X + shape.Width - 5,
+                    Y = shape.Y + shape.Height - 5,
+                    Width = 10,
+                    Height = 10
+                };
+                _selectors.Add((new Renderer(hitbox.ToFloatArray(), new uint[] { 0, 1, 2, 0, 2, 3 }, PrimitiveType.Triangles), hitbox, SelectorType.Resize)); // The corner are filled so it's two triangles
+            }
         }
 
+        /// <summary>
+        /// Trigger draw element through OpenGL context
+        /// </summary>
+        /// <param name="clientSize">Window size</param>
         public void Draw(Vector2i clientSize)
         {
             GL.Enable(EnableCap.LineSmooth);
-            GL.LineWidth(3.0f);                 
+            GL.LineWidth(3.0f);
 
-            foreach ((Renderer vao, Area _, SelectorType type) part in _vaos)
+            foreach ((Renderer vao, Area _, SelectorType type) selector in _selectors)
             {
-                if (part.type == SelectorType.Edge)
-                    part.vao.Draw(clientSize, new Color4(0, 125, 200, 255));
+                if (selector.type == SelectorType.Edge) // The color is not the same for the edge and the corners
+                    selector.vao.Draw(clientSize, new Color4(0, 125, 200, 255));
                 else
-                    part.vao.Draw(clientSize, new Color4(0, 125, 255, 255));
+                    selector.vao.Draw(clientSize, new Color4(0, 125, 255, 255));
             }
 
             GL.Disable(EnableCap.LineSmooth);
@@ -105,17 +115,20 @@ namespace FreeFrame
         /// <returns>true if touching the selector (and give the selector type), false otherwise (and null) </returns>
         public (bool, SelectorType?) HitBox(Vector2i mousePosition)
         {
-            if (_vaos.Count > 0)
-                foreach ((Renderer _, Area hitbox, SelectorType type) part in _vaos)
-                    if (part.hitbox.X < mousePosition.X && part.hitbox.X + part.hitbox.Width > mousePosition.X && part.hitbox.Y < mousePosition.Y && part.hitbox.Y + part.hitbox.Height > mousePosition.Y)
-                        return (true, part.type);
+            if (_selectors.Count > 0)
+                foreach ((Renderer _, Area hitbox, SelectorType type) selector in _selectors)
+                    if (selector.hitbox.X < mousePosition.X && selector.hitbox.X + selector.hitbox.Width > mousePosition.X && selector.hitbox.Y < mousePosition.Y && selector.hitbox.Y + selector.hitbox.Height > mousePosition.Y)
+                        return (true, selector.type);
             return (false, null);
         }
 
+        /// <summary>
+        /// Delete all the renderers for each selector
+        /// </summary>
         public void DeleteObjects()
         {
-            _vaos.ForEach(i => i.vao.DeleteObjects());
-            _vaos.Clear();
+            _selectors.ForEach(i => i.vao.DeleteObjects());
+            _selectors.Clear();
         }
     }
 }

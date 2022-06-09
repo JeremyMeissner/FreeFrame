@@ -1015,7 +1015,6 @@ namespace FreeFrame
                         }
                         ImGui.EndMenu();
                     }
-                    if (ImGui.MenuItem("Close", "Ctrl+W")) { /* Do stuff */ }
                     ImGui.EndMenu();
                 }
                 ImGui.EndMenuBar();

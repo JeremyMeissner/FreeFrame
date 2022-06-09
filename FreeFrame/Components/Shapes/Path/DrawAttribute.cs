@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using OpenTK.Mathematics;
 using System.Text.RegularExpressions;
-using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes.Path
 {

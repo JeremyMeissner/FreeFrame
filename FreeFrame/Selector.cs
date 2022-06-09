@@ -1,11 +1,6 @@
 ﻿using FreeFrame.Components.Shapes;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FreeFrame
 {

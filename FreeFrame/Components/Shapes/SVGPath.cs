@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Xml;
-using System.Text.RegularExpressions;
-using FreeFrame.Components.Shapes.Path;
+﻿using FreeFrame.Components.Shapes.Path;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {

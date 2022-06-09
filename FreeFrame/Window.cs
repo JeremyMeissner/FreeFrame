@@ -1,34 +1,19 @@
-﻿using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Desktop;
-using OpenTK.Graphics.OpenGL4;
-using ImGuiNET;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FreeFrame.Lib.ImGuiTools;
+﻿using AnimatedGif;
+using Emgu.CV;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
+using FreeFrame.Lib.FileExplorer;
+using FreeFrame.Lib.ImGuiTools;
+using ImGuiNET;
+using Newtonsoft.Json;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using static FreeFrame.Selector;
-using System.Reflection;
-using Emgu.CV;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.Versioning;
-using Emgu.CV.Util;
-using Emgu.CV.Structure;
-using AnimatedGif;
-using System.Drawing.Drawing2D;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json;
-using FreeFrame.Lib.FileExplorer;
-using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
+using static FreeFrame.Selector;
 
 namespace FreeFrame
 {

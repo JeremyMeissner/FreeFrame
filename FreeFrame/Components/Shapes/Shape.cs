@@ -1,8 +1,4 @@
-﻿using FreeFrame.Components.Shapes.Path;
-using Newtonsoft.Json;
-using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-using OpenTK.Windowing.Desktop;
+﻿using OpenTK.Mathematics;
 
 namespace FreeFrame.Components.Shapes
 {

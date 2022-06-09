@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml;
-using FreeFrame.Components.Shapes;
+﻿using FreeFrame.Components.Shapes;
 using OpenTK.Mathematics;
+using System.Text;
+using System.Xml;
 
 namespace FreeFrame.Components
 {
     public static class Importer
     {
+        /// <summary>
+        /// Import shapes list and timeline from a stream
+        /// </summary>
+        /// <param name="pStream">Given stream</param>
+        /// <returns>Shape list and timeline</returns>
+        /// <exception cref="Exception">If something went wrong in the importation</exception>
         static private (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromStream(Stream pStream)
         {
             List<Shape> shapes = new List<Shape>();
@@ -68,6 +69,13 @@ namespace FreeFrame.Components
             }
             return (shapes, new SortedDictionary<int, List<Shape>>(), compatibilityFlag);
         }
+
+        /// <summary>
+        /// Import shapes list and timeline from a file path
+        /// </summary>
+        /// <param name="pFilename">File path</param>
+        /// <returns>Shape list and timeline</returns>
+        /// <exception cref="ArgumentException">If file cannot be found</exception>
         static public (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromFile(string pFilename)
         {
             if (!File.Exists(pFilename))
@@ -77,6 +85,12 @@ namespace FreeFrame.Components
 
             return ImportFromStream(new MemoryStream(byteArray));
         }
+
+        /// <summary>
+        /// Import shapes list and timeline from a string
+        /// </summary>
+        /// <param name="pString">Given string</param>
+        /// <returns>Shape list and timeline</returns>
         static public (List<Shape>, SortedDictionary<int, List<Shape>>, bool) ImportFromString(string pString)
         {
             byte[] byteArray = Encoding.UTF8.GetBytes(pString);
@@ -84,9 +98,14 @@ namespace FreeFrame.Components
             return ImportFromStream(new MemoryStream(byteArray));
         }
 
+        /// <summary>
+        /// Export a given shape list into an svg file
+        /// </summary>
+        /// <param name="shapes">Shape list</param>
+        /// <param name="clientSize">Window size</param>
+        /// <param name="path">File path</param>
         static public void ExportToFile(List<Shape> shapes, Vector2i clientSize, string path)
         {
-
             using (FileStream fs = new FileStream(path, FileMode.Create))
             {
                 byte[] bytes = Encoding.ASCII.GetBytes($@"<?xml version=""1.0"" encoding=""utf-8"" ?>
@@ -107,6 +126,11 @@ namespace FreeFrame.Components
             }
         }
 
+        /// <summary>
+        /// Convert from a string to an Color4 value
+        /// </summary>
+        /// <param name="hexadecimal">hexadecimal string</param>
+        /// <returns>Color4 value</returns>
         static public Color4 HexadecimalToRGB(string hexadecimal)
         {
             float r = Convert.ToInt32(hexadecimal.Substring(1, 2), 16) / 255f;

@@ -61,12 +61,5 @@ namespace FreeFrame
         /// Use the current shaders
         /// </summary>
         public void Use() => GL.UseProgram(_program);
-
-        /// <summary>
-        /// Delete the program/shaders
-        /// </summary>
-        public void Delete() { }  //GL.DeleteProgram(_program);
-        ~Shader() => Delete(); 
-        //TODO: Make deletion program correctly
     }
 }

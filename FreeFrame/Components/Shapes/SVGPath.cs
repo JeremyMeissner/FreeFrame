@@ -81,9 +81,6 @@ namespace FreeFrame.Components.Shapes
                         case 't':
                             DrawAttributes.Add(new SmoothQuadraticBezierCurveTo(match.Groups[1], match.Groups[2], c == 't')); // 't' is relative and 'T' absolute
                             break;
-                        case 'a':
-                            DrawAttributes.Add(new EllipticalArc(match.Groups[1], match.Groups[2], match.Groups[3], match.Groups[4], match.Groups[5], match.Groups[6], match.Groups[7], c == 'a')); // 'a' is relative and 'A' absolute
-                            break;
                         case 'z':
                             DrawAttributes.Add(new LineTo(_x0, _y0));
                             break;
@@ -158,7 +155,6 @@ namespace FreeFrame.Components.Shapes
                 Type attrType = attr.GetType();
                 if (attr.IsRelative == false) // Update position of each absolute attr
                 {
-                    //Console.WriteLine("{0} is relative? =>{1}", attr.GetType().Name, attr.IsRelative);
                     if (deltaX == null || deltaY == null)
                     {
                         // Get delta X and Y only one time
@@ -185,8 +181,7 @@ namespace FreeFrame.Components.Shapes
                 if (attrType == typeof(CurveTo) ||
                     attrType == typeof(SmoothCurveTo) ||
                     attrType == typeof(QuadraticBezierCurveTo) ||
-                    attrType == typeof(SmoothQuadraticBezierCurveTo) ||
-                    attrType == typeof(EllipticalArc)) // Only thoses are LineStrip type
+                    attrType == typeof(SmoothQuadraticBezierCurveTo)) // Only thoses are LineStrip type
                 {
                     Renderers.Add(new Renderer(attr.GetVertices(), attr.GetVerticesIndexes(), PrimitiveType.LineStrip, this));
                 }

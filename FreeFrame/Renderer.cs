@@ -165,14 +165,13 @@ namespace FreeFrame
             _indexCount = indexes.Length;
         }
         /// <summary>
-        /// Delete all the buffer objects and shader
+        /// Delete all the buffer objects
         /// </summary>
         public void DeleteObjects()
         {
             GL.DeleteBuffer(VertexBufferObjectID);
             GL.DeleteBuffer(IndexBufferObjectID);
             GL.DeleteVertexArray(VertexArrayObjectID);
-            _shader.Delete();
         }
     }
 }

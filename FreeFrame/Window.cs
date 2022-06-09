@@ -714,7 +714,6 @@ namespace FreeFrame
                     _selectedShape = Shapes[i];
                     _selector.Select(Shapes[i]);
                     _userMode = UserMode.Edit;
-                    Console.WriteLine("New shape selected through tree view");
                 }
                 if (i - 1 >= 0)
                 {
@@ -945,7 +944,6 @@ namespace FreeFrame
                         {
                             if (shape.Id == _selectedShape.Id)
                             {
-                                Console.WriteLine("Already exist");
                                 _timeline.SortedTimeline[_timeline.TimelineIndex].Remove(shape);
                                 break;
                             }
@@ -1094,35 +1092,30 @@ namespace FreeFrame
                 if (picker.Draw())
                 {
                     ResetSelection();
-                    //bool compatibilityFlag = false;
-
-                    switch (_importMode)
-                    {
-                        case ImportMode.Workspace:
-                            ImportFreeFrameWorkspace(picker.SelectedFile);
-                            break;
-                        case ImportMode.Add:
-                            (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
-                            Shapes.AddRange(newShapes);
-                            break;
-                        case ImportMode.Override:
-                            (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
-                            _timeline.ResetTimeline();
-                            break;
-                        default:
-                            break;
-                    }
-                    // TODO: Fix trycatch
                     try
                     {
+                        switch (_importMode)
+                        {
+                            case ImportMode.Workspace:
+                                ImportFreeFrameWorkspace(picker.SelectedFile);
+                                break;
+                            case ImportMode.Add:
+                                (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                Shapes.AddRange(newShapes);
+                                break;
+                            case ImportMode.Override:
+                                (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                _timeline.ResetTimeline();
+                                break;
+                            default:
+                                break;
+                        }
+
                     }
                     catch (Exception)
                     {
                         _dialogError = true;
                     }
-
-                    //if (compatibilityFlag)
-                    //    _dialogCompatibility = true;
 
                     FilePicker.Clear();
                 }
@@ -1134,7 +1127,7 @@ namespace FreeFrame
             if (_dialogCompatibility)
                 ImGui.OpenPopup("Compatibility Problem");
 
-            if (ImGui.BeginPopupModal("Compatibility Problem")) // ImGuiWindowFlags.AlwaysAutoResize
+            if (ImGui.BeginPopupModal("Compatibility Problem"))
             {
                 ImGui.Text("Some SVG elements are not compatible. Go to the list of compatible SVG elements");
                 ImGui.Separator();
@@ -1149,7 +1142,7 @@ namespace FreeFrame
             // Error alert
             if (_dialogError)
                 ImGui.OpenPopup("Error Problem");
-            if (ImGui.BeginPopupModal("Error Problem")) // ImGuiWindowFlags.AlwaysAutoResize
+            if (ImGui.BeginPopupModal("Error Problem"))
             {
                 ImGui.Text("There was an error while importing the file, please check the syntax");
                 ImGui.Separator();

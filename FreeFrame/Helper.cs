@@ -1,11 +1,6 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FreeFrame
 {
@@ -51,12 +46,14 @@ namespace FreeFrame
             if (type == DebugType.DebugTypeError)
                 throw new Exception("OpenGL error");
         }
+        /// <summary>
+        /// Enable the debug mode
+        /// </summary>
         static public void EnableDebugMode()
         {
             GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
             GL.Enable(EnableCap.DebugOutput);
             GL.Enable(EnableCap.DebugOutputSynchronous);
         }
-
     }
 }

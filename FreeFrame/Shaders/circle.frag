@@ -5,6 +5,7 @@ layout(location = 0) out vec4 color;
 uniform vec2 u_Resolution;
 uniform vec4 u_Color;
 uniform vec2 u_Position;
+uniform vec2 u_Size;
 uniform float u_Radius;
 
 // Draw a circle at a given position with radius and color
@@ -18,7 +19,9 @@ void main() {
 
 	vec2 uv = gl_FragCoord.xy;
 
-	vec2 position = vec2(u_Position.x, u_Resolution.y - u_Position.y);  // Invert y axis
+	float radius = u_Size.x / 2.0;
 
-	color = circle(uv, position, u_Radius, u_Color);
+	vec2 position = vec2(u_Position.x + u_Size.x / 2.0, u_Resolution.y - (u_Position.y + u_Size.y / 2.0));  // Invert y axis
+
+	color = circle(uv, position, radius, u_Color);
 }

@@ -1,36 +1,57 @@
-﻿using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Desktop;
-using OpenTK.Graphics.OpenGL4;
-using ImGuiNET;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FreeFrame.Lib.ImGuiTools;
+﻿using AnimatedGif;
+using Emgu.CV;
 using FreeFrame.Components;
 using FreeFrame.Components.Shapes;
-using FreeFrame.Lib.FilePicker;
+using FreeFrame.Lib.FileExplorer;
+using FreeFrame.Lib.ImGuiTools;
+using ImGuiNET;
+using Newtonsoft.Json;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Drawing;
+using System.Drawing.Imaging;
 using static FreeFrame.Selector;
-using System.Reflection;
 
 namespace FreeFrame
 {
     public class Window : GameWindow
     {
+        const int DEFAULT_IO_INT = 0;
+        struct Workspace
+        {
+            public List<Shape> Shapes { get; set; }
+            public SortedDictionary<int, List<Shape>> SortedTimeline { get; set; }
+            public System.Numerics.Vector3 BgColor { get; set; }
+        }
         enum UserMode
         {
             Idle,
             Edit,
             Create
         }
+        enum ImportMode
+        {
+            Workspace,
+            Add,
+            Override
+        }
+        enum ExportMode
+        {
+            Workspace,
+            GIF,
+            MP4,
+            PNG,
+            SVG
+        }
         enum CreateMode
         {
             Line,
             Rectangle,
-            Circle
+            Circle,
+            Triangle
         }
         int _ioAngle;
         int _ioCornerRadius;
@@ -38,12 +59,19 @@ namespace FreeFrame
         int _ioY;
         int _ioWidth;
         int _ioHeight;
-        System.Numerics.Vector4 _ioColor;
         int _ioTimeline;
+        int _ioFps;
+        System.Numerics.Vector4 _ioColor;
+
+        System.Numerics.Vector3 _ioBgColor;
         bool _dialogFilePicker = false;
         bool _dialogCompatibility = false;
+        bool _dialogFileSaver = false;
+        bool _dialogError = false;
 
-        Vector2i MouseOriginalState;
+        Vector2i _mouseOriginalState;
+
+        Timeline _timeline;
 
         SelectorType _selectorType = SelectorType.None;
 
@@ -53,10 +81,14 @@ namespace FreeFrame
 
         UserMode _userMode;
         CreateMode _createMode;
+        ImportMode _importMode;
+        ExportMode _exportMode;
 
         ImGuiController _ImGuiController;
 
         List<Shape> _shapes;
+
+        public List<Shape> Shapes { get => _shapes; set => _shapes = value; }
 
         public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings) { }
 
@@ -64,26 +96,36 @@ namespace FreeFrame
         {
             base.OnLoad();
 
-            Helper.EnableDebugMode();
-
-            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f); // TODO: Magic value
-            GL.Enable(EnableCap.Multisample);
+            //Helper.EnableDebugMode();
 
             _userMode = UserMode.Idle;
             _createMode = CreateMode.Rectangle;
 
-            _shapes = new List<Shape>();
-
+            Shapes = new List<Shape>();
             _selector = new Selector();
-
-            MouseOriginalState = new Vector2i(0, 0);
-
+            _mouseOriginalState = new Vector2i(0, 0);
             _ImGuiController = new ImGuiController(ClientSize.X, ClientSize.Y);
+            _timeline = new Timeline();
+
+            // Input/Output
+            _ioAngle = DEFAULT_IO_INT;
+            _ioCornerRadius = DEFAULT_IO_INT;
+            _ioX = DEFAULT_IO_INT;
+            _ioY = DEFAULT_IO_INT;
+            _ioWidth = DEFAULT_IO_INT;
+            _ioHeight = DEFAULT_IO_INT;
+            _ioTimeline = DEFAULT_IO_INT;
+            _ioFps = Timeline.DEFAULT_FPS;
+            _ioColor = new System.Numerics.Vector4(0f, 0f, 0f, 1f);
+            _ioBgColor = new System.Numerics.Vector3(0.1f, 0.1f, 0.1f);
+            GL.ClearColor(_ioBgColor.X, _ioBgColor.Y, _ioBgColor.Z, 1.0f);
+
+            GL.Enable(EnableCap.Multisample);
         }
+
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            // TODO: map the new NDC to the window
 
             GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
 
@@ -97,15 +139,21 @@ namespace FreeFrame
         {
             base.OnUpdateFrame(e);
 
-            Title = String.Format("FreeFrame - x: {0} y: {1}", MouseState.X, MouseState.Y);
-            // Update title based on current context
-            //if (_selectedShape != null)
-            //    Title = String.Format("FreeFrame - Selected: {0} Mode: {1}", _selectedShape.GetType().Name, _userMode.ToString());
-            //else
-            //    Title = "FreeFrame";
+            Title = String.Format("FreeFrame - (height: {0} width: {1}) (x: {2} y: {3})", ClientSize.X, ClientSize.Y, MouseState.X, MouseState.Y);
 
-            //if (_selectedShape != null)
-            //    Console.WriteLine("x: {0}; y: {1}; width: {2}; height: {3}", _selectedShape.X, _selectedShape.Y, _selectedShape.Width, _selectedShape.Height);
+            if (_userMode == UserMode.Edit && _selectorType == SelectorType.Move)
+            {
+                float x = MouseState.X, y = MouseState.Y;
+                if (KeyboardState.IsKeyDown(Keys.LeftShift))
+                {
+                    if (Math.Abs(_mouseOriginalState.X - x) > Math.Abs(_mouseOriginalState.Y - y))
+                        y = _mouseOriginalState.Y;
+                    else
+                        x = _mouseOriginalState.X;
+                }
+                Title += String.Format(" (delta x: {0} delta y: {1})", x - _mouseOriginalState.X, y - _mouseOriginalState.Y);
+            }
+
         }
         /// <summary>
         /// Triggered as often as possible (fps). (Drawing, etc.)
@@ -116,32 +164,25 @@ namespace FreeFrame
             base.OnRenderFrame(e);
             GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
 
+            _timeline.OnRenderFrame(e, this);
 
+            _ioTimeline = _timeline.TimelineIndex;
+
+            // Reset selection
             if (KeyboardState.IsKeyDown(Keys.Escape))
                 ResetSelection();
 
+            // Delete shape
             if (KeyboardState.IsKeyDown(Keys.Delete))
-            {
                 if (_selectedShape != null)
-                {
-                    _shapes.Remove(_selectedShape);
-                    _selectedShape.DeleteObjects();
+                    DeleteShape(_selectedShape);
 
-                    ResetSelection();
-                }
-            }
-
-            if (KeyboardState.IsKeyDown(Keys.LeftControl) && KeyboardState.IsKeyDown(Keys.D) && (KeyboardState.WasKeyDown(Keys.LeftControl) == false || KeyboardState.WasKeyDown(Keys.D) == false)) // TODO: Fix duplication
-            {
+            // Duplicate shape
+            if (KeyboardState.IsKeyPressed(Keys.D) && KeyboardState.IsKeyDown(Keys.LeftControl))
                 if (_selectedShape != null)
-                {
-                    Shape shape = _selectedShape.Clone();
-                    _shapes.Add(shape);
-                    ResetSelection();
-                    _selectedShape = shape;
-                }
-            }
+                    DuplicateShape(_selectedShape);
 
+            // Mouse actions
             if (MouseState.WasButtonDown(MouseButton.Left) == false && MouseState.IsButtonDown(MouseButton.Left) == true) // First left click
                 OnLeftMouseDown();
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == true) // Long left click
@@ -149,13 +190,13 @@ namespace FreeFrame
             else if (MouseState.WasButtonDown(MouseButton.Left) == true && MouseState.IsButtonDown(MouseButton.Left) == false) // Release left click
                 OnLeftMouseUp();
 
-
             //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-            foreach (Shape shape in _shapes)
-            {
-                // shape.ImplementObject();
+            foreach (Shape shape in Shapes)
                 shape.Draw(ClientSize);
-            }
+
+            if (_userMode == UserMode.Edit)
+                _selector.Draw(ClientSize); // Only draw selector on edit mode
+            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
             if (_selectedShape != null)
             {
@@ -173,9 +214,8 @@ namespace FreeFrame
                         _selectedShape.Height != _ioHeight ||
                         _selectedShape.Color != new Color4(_ioColor.X, _ioColor.Y, _ioColor.Z, _ioColor.W) ||
                         _selectedShape.Angle != _ioAngle ||
-                        _selectedShape.CornerRadius != _ioCornerRadius) // If a properties need to be updated
+                        _selectedShape.CornerRadius != _ioCornerRadius) // If a property needs to be updated
                     {
-                        Console.WriteLine("Update properties");
                         _selectedShape.X = _ioX;
                         _selectedShape.Y = _ioY;
                         _selectedShape.Width = _ioWidth;
@@ -184,33 +224,25 @@ namespace FreeFrame
                         _selectedShape.Angle = _ioAngle;
                         _selectedShape.CornerRadius = _ioCornerRadius;
 
+                        // Update the shape in the timeline
+                        _timeline.UpdateShapeInTimeline(_selectedShape);
+
                         _selectedShape.ImplementObject();
                         _selector.Select(_selectedShape);
                     }
                 }
             }
-            switch (_userMode)
-            {
-                case UserMode.Edit:
-                    _selector.Draw(ClientSize);
-                    break;
-                case UserMode.Create:
-                    break;
-                case UserMode.Idle:
-                default:
-                    break;
-            }
-            //GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
 
-            _ImGuiController.Update(this, (float)e.Time); // TODO: Explain what's the point of this. Also explain why this order is necessary
-            ImGui.ShowDemoWindow();
+            _ImGuiController.Update(this, (float)e.Time);
             ShowUI();
+
+            //ImGui.ShowDemoWindow();
+            //ShowUIDebug();
 
             _ImGuiController.Render(); // Render ImGui elements
 
             SwapBuffers();
         }
-
         protected override void OnUnload()
         {
             base.OnUnload();
@@ -221,8 +253,132 @@ namespace FreeFrame
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
             GL.BindVertexArray(0);
 
-            _shapes.ForEach(shape => shape.DeleteObjects());
+            Shapes.ForEach(shape => shape.DeleteObjects());
         }
+
+        private void OnLeftMouseDown()
+        {
+            if (_userMode != UserMode.Create) // If it's not to create
+            {
+                if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
+                {
+                    _mouseOriginalState.X = (int)MouseState.X;
+                    _mouseOriginalState.Y = (int)MouseState.Y;
+
+                    // Retrieve the nearest shape
+                    Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+                    if (nearestShape != null)
+                    {
+                        if (nearestShape != _selectedShape)
+                        {
+                            _userMode = UserMode.Edit;
+                            _selector.Select(nearestShape);
+                            _selectedShape = nearestShape;
+                        }
+                    }
+
+                    (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
+
+                    // If the click is in a selector
+                    if (click)
+                    {
+                        _selectorType = type ?? SelectorType.None;
+
+                        if (_selectorType == SelectorType.Move && _selectedShape != null)
+                        {
+                            // Save the original point to calculate the delta when the user move the mouse
+                            _mouseOriginalState.X = _selectedShape.X;
+                            _mouseOriginalState.Y = _selectedShape.Y;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void OnLeftMouseEnter()
+        {
+            switch (_userMode)
+            {
+                case UserMode.Create: // Create mode
+                    _selectedShape = _createMode switch
+                    {
+                        CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y, Shape.DefaultColor),
+                        CreateMode.Rectangle => new SVGRectangle(0, 0, (int)MouseState.X, (int)MouseState.Y),
+                        CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y, Shape.DefaultColor),
+                        CreateMode.Triangle => new SVGPolygon((int)MouseState.X, (int)MouseState.Y, 0, 0, Shape.DefaultColor),
+                        _ => throw new Exception("A create mode need to be selected"),
+                    };
+                    Shapes.Add(_selectedShape);
+                    _selectorType = SelectorType.Resize;
+                    _userMode = UserMode.Edit;
+                    OnLeftMouseEnter(); // Change user mode and call same function in order to switch to edit mode
+                    break;
+
+                case UserMode.Edit: // Edit mode
+                    if (_selectedShape != null)
+                    {
+                        switch (_selectorType)
+                        {
+                            // Move the current shape
+                            case SelectorType.Move:
+                                if (_selectedShape.IsMoveable)
+                                {
+                                    float x = MouseState.X, y = MouseState.Y;
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
+                                    {
+                                        if (Math.Abs(_mouseOriginalState.X - x) > Math.Abs(_mouseOriginalState.Y - y))
+                                            y = _mouseOriginalState.Y;
+                                        else
+                                            x = _mouseOriginalState.X;
+                                    }
+                                    _selectedShape.Move(new Vector2i((int)x, (int)y));
+
+                                    // Update shape in timeline
+                                    _timeline.UpdateShapeInTimeline(_selectedShape);
+
+                                    _selector.Select(_selectedShape);
+                                    UpdateIO_UI();
+                                }
+                                break;
+
+                            // Resize the current shape
+                            case SelectorType.Resize:
+                                if (_selectedShape.IsResizeable)
+                                {
+                                    float width, height;
+                                    width = MouseState.X - _selectedShape.X;
+                                    height = MouseState.Y - _selectedShape.Y;
+                                    if (KeyboardState.IsKeyDown(Keys.LeftShift) || _selectedShape.GetType() == typeof(SVGCircle)) // SHIFT
+                                    {
+                                        if (width > height)
+                                            height = width;
+                                        else
+                                            width = height;
+                                    }
+                                    _selectedShape.Resize(new Vector2i((int)width, (int)height));
+
+                                    // Update shape in timeline
+                                    _timeline.UpdateShapeInTimeline(_selectedShape);
+
+                                    _selector.Select(_selectedShape);
+                                    UpdateIO_UI();
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void OnLeftMouseUp()
+        {
+            _selectorType = SelectorType.None;
+        }
+
         /// <summary>
         /// Update shape properties windows using shape properties
         /// </summary>
@@ -239,6 +395,10 @@ namespace FreeFrame
                 _ioCornerRadius = _selectedShape.CornerRadius;
             }
         }
+
+        /// <summary>
+        /// Reset the selection
+        /// </summary>
         public void ResetSelection()
         {
             _userMode = UserMode.Idle;
@@ -246,19 +406,25 @@ namespace FreeFrame
             _selectedShape = null;
             _selectedShapeBefore = null;
 
-            _ioX = 0;
-            _ioY = 0;
-            _ioWidth = 0;
-            _ioHeight = 0;
-            _ioColor = new System.Numerics.Vector4(0);
-            _ioAngle = 0;
-            _ioCornerRadius = 0;
+            _ioX = DEFAULT_IO_INT;
+            _ioY = DEFAULT_IO_INT;
+            _ioWidth = DEFAULT_IO_INT;
+            _ioHeight = DEFAULT_IO_INT;
+            _ioColor = new System.Numerics.Vector4(DEFAULT_IO_INT);
+            _ioAngle = DEFAULT_IO_INT;
+            _ioCornerRadius = DEFAULT_IO_INT;
         }
+
+        /// <summary>
+        /// Retrieve the nearest shape base on a given point
+        /// </summary>
+        /// <param name="currentLocation">point where the shape distance is going to be calculated</param>
+        /// <returns>Nearest shape</returns>
         public Shape? GetNearestShape(Vector2i currentLocation)
         {
             (Shape? shape, double pythagore) nearest = (null, double.MaxValue);
 
-            foreach (Shape shape in _shapes)
+            foreach (Shape shape in Shapes)
             {
                 List<Vector2i> points = shape.GetSelectablePoints();
 
@@ -272,116 +438,104 @@ namespace FreeFrame
             }
             return nearest.shape;
         }
-        public void OnLeftMouseDown()
-        {
-            switch (_userMode)
-            {
-                case UserMode.Idle:
-                case UserMode.Edit:
-                    if (ImGui.GetIO().WantCaptureMouse == false) // If it's not ImGui click
-                    {
-                        MouseOriginalState.X = (int)MouseState.X;
-                        MouseOriginalState.Y = (int)MouseState.Y;
 
-                        (bool click, SelectorType? type) = _selector.HitBox(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                        if (click)
+        /// <summary>
+        /// Draw the debug UI
+        /// </summary>
+        private void ShowUIDebug()
+        {
+            ImGui.Begin("Debug");
+            ImGui.Text("Selected shape:");
+            if (_selectedShape != null)
+            {
+                ImGui.Text(string.Format("Name: {0}", _selectedShape.GetType().Name));
+                ImGui.Text(string.Format("UID: {0}", _selectedShape.Id));
+                ImGui.Text(string.Format("Hash: {0}", _selectedShape.GetHashCode()));
+            }
+            else
+                ImGui.Text("none");
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (_selectedShape != null)
+            {
+                foreach (Renderer vao in _selectedShape.Renderers)
+                {
+                    ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
+                    ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));
+                    ImGui.Text(String.Format("IBO: {0}", vao.IndexBufferObjectID));
+                }
+            }
+            else
+                ImGui.Text("none");
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            ImGui.Text("Context:");
+            ImGui.Text(String.Format("User mode: {0}", _userMode.ToString()));
+            ImGui.Text(String.Format("Create mode: {0}", _createMode.ToString()));
+
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Spacing();
+            ImGui.Text("Timeline");
+            int numberColumns = 0, numberRows = 0;
+
+            if (_timeline.SortedTimeline != null)
+            {
+                numberColumns = _timeline.SortedTimeline.Count;
+                if (_timeline.SortedTimeline.Count > 0)
+                    numberRows = _timeline.SortedTimeline.Max(i => i.Value != null ? i.Value.Count : 0);
+            }
+
+            if (numberColumns > 0)
+            {
+                if (ImGui.BeginTable("elements", numberColumns, ImGuiTableFlags.RowBg | ImGuiTableFlags.Borders))
+                {
+                    foreach (KeyValuePair<int, List<Shape>> shapes in _timeline.SortedTimeline)
+                        if (shapes.Value != null)
+                            ImGui.TableSetupColumn(shapes.Key.ToString());
+                    ImGui.TableHeadersRow();
+
+                    for (int row = 0; row < numberRows; row++)
+                    {
+                        int columnIndex = 0;
+                        ImGui.TableNextRow();
+                        foreach (KeyValuePair<int, List<Shape>> shapes in _timeline.SortedTimeline)
                         {
-                            Console.WriteLine("Click on selector");
-                            _selectorType = type ?? SelectorType.None;
-                        }
-                        Shape? nearestShape = GetNearestShape(new Vector2i((int)MouseState.X, (int)MouseState.Y));
-                        if (nearestShape != null)
-                        {
-                            if (nearestShape != _selectedShape)
+                            if (shapes.Value != null)
                             {
-                                Console.WriteLine("New shape selected -> {0} >> {1}", nearestShape.GetType().Name, nearestShape.ToString()); // TODO: Add a debug mode
-                                _userMode = UserMode.Edit;
-                                _selector.Select(nearestShape);
-                                _selectedShape = nearestShape;
+                                if (shapes.Value.Count > row)
+                                {
+                                    ImGui.TableSetColumnIndex(columnIndex);
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].GetType().Name));
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].Id));
+                                    ImGui.Text(string.Format("{0}", shapes.Value[row].GetHashCode()));
+                                    foreach (Renderer vao in shapes.Value[row].Renderers)
+                                    {
+                                        ImGui.Text(String.Format("VAO: {0}", vao.VertexArrayObjectID));
+                                        ImGui.Text(String.Format("VBO: {0}", vao.VertexBufferObjectID));
+                                        ImGui.Text(String.Format("IBO: {0}", vao.IndexBufferObjectID));
+                                    }
+                                }
+                                columnIndex++;
                             }
                         }
                     }
-                    break;
-                case UserMode.Create:
-                default:
-                    break;
+                    ImGui.EndTable();
+                }
             }
+            ImGui.End();
         }
-        public void OnLeftMouseEnter() // TODO: Rename this
-        {
-            // Console.WriteLine("Mouse is down and usermode is {0}", _userMode.ToString());
-            switch (_userMode)
-            {
-                case UserMode.Create: // Create mode
-                    _selectedShape = _createMode switch
-                    {
-                        CreateMode.Line => new SVGLine((int)MouseState.X, (int)MouseState.Y, (int)MouseState.X, (int)MouseState.Y),
-                        CreateMode.Rectangle => new SVGRectangle(0, 0, (int)MouseState.X, (int)MouseState.Y),
-                        CreateMode.Circle => new SVGCircle(0, (int)MouseState.X, (int)MouseState.Y),
-                        _ => throw new Exception("A create mode need to be selected"),
-                    };
-                    _shapes.Add(_selectedShape);
-                    _selectorType = SelectorType.Resize;
-                    _userMode = UserMode.Edit;
-                    OnLeftMouseEnter(); // Change user mode and call same function in order to switch to edit mode
-                    break;
-                case UserMode.Edit: // Edit mode
-                    if (_selectedShape != null)
-                    {
-                        switch (_selectorType)
-                        {
-                            case SelectorType.Move:
-                                if (_selectedShape.IsMoveable)
-                                {
-                                    float x = MouseState.X, y = MouseState.Y;
-                                    if (KeyboardState.IsKeyDown(Keys.LeftShift)) // SHIFT
-                                    {
-                                        if (Math.Abs(MouseOriginalState.X - x) > Math.Abs(MouseOriginalState.Y - y))
-                                            y = MouseOriginalState.Y;
-                                        else
-                                            x = MouseOriginalState.X;
-                                    }
-                                    _selectedShape.Move(new Vector2i((int)x, (int)y));
-                                    _selector.Select(_selectedShape);
-                                    UpdateIO_UI();
-                                }
-                                break;
-                            case SelectorType.Resize:
-                                if (_selectedShape.IsResizeable)
-                                {
-                                    float width, height;
-                                    width = MouseState.X - _selectedShape.X;
-                                    height = MouseState.Y - _selectedShape.Y;
-                                    if (KeyboardState.IsKeyDown(Keys.LeftShift) || _selectedShape.GetType() == typeof(SVGCircle)) // SHIFT
-                                    {
-                                        if (width > height)
-                                            height = width;
-                                        else
-                                            width = height;
-                                    }
-                                    _selectedShape.Resize(new Vector2i((int)width, (int)height));
-                                    _selector.Select(_selectedShape);
-                                    UpdateIO_UI();
-                                }
-                                break;
-                            case SelectorType.Edge:
-                            case SelectorType.None:
-                            default:
-                                break;
-                        }
-                    }
-                    break;
-                case UserMode.Idle:
-                default:
-                    break;
-            }
 
-        }
-        public void OnLeftMouseUp()
-        {
-            _selectorType = SelectorType.None;
-        }
-        public void ShowUI()
+        /// <summary>
+        /// Draw the UI
+        /// </summary>
+        private void ShowUI()
         {
             // ImGui settings
             ImGui.GetStyle().WindowRounding = 0.0f;
@@ -409,7 +563,7 @@ namespace FreeFrame
                 if (_selectedShape == null || _selectedShape.IsMoveable == false)
                 {
                     ImGui.EndDisabled();
-                    HelpMarker("This shape is not moveable");
+                    //HelpMarker("This shape is not moveable");
                     ImGui.BeginDisabled();
                 }
                 ImGui.TableSetColumnIndex(1);
@@ -441,7 +595,7 @@ namespace FreeFrame
                 if (_selectedShape == null || _selectedShape.IsResizeable == false)
                 {
                     ImGui.EndDisabled();
-                    HelpMarker("This shape is not resizeable");
+                    //HelpMarker("This shape is not resizeable");
                     ImGui.BeginDisabled();
                 }
                 ImGui.TableSetColumnIndex(1);
@@ -505,7 +659,8 @@ namespace FreeFrame
                 ImGui.PushItemWidth(82);
                 if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
                     ImGui.BeginDisabled();
-                ImGui.InputInt("##Radius", ref _ioCornerRadius);
+                if (ImGui.InputInt("##Radius", ref _ioCornerRadius))
+                    _ioCornerRadius = Math.Max(_ioCornerRadius, 0);
                 if (_selectedShape == null || _selectedShape.IsCornerRadiusChangeable == false)
                     ImGui.EndDisabled();
 
@@ -513,16 +668,22 @@ namespace FreeFrame
             }
 
             ImGui.Spacing();
+
+            if (_selectedShape == null)
+                ImGui.BeginDisabled();
+            ImGui.Text("Color");
+            ImGui.ColorEdit4("##Color", ref _ioColor);
+            if (_selectedShape == null)
+                ImGui.EndDisabled();
+
+            ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
-            ImGui.Text("Color");
+            ImGui.Text("Background Color");
             ImGui.Spacing();
-            if (_selectedShape == null)
-                ImGui.BeginDisabled();
-            ImGui.ColorEdit4("Color", ref _ioColor);
-            if (_selectedShape == null)
-                ImGui.EndDisabled();
+            if (ImGui.ColorEdit3("##BgColor", ref _ioBgColor))
+                GL.ClearColor(_ioBgColor.X, _ioBgColor.Y, _ioBgColor.Z, 1.0f);
             ImGui.End();
 
             // Tree view side
@@ -531,15 +692,33 @@ namespace FreeFrame
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X - ImGui.GetWindowWidth(), ClientSize.Y / 2));
             ImGui.Text("Tree View");
             ImGui.Spacing();
-            foreach (Shape shape in _shapes)
+            for (int i = Shapes.Count - 1; i >= 0; i--)
             {
-                if (ImGui.Selectable(String.Format("{0}##{1}", shape.GetType().Name, shape.GetHashCode()), _selectedShape == shape))
+                if (ImGui.Selectable(String.Format("{0} - {1}##{2}", Shapes[i].ShortId, Shapes[i].GetType().Name, Shapes[i].GetHashCode()), _selectedShape == Shapes[i]))
                 {
-                    _selectedShape = shape;
-                    _selector.Select(shape);
+                    _selectedShape = Shapes[i];
+                    _selector.Select(Shapes[i]);
                     _userMode = UserMode.Edit;
-                    Console.WriteLine("New shape selected through tree view");
                 }
+                if (i - 1 >= 0)
+                {
+                    if (ImGui.ArrowButton(String.Format("Down##d{0}", i), ImGuiDir.Down))
+                    {
+                        InvertShape(i, i - 1);
+                        SelectShape(Shapes[i - 1]);
+                    }
+                }
+                if (i + 1 < Shapes.Count)
+                {
+                    if (i - 1 >= 0)
+                        ImGui.SameLine();
+                    if (ImGui.ArrowButton(String.Format("Up##u{0}", i), ImGuiDir.Up))
+                    {
+                        InvertShape(i, i + 1);
+                        SelectShape(Shapes[i + 1]);
+                    }
+                }
+                ImGui.Separator();
             }
             ImGui.End();
 
@@ -548,6 +727,153 @@ namespace FreeFrame
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(0, ClientSize.Y - ImGui.GetWindowHeight()));
             ImGui.Text("Animation");
+            ImGui.Spacing();
+
+            int numberColumns = _timeline.SortedTimeline.Count;
+            if (numberColumns > 0)
+            {
+                foreach (Shape shape in Shapes)
+                {
+                    if (ImGui.BeginTable("shape", 2, ImGuiTableFlags.Resizable))
+                    {
+                        ImGui.TableNextRow();
+                        ImGui.TableSetColumnIndex(0);
+                        ImGui.Text(string.Format("{0} - {1}", shape.ShortId, shape.GetType().Name));
+                        ImGui.TableSetColumnIndex(1);
+                        if (ImGui.BeginTable(String.Format("elements##{0}", shape.Id), numberColumns + 1, ImGuiTableFlags.Borders))
+                        {
+                            ImGui.TableSetupColumn("Properties");
+                            foreach (KeyValuePair<int, List<Shape>> shapes in _timeline.SortedTimeline)
+                                ImGui.TableSetupColumn(shapes.Key.ToString());
+                            ImGui.TableHeadersRow();
+
+
+                            int i = 0;
+
+                            if (shape.IsMoveable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("X");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.X.ToString());
+                                    }
+                                }
+
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Y");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Y.ToString());
+                                    }
+                                }
+                            }
+
+                            if (shape.IsResizeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Width");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Width.ToString());
+                                    }
+                                }
+
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Height");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.Height.ToString());
+                                    }
+                                }
+                            }
+
+                            if (shape.IsAngleChangeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Angle");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(String.Format("{0}°", sibling.Angle));
+                                    }
+                                }
+                            }
+
+                            if (shape.IsCornerRadiusChangeable)
+                            {
+                                i = 0;
+                                ImGui.TableNextRow();
+                                ImGui.TableSetColumnIndex(i);
+                                ImGui.Text("Corner Radius");
+                                foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                                {
+                                    i++;
+                                    Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                    if (sibling != null)
+                                    {
+                                        ImGui.TableSetColumnIndex(i);
+                                        ImGui.Text(sibling.CornerRadius.ToString());
+                                    }
+                                }
+                            }
+
+                            i = 0;
+                            ImGui.TableNextRow();
+                            ImGui.TableSetColumnIndex(i);
+                            ImGui.Text("Color");
+                            foreach (KeyValuePair<int, List<Shape>> timeline in _timeline.SortedTimeline)
+                            {
+                                i++;
+                                Shape? sibling = timeline.Value.Find(x => x.Id == shape.Id);
+                                if (sibling != null)
+                                {
+                                    ImGui.TableSetColumnIndex(i);
+                                    ImGui.Text(String.Format("RGBA({0}, {1}, {2}, {3})", sibling.Color.R, sibling.Color.G, sibling.Color.B, sibling.Color.A));
+                                }
+                            }
+
+                            ImGui.EndTable();
+                        }
+                        ImGui.EndTable();
+                        ImGui.Spacing();
+                    }
+                }
+            }
             ImGui.End();
 
 
@@ -555,10 +881,65 @@ namespace FreeFrame
             ImGui.Begin("Timeline", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar);
             ImGui.SetWindowSize(new System.Numerics.Vector2(ClientSize.X / 2 - 200, 200));
             ImGui.SetWindowPos(new System.Numerics.Vector2(ClientSize.X / 2, ClientSize.Y - ImGui.GetWindowHeight()));
+
             ImGui.Text("Timeline");
             ImGui.Spacing();
-            ImGui.SliderInt("(seconds)", ref _ioTimeline, 0, 60);
+            if (ImGui.SliderInt("frame", ref _ioTimeline, Timeline.MIN_TIMELINE, Timeline.MAX_TIMELINE))
+            {
+                _timeline.TimelineIndex = _ioTimeline;
+                _timeline.RenderInterpolation(Shapes);
+                ResetSelection();
+            }
+
+            ImGui.SameLine();
+
+            ImGui.PushItemWidth(80f);
+            if (ImGui.InputInt("fps", ref _ioFps))
+            {
+                _ioFps = Math.Clamp(_ioFps, Timeline.MIN_FPS, Timeline.MAX_FPS);
+                _timeline.Fps = _ioFps;
+            }
+            ImGui.PopItemWidth();
+
+            if (ImGui.Button(_timeline.IsPlaying == false ? "Play" : "Pause"))
+                _timeline.IsPlaying = !_timeline.IsPlaying;
+
+            ImGui.SameLine();
+
+            if (_selectedShape != null)
+            {
+                if (_timeline.SortedTimeline.ContainsKey(_timeline.TimelineIndex) && _timeline.SortedTimeline[_timeline.TimelineIndex] != null && _timeline.SortedTimeline[_timeline.TimelineIndex].Any(x => x.Id == _selectedShape.Id))
+                {
+                    if (ImGui.Button(String.Format("Remove keyframe {0} for {1}", _timeline.TimelineIndex, _selectedShape.GetType().Name)))
+                    {
+                        _timeline.SortedTimeline[_timeline.TimelineIndex].Remove(_timeline.SortedTimeline[_timeline.TimelineIndex].Find(x => x.Id == _selectedShape.Id)!); // Can't be null
+                        // If timeline empty then null it
+                        if (_timeline.SortedTimeline[_timeline.TimelineIndex].Count == 0)
+                            _timeline.SortedTimeline.Remove(_timeline.TimelineIndex);
+                    }
+                }
+                else
+                {
+                    if (ImGui.Button(String.Format("Create keyframe for {0}", _selectedShape.GetType().Name)))
+                    {
+                        if (_timeline.SortedTimeline.ContainsKey(_timeline.TimelineIndex) == false || _timeline.SortedTimeline[_timeline.TimelineIndex] == null)
+                            _timeline.SortedTimeline[_timeline.TimelineIndex] = new List<Shape>();
+
+                        foreach (Shape shape in _timeline.SortedTimeline[_timeline.TimelineIndex])
+                        {
+                            if (shape.Id == _selectedShape.Id)
+                            {
+                                _timeline.SortedTimeline[_timeline.TimelineIndex].Remove(shape);
+                                break;
+                            }
+                        }
+                        _timeline.SortedTimeline[_timeline.TimelineIndex].Add(_selectedShape.ShallowCopy());
+                    }
+                }
+            }
+
             ImGui.End();
+
 
             // Navbar side
             ImGui.Begin("NavBar", ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.MenuBar);
@@ -571,21 +952,52 @@ namespace FreeFrame
                 {
                     if (ImGui.BeginMenu("Open"))
                     {
-                        if (ImGui.MenuItem("New project", "Ctrl+O"))
+                        if (ImGui.MenuItem("Open a new project"))
+                        {
                             _dialogFilePicker = true;
-                        if (ImGui.MenuItem("Import a file", "Ctrl+I"))
-                        { }
+                            _importMode = ImportMode.Workspace;
+                        }
+                        if (ImGui.MenuItem("Import a SVG"))
+                        {
+                            _dialogFilePicker = true;
+                            _importMode = ImportMode.Add;
+                        }
+                        if (ImGui.MenuItem("Open a new project from a SVG"))
+                        {
+                            _dialogFilePicker = true;
+                            _importMode = ImportMode.Override;
+                        }
                         ImGui.EndMenu();
                     }
                     if (ImGui.BeginMenu("Save"))
                     {
-                        if (ImGui.MenuItem("Save as PNG", "Ctrl+S"))
+                        if (ImGui.MenuItem("Save"))
                         {
-                            // Save the current screen
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.Workspace;
+                        }
+                        if (ImGui.MenuItem("Save as SVG"))
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.SVG;
+                        }
+                        if (ImGui.MenuItem("Save as MP4"))
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.MP4;
+                        }
+                        if (ImGui.MenuItem("Save as GIF"))
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.GIF;
+                        }
+                        if (ImGui.MenuItem("Save as PNG"))
+                        {
+                            _dialogFileSaver = true;
+                            _exportMode = ExportMode.PNG;
                         }
                         ImGui.EndMenu();
                     }
-                    if (ImGui.MenuItem("Close", "Ctrl+W")) { /* Do stuff */ }
                     ImGui.EndMenu();
                 }
                 ImGui.EndMenuBar();
@@ -614,23 +1026,83 @@ namespace FreeFrame
                     _userMode = UserMode.Create;
                     _createMode = CreateMode.Rectangle;
                 }
-                if (ImGui.Selectable("Triangle")) { /* Do stuff */ }
+                if (ImGui.Selectable("Triangle"))
+                {
+                    _userMode = UserMode.Create;
+                    _createMode = CreateMode.Triangle;
+                }
+                ImGui.EndPopup();
+            }
+            // File picker dialog
+            if (_dialogFileSaver)
+                ImGui.OpenPopup("save-file");
+            if (ImGui.BeginPopupModal("save-file"))
+            {
+                var picker = FileSaver.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"));
+                if (picker.Draw())
+                {
+                    string path = picker.CurrentFolder + '\\' + picker.Filename;
+                    switch (_exportMode)
+                    {
+                        case ExportMode.Workspace:
+                            SaveFreeFrameWorkspace(path);
+                            break;
+                        case ExportMode.GIF:
+                            SaveCurrentScreenToGIF(path);
+                            break;
+                        case ExportMode.MP4:
+                            SaveCurrentScreenToMP4(path);
+                            break;
+                        case ExportMode.PNG:
+                            SaveCurrentScreenToPNG(path);
+                            break;
+                        case ExportMode.SVG:
+                            SaveCurrentScreenToSVG(path);
+                            break;
+                        default:
+                            break;
+                    }
+                    FileSaver.Clear();
+                }
+                _dialogFileSaver = false;
                 ImGui.EndPopup();
             }
 
             // File picker dialog
             if (_dialogFilePicker)
                 ImGui.OpenPopup("open-file");
-            if (ImGui.BeginPopupModal("open-file")) // ImGuiWindowFlags.AlwaysAutoResize
+            if (ImGui.BeginPopupModal("open-file"))
             {
-                var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), ".svg");
+                var picker = FilePicker.GetFilePicker(this, Path.Combine(Environment.CurrentDirectory, "Content/Atlases"), _importMode == ImportMode.Workspace ? ".freeframe" : ".svg");
                 if (picker.Draw())
                 {
-                    (_shapes, bool compatibilityFlag) = Importer.ImportFromFile(picker.SelectedFile);
-                    FilePicker.RemoveFilePicker(this);
-                    if (compatibilityFlag)
-                        _dialogCompatibility = true;
+                    ResetSelection();
+                    try
+                    {
+                        switch (_importMode)
+                        {
+                            case ImportMode.Workspace:
+                                ImportFreeFrameWorkspace(picker.SelectedFile);
+                                break;
+                            case ImportMode.Add:
+                                (List<Shape> newShapes, SortedDictionary<int, List<Shape>> newTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                Shapes.AddRange(newShapes);
+                                break;
+                            case ImportMode.Override:
+                                (Shapes, _timeline.SortedTimeline, _dialogCompatibility) = Importer.ImportFromFile(picker.SelectedFile);
+                                _timeline.ResetTimeline();
+                                break;
+                            default:
+                                break;
+                        }
 
+                    }
+                    catch (Exception)
+                    {
+                        _dialogError = true;
+                    }
+
+                    FilePicker.Clear();
                 }
                 _dialogFilePicker = false;
                 ImGui.EndPopup();
@@ -639,7 +1111,8 @@ namespace FreeFrame
             // Compatibility alert
             if (_dialogCompatibility)
                 ImGui.OpenPopup("Compatibility Problem");
-            if (ImGui.BeginPopupModal("Compatibility Problem")) // ImGuiWindowFlags.AlwaysAutoResize
+
+            if (ImGui.BeginPopupModal("Compatibility Problem"))
             {
                 ImGui.Text("Some SVG elements are not compatible. Go to the list of compatible SVG elements");
                 ImGui.Separator();
@@ -650,20 +1123,203 @@ namespace FreeFrame
                 }
                 ImGui.EndPopup();
             }
+
+            // Error alert
+            if (_dialogError)
+                ImGui.OpenPopup("Error Problem");
+            if (ImGui.BeginPopupModal("Error Problem"))
+            {
+                ImGui.Text("There was an error while importing the file, please check the syntax");
+                ImGui.Separator();
+                if (ImGui.Button("OK"))
+                {
+                    ImGui.CloseCurrentPopup();
+                    _dialogError = false;
+                }
+                ImGui.EndPopup();
+            }
             ImGui.End();
         }
 
-        static void HelpMarker(string desc)
+        /// <summary>
+        /// Select the given shape
+        /// </summary>
+        /// <param name="shape">Shape to be selected</param>
+        public void SelectShape(Shape shape)
         {
-            ImGui.TextDisabled("(?)");
-            if (ImGui.IsItemHovered())
+            _selectedShape = shape;
+            _selector.Select(shape);
+            _userMode = UserMode.Edit;
+        }
+
+        /// <summary>
+        /// Delete the given shape
+        /// </summary>
+        /// <param name="shape">Shape to be deleted</param>
+        public void DeleteShape(Shape shape)
+        {
+            _timeline.RemoveElementInTimeline(shape);
+
+            Shapes.Remove(shape);
+            shape.DeleteObjects();
+
+            ResetSelection();
+        }
+
+        /// <summary>
+        /// Duplicate the given shape
+        /// </summary>
+        /// <param name="shape">Shape to be duplicated</param>
+        public void DuplicateShape(Shape shape)
+        {
+            Shape copy = shape.DeepCopy();
+            ResetSelection();
+            Shapes.Add(copy);
+            copy.ImplementObject();
+        }
+
+        /// <summary>
+        /// Invert shapes position (layer)
+        /// </summary>
+        /// <param name="index1">First shape index</param>
+        /// <param name="index2">Second shape index</param>
+        public void InvertShape(int index1, int index2)
+        {
+            Shape tmpShape = Shapes[index2].ShallowCopy();
+            Shapes[index2] = Shapes[index1].ShallowCopy();
+            Shapes[index1] = tmpShape;
+        }
+
+        /// <summary>
+        /// Save the current workspace in MP4
+        /// </summary>
+        /// <param name="path">Location of the MP4 output</param>
+        public void SaveCurrentScreenToMP4(string path)
+        {
+            using VideoWriter w = new VideoWriter(path + ".mp4", _timeline.Fps, new System.Drawing.Size(ClientSize.X, ClientSize.Y), true);
+            for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++)
             {
-                ImGui.BeginTooltip();
-                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35.0f);
-                ImGui.TextUnformatted(desc);
-                ImGui.PopTextWrapPos();
-                ImGui.EndTooltip();
+                RenderFrameBySecondIndex(i);
+                w.Write(TakeSnap().ToMat());
             }
+        }
+
+        /// <summary>
+        /// Save the current workspace in the FreeFrame format
+        /// </summary>
+        /// <param name="path">Location of the FreeFrame output</param>
+        public void SaveFreeFrameWorkspace(string path)
+        {
+            Workspace workspace = new()
+            {
+                SortedTimeline = _timeline.SortedTimeline,
+                BgColor = _ioBgColor,
+                Shapes = Shapes
+            };
+
+            string jsonString = JsonConvert.SerializeObject(workspace, Formatting.Indented, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto, // Because I have abstract classes
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
+
+            File.WriteAllText(path + ".freeframe", jsonString);
+        }
+
+        /// <summary>
+        /// Import a FreeFrame file
+        /// </summary>
+        /// <param name="path">Location of the FreeFrame file</param>
+        public void ImportFreeFrameWorkspace(string path)
+        {
+            Workspace fromJson = JsonConvert.DeserializeObject<Workspace>(File.ReadAllText(path), new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto // Because I have abstract classes
+            });
+
+            Shapes = fromJson.Shapes ?? new();
+            _timeline.SortedTimeline = fromJson.SortedTimeline ?? new();
+            _ioBgColor = fromJson.BgColor;
+
+            // Implement new objects and render
+            foreach (Shape shape in Shapes)
+                shape.ImplementObject();
+            _timeline.RenderInterpolation(Shapes);
+            ResetSelection();
+        }
+
+        /// <summary>
+        /// Save the current workspace in the GIF format
+        /// </summary>
+        /// <param name="path">Location of the GIF output</param>
+        public void SaveCurrentScreenToGIF(string path)
+        {
+            using (var gif = AnimatedGif.AnimatedGif.Create(path + ".gif", 1000 / _timeline.Fps))
+            {
+                for (int i = Timeline.MIN_TIMELINE; i <= Timeline.MAX_TIMELINE; i++)
+                {
+                    RenderFrameBySecondIndex(i);
+                    gif.AddFrame(TakeSnap(), delay: -1, quality: GifQuality.Bit8);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Save the current workspace in the SVG format
+        /// </summary>
+        /// <param name="path">Location of the SVG output</param>
+        public void SaveCurrentScreenToSVG(string path)
+        {
+            Importer.ExportToFile(Shapes, ClientSize, path + ".svg");
+        }
+
+        /// <summary>
+        /// Save the current workspace in the PNG format
+        /// </summary>
+        /// <param name="path">Location of the PNG output</param>
+        public void SaveCurrentScreenToPNG(string path)
+        {
+            RenderFrameBySecondIndex(_timeline.TimelineIndex);
+            TakeSnap().Save(path + ".png", ImageFormat.Png);
+        }
+
+        /// <summary>
+        /// Render the timeline
+        /// </summary>
+        /// <param name="second">Index of the timeline to be renderer</param>
+        public void RenderFrameBySecondIndex(int second)
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit); // Clear the color
+            ResetSelection();
+
+            _timeline.TimelineIndex = second;
+            _timeline.RenderInterpolation(Shapes);
+
+            ResetSelection();
+
+            foreach (Shape shape in Shapes)
+                shape.Draw(ClientSize);
+        }
+
+        /// <summary>
+        /// Take a screenshot of the current user view
+        /// </summary>
+        /// <returns>Bitmap that contains all the pixels of the screenshot</returns>
+        public Bitmap TakeSnap()
+        {
+            Bitmap bmp = new Bitmap(ClientSize.X, ClientSize.Y);
+
+            // Lock the bits
+            BitmapData bmpData = bmp.LockBits(new System.Drawing.Rectangle(0, 0, ClientSize.X, ClientSize.Y), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+            // Fill with current window
+            GL.ReadPixels(0, 0, ClientSize.X, ClientSize.Y, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, bmpData.Scan0);
+
+            bmp.UnlockBits(bmpData);
+
+            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+
+            return bmp;
         }
     }
 }

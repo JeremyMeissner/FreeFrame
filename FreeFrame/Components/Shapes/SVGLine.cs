@@ -9,7 +9,7 @@ using System.Xml;
 
 namespace FreeFrame.Components.Shapes
 {
-    internal class SVGLine : Shape
+    public class SVGLine : Shape
     {
         #region Default values
         const int DefaultX1 = 0;
@@ -22,11 +22,12 @@ namespace FreeFrame.Components.Shapes
             Convert.ToInt32(reader["x1"]),
             Convert.ToInt32(reader["y1"]),
             Convert.ToInt32(reader["x2"]),
-            Convert.ToInt32(reader["y2"])) // TODO: Error handler if one of the properties in reader is note here, it should be dynamic
+            Convert.ToInt32(reader["y2"]),
+            Convert.ToString(reader["fill"] == null ? DefaultColor : reader["fill"]))
         {
         }
-        public SVGLine() : this(DefaultX1, DefaultY1, DefaultX2, DefaultY2) { }
-        public SVGLine(int x1, int y1, int x2, int y2)
+        public SVGLine() : this(DefaultX1, DefaultY1, DefaultX2, DefaultY2, DefaultColor) { }
+        public SVGLine(int x1, int y1, int x2, int y2, string color)
         {
             IsCornerRadiusChangeable = false;
 
@@ -34,12 +35,39 @@ namespace FreeFrame.Components.Shapes
             Y = y1;
             Width = x2 - X;
             Height = y2 - Y;
+            Color = Importer.HexadecimalToRGB(color);
 
             ImplementObject();
         }
-        public override float[] GetVertices() => new float[] { X, Y, Width + X, Height + Y }; // x, y, x, y, x, y, ... (clockwise)
-        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 }; // TODO: please dont hardcode
-        public override string ToString() => $"x1: {X}, y1: {Y}, x2: {Width + X}, y2: {Height + Y}";
+
+        /// <summary>
+        /// Return the vertices position in NDC format
+        /// </summary>
+        /// <returns>array of vertices position. x, y, x, y, ... (clockwise)</returns>
+        public override float[] GetVertices() => new float[] { X, Y, X + Width, Y + Height }; // x, y, x, y, x, y, ... (clockwise)
+
+        /// <summary>
+        /// Return the indexes position of the lines
+        /// </summary>
+        /// <returns>array of indexes</returns>
+        public override uint[] GetVerticesIndexes() => new uint[] { 0, 1 };
+
+        /// <summary>
+        /// Reset the renderers and create new ones (use when update any properties of the shape)
+        /// </summary>
+        public override void ImplementObject()
+        {
+            foreach (Renderer vao in Renderers)
+                vao.DeleteObjects();
+            Renderers.Clear();
+
+            Renderers.Add(new Renderer(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines, this ));
+        }
+
+        /// <summary>
+        /// Retrieve the points that made the shape detectable
+        /// </summary>
+        /// <returns>Position of all the points</returns>
         public override List<Vector2i> GetSelectablePoints()
         {
             List<Vector2i> points = new();
@@ -47,14 +75,11 @@ namespace FreeFrame.Components.Shapes
             points.Add(new Vector2i(Width + X, Height + Y));
             return points;
         }
-        public override void ImplementObject()
-        {
-            foreach (VertexArrayObject vao in _vaos)
-                vao.DeleteObjects();
-            _vaos.Clear();
 
-            _vaos.Add(new VertexArrayObject(GetVertices(), GetVerticesIndexes(), PrimitiveType.Lines, this ));
-        }
+        /// <summary>
+        /// Move the current shape to the given position
+        /// </summary>
+        /// <param name="position">New position</param>
         public override void Move(Vector2i position)
         {
             X = position.X;
@@ -62,6 +87,11 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
+
+        /// <summary>
+        /// Resize the current shape to the given size
+        /// </summary>
+        /// <param name="size">New size</param>
         public override void Resize(Vector2i size)
         {
             Width = size.X;
@@ -69,5 +99,11 @@ namespace FreeFrame.Components.Shapes
 
             ImplementObject();
         }
+
+        /// <summary>
+        /// Retrieve the Shape in the SVG format
+        /// </summary>
+        /// <returns>string of the SVG format</returns>
+        public override string ToString() => $"<line x1=\"{X}\" y1=\"{Y}\" x2=\"{Width + X}\" y2=\"{Height + Y}\" fill=\"{ColorToHexadecimal(Color)}\"/>";
     }
 }

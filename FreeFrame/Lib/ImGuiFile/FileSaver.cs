@@ -8,22 +8,18 @@ using System.Collections.Generic;
 using System.IO;
 using Num = System.Numerics;
 
-namespace FreeFrame.Lib.FilePicker
+namespace FreeFrame.Lib.FileExplorer
 {
-    public class FilePicker
+    public class FileSaver
     {
-        static readonly Dictionary<object, FilePicker> _filePickers = new Dictionary<object, FilePicker>();
+        static readonly Dictionary<object, FileSaver> _fileSavers = new Dictionary<object, FileSaver>();
 
         public string RootFolder;
         public string CurrentFolder;
-        public string SelectedFile;
-        public List<string> AllowedExtensions;
-        public bool OnlyAllowFolders;
 
-        public static FilePicker GetFolderPicker(object o, string startingPath)
-            => GetFilePicker(o, startingPath, null, true);
+        public string Filename;
 
-        public static FilePicker GetFilePicker(object o, string startingPath, string searchFilter = null, bool onlyAllowFolders = false)
+        public static FileSaver GetFilePicker(object o, string startingPath)
         {
             if (File.Exists(startingPath))
             {
@@ -36,32 +32,21 @@ namespace FreeFrame.Lib.FilePicker
                     startingPath = AppContext.BaseDirectory;
             }
 
-            if (!_filePickers.TryGetValue(o, out FilePicker fp))
+            if (!_fileSavers.TryGetValue(o, out FileSaver fp))
             {
-                fp = new FilePicker
+                fp = new FileSaver
                 {
                     RootFolder = startingPath,
                     CurrentFolder = startingPath,
-                    OnlyAllowFolders = onlyAllowFolders
+                    Filename = string.Empty,
                 };
 
-                if (searchFilter != null)
-                {
-                    if (fp.AllowedExtensions != null)
-                        fp.AllowedExtensions.Clear();
-                    else
-                        fp.AllowedExtensions = new List<string>();
-
-                    fp.AllowedExtensions.AddRange(searchFilter.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries));
-                }
-
-                _filePickers.Add(o, fp);
+                _fileSavers.Add(o, fp);
             }
 
             return fp;
         }
-
-        public static void RemoveFilePicker(object o) => _filePickers.Remove(o);
+        public static void Clear() => _fileSavers.Clear();
 
         public bool Draw()
         {
@@ -76,7 +61,7 @@ namespace FreeFrame.Lib.FilePicker
                 var di = new DirectoryInfo(CurrentFolder);
                 if (di.Exists)
                 {
-                    if (di.Parent != null) // && CurrentFolder != RootFolder
+                    if (di.Parent != null)
                         if (ImGui.Selectable("../", false, ImGuiSelectableFlags.DontClosePopups))
                             CurrentFolder = di.Parent.FullName;
 
@@ -91,19 +76,6 @@ namespace FreeFrame.Lib.FilePicker
                                 CurrentFolder = fse;
                             ImGui.PopStyleColor();
                         }
-                        else
-                        {
-                            var name = Path.GetFileName(fse);
-                            bool isSelected = SelectedFile == fse;
-                            if (ImGui.Selectable($"[F] {name}", isSelected, ImGuiSelectableFlags.DontClosePopups))
-                                SelectedFile = fse;
-
-                            if (ImGui.IsMouseDoubleClicked(0))
-                            {
-                                result = true;
-                                ImGui.CloseCurrentPopup();
-                            }
-                        }
                     }
                 }
             }
@@ -114,27 +86,15 @@ namespace FreeFrame.Lib.FilePicker
             {
                 result = false;
                 ImGui.CloseCurrentPopup();
+                Clear();
             }
-
-            if (OnlyAllowFolders)
+            ImGui.SameLine();
+            if (ImGui.Button("Save here"))
             {
-                ImGui.SameLine();
-                if (ImGui.Button("Open"))
-                {
-                    result = true;
-                    SelectedFile = CurrentFolder;
-                    ImGui.CloseCurrentPopup();
-                }
+                result = true;
+                ImGui.CloseCurrentPopup();
             }
-            else if (SelectedFile != null)
-            {
-                ImGui.SameLine();
-                if (ImGui.Button("Open"))
-                {
-                    result = true;
-                    ImGui.CloseCurrentPopup();
-                }
-            }
+            ImGui.InputText("Filename", ref Filename, 64);
 
             return result;
         }
@@ -144,22 +104,8 @@ namespace FreeFrame.Lib.FilePicker
             var dirs = new List<string>();
 
             foreach (var fse in Directory.GetFileSystemEntries(fullName, ""))
-            {
                 if (Directory.Exists(fse))
-                {
                     dirs.Add(fse);
-                }
-                else if (!OnlyAllowFolders)
-                {
-                    if (AllowedExtensions != null)
-                    {
-                        if (AllowedExtensions.Contains(Path.GetExtension(fse)))
-                            files.Add(fse);
-                    }
-                    else
-                        files.Add(fse);
-                }
-            }
 
             var ret = new List<string>(dirs);
             ret.AddRange(files);

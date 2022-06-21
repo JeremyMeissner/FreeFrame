@@ -18,52 +18,65 @@ namespace FreeFrameTests
         {
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1000\" height=\"1000\">" +
-                "<circle cx=\"600\" cy=\"200\" r=\"100\" fill=\"red\" stroke=\"blue\" stroke-width=\"10\"/>" +
+                "<svg>" +
+                "<circle cx=\"10\" cy=\"10\" r=\"10\" fill=\"#000000FF\"/>" +
                 "</svg>";
-            (List<Shape> result, _) = Importer.ImportFromString(svgString);
+            (List<Shape> result, _, _) = Importer.ImportFromString(svgString);
 
             // Assert
-            Assert.AreEqual("cx: 600, cy: 200, r: 100", ((SVGCircle)result[0]).ToString());
+            Assert.AreEqual("<circle cx=\"10\" cy=\"10\" r=\"10\" fill=\"#000000FF\"/>", ((SVGCircle)result[0]).ToString());
         }
         [TestMethod]
         public void ImportFromStream_Test_Path()
         {
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1000\" height=\"1000\">" +
-                "<path d=\"M 20,0 C 0,100 200,100 180,0 m 50,10 L 10,21 H 10 V 10 s 20,20 10,10 Q 10,10 0,0 t 10,10 A 100 100 60 1 0 20,20 z\" stroke=\"black\"/>" +
+                "<svg>" +
+                "<path d=\"M 20,0 C 0,100 200,100 180,0 m 50,10 L 10,21 H 10 V 10 s 20,20 10,10 Q 10,10 0,0 t 10,10 A 100 100 60 1 0 20,20 z\" fill=\"000000FF\"/>" +
                 "</svg>";
-            (List<Shape> result, _) = Importer.ImportFromString(svgString);
+            (List<Shape> result, _, _) = Importer.ImportFromString(svgString);
 
             // Assert
-            Assert.AreEqual("d: M 20,0 C 0,100 200,100 180,0 m 50,10 L 10,21 H 10 V 10 s 20,20 10,10 Q 10,10 0,0 t 10,10 A 100 100 60 1 0 20,20 z", ((SVGPath)result[0]).ToString());
+            Assert.AreEqual("<path d=\"M 20,0 C 0,100 200,100 180,0 m 50,10 L 10,21 H 10 V 10 s 20,20 10,10 Q 10,10 0,0 t 10,10 A 100 100 60 1 0 20,20 z\" fill=\"000000FF\"/>", ((SVGPath)result[0]).ToString());
         }
         [TestMethod]
         public void ImportFromStream_Test_Polygon()
         {
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1000\" height=\"1000\">" +
-                "<polygon points=\"50,0 21,90 98,35 2,35 79,90\" stroke=\"black\"/>" +
+                "<svg>" +
+                "<polygon points=\"50,0 21,90 98,35 2,35 79,90\" fill=\"#000000FF\"/>" +
                 "</svg>";
-            (List<Shape> result, _) = Importer.ImportFromString(svgString);
+            (List<Shape> result, _, _) = Importer.ImportFromString(svgString);
 
             // Assert
-            Assert.AreEqual("points: 50,0 21,90 98,35 2,35 79,90", ((SVGPolygon)result[0]).ToString());
+            Assert.AreEqual("<polygon points=\"50,0 21,90 98,35 2,35 79,90\" fill=\"#000000FF\"/>", ((SVGPolygon)result[0]).ToString());
         }
         [TestMethod]
         public void ImportFromStream_Test_Rectangle()
         {
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" width=\"1000\" height=\"1000\">" +
-                "<rect width=\"100\" height=\"50\" fill=\"green\"/>" +
+                "<svg>" +
+                "<rect x=\"10\" y=\"20\" width=\"100\" height=\"50\" rx=\"10\" ry=\"10\" fill=\"#FFFFFFFF\"/>" +
                 "</svg>";
-            (List<Shape> result, _) = Importer.ImportFromString(svgString);
+            (List<Shape> result, _, _) = Importer.ImportFromString(svgString);
 
             // Assert
-            Assert.AreEqual("x: 0, y: 0, width: 100, height: 50, rx: 0, ry: 0", ((SVGRectangle)result[0]).ToString());
+            Assert.AreEqual("<rect x=\"10\" y=\"20\" width=\"100\" height=\"50\" rx=\"10\" ry=\"10\" fill=\"#FFFFFFFF\"/>", ((SVGRectangle)result[0]).ToString());
+        }
+        [TestMethod]
+        public void ImportFromStream_Test_Line()
+        {
+            // Arrange
+            string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
+                "<svg>" +
+                "<line x1=\"10\" y1=\"20\" x2=\"100\" y2=\"50\" fill=\"#000000FF\"/>" +
+                "</svg>";
+            (List<Shape> result, _, _) = Importer.ImportFromString(svgString);
+
+            // Assert
+            Assert.AreEqual("<line x1=\"10\" y1=\"20\" x2=\"100\" y2=\"50\" fill=\"#000000FF\"/>", ((SVGLine)result[0]).ToString());
         }
         [TestMethod]
         public void ImportFromStream_Test_CountElements()
@@ -71,13 +84,12 @@ namespace FreeFrameTests
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
                 "<svg>" +
-                "<circle/>" +
-                "<rect/>" +
-                "<path/>" +
+                "<circle cx=\"10\" cy=\"10\" r=\"10\" fill=\"#FFFFFFFF\"/>" +
+                "<rect x=\"10\" y=\"20\" width=\"100\" height=\"50\" rx=\"10\" ry=\"10\" fill=\"#FFFFFFFF\"/>" +
                 "</svg>";
-            (List<Shape> result, _) = Importer.ImportFromString(svgString);
+            (List<Shape> result, _, _) = Importer.ImportFromString(svgString);
             // Assert
-            Assert.AreEqual(3, result.Count);
+            Assert.AreEqual(2, result.Count);
         }
         [TestMethod]
         public void ImportFromStream_Test_KnownElement()
@@ -85,11 +97,10 @@ namespace FreeFrameTests
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
                 "<svg>" +
-                "<circle/>" +
-                "<rect/>" +
-                "<path/>" +
+                "<circle cx=\"10\" cy=\"10\" r=\"10\" fill=\"#FFFFFFFF\"/>" +
+                "<rect x=\"10\" y=\"20\" width=\"100\" height=\"50\" rx=\"10\" ry=\"10\" fill=\"#FFFFFFFF\"/>" +
                 "</svg>";
-            (_, bool compatibilityFlag) = Importer.ImportFromString(svgString);
+            (_, _, bool compatibilityFlag) = Importer.ImportFromString(svgString);
 
             // Assert
             Assert.AreEqual(false, compatibilityFlag);
@@ -100,11 +111,10 @@ namespace FreeFrameTests
             // Arrange
             string svgString = "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
                 "<svg>" +
-                "<circle/>" +
-                "<hello/>" +
-                "<path/>" +
+                "<circle cx=\"10\" cy=\"10\" r=\"10\" fill=\"#FFFFFFFF\"/>" +
+                "<hello world=\"10\"/>" +
                 "</svg>";
-            (_, bool compatibilityFlag) = Importer.ImportFromString(svgString);
+            (_, _, bool compatibilityFlag) = Importer.ImportFromString(svgString);
 
             // Assert
             Assert.AreEqual(true, compatibilityFlag);

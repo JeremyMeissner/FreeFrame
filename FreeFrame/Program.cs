@@ -1,9 +1,4 @@
-﻿using OpenTK;
-using OpenTK.Mathematics;
-using OpenTK.Graphics;
-using FreeFrame.Components;
-using FreeFrame.Components.Shapes;
-using OpenTK.Windowing.Common;
+﻿using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 
 namespace FreeFrame
@@ -15,7 +10,8 @@ namespace FreeFrame
             NativeWindowSettings nativeWindowSettings = new()
             {
                 Size = new Vector2i(800, 600),
-                Title = "FreeFrame"
+                Title = "FreeFrame",
+                NumberOfSamples = 8, // MSAA
             };
             using Window window = new(GameWindowSettings.Default, nativeWindowSettings); // Create window context (GLFW, OpenGL)
 

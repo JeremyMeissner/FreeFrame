@@ -9,6 +9,7 @@ FreeFrame is free lightweight After Effects alternative built in C#.
 ## Docs
 
 - [Documentation](/assets/documentation-fr.pdf) (Only in French)
+- [Presentation](/assets/presentation-fr.pdf) (Only in French)
 
 <!--
 ## Getting Started
